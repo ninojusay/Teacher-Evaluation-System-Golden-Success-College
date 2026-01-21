@@ -1,0 +1,473 @@
+﻿@model IEnumerable<Teacher_Evaluation_System__Golden_Success_College_.Models.Subject>
+
+@{
+    ViewData["Title"] = "Subjects";
+    Layout = "_Layoutadmin";
+}
+
+<h1>Subjects</h1>
+
+<div class="mb-3">
+    <button class="btn btn-primary" id="btnCreateSubject">
+        <i class="bi bi-plus-circle"></i> Create Subject
+    </button>
+</div>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:1050; text-align:center;">
+    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2">Loading...</div>
+    </div>
+</div>
+
+<table class="table table-bordered table-striped table-sm align-middle w-100" id="subjectsTable">
+    <thead>
+        <tr>
+            <th>Subject Code</th>
+            <th>Subject Name</th>
+            <th>Level</th>
+            <th>Section/Program</th>
+            <th>Teacher</th>
+            <th>Schedule</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr data-id="@item.SubjectId">
+                <td>@item.SubjectCode</td>
+                <td>@item.SubjectName</td>
+                <td>@(item.Level?.LevelName ?? "N/A")</td>
+                <td>@(item.Section?.SectionName ?? "N/A")</td>
+                <td>@(item.Teacher?.FullName ?? "N/A")</td>
+                <td>@(item.Schedule ?? "N/A")</td>
+                <td>
+                    <button class="btn btn-sm btn-warning btn-edit" data-id="@item.SubjectId">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger btn-delete" data-id="@item.SubjectId">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal for Create/Edit -->
+<div class="modal fade" id="subjectModal" tabindex="-1" aria-labelledby="subjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="subjectModalLabel">Create/Edit Subject</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="subjectForm">
+                    <input type="hidden" id="SubjectId" name="SubjectId" />
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="SubjectCode" class="form-label">Subject Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="SubjectCode" name="SubjectCode" maxlength="20" required />
+                            <small class="form-text text-muted">e.g., CS101, MATH101</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="SubjectName" class="form-label">Subject Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="SubjectName" name="SubjectName" required />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="LevelId" class="form-label">Level <span class="text-danger">*</span></label>
+                            <select class="form-select" id="LevelId" name="LevelId" required>
+                                <option value="">-- Select Level --</option>
+                                @if (ViewData["LevelId"] != null)
+                                {
+                                    @foreach (var level in ViewData["LevelId"] as SelectList)
+                                    {
+                                        <option value="@level.Value">@level.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="SectionId" class="form-label">Section/Program <span class="text-danger">*</span></label>
+                            <select class="form-select" id="SectionId" name="SectionId" required>
+                                <option value="">-- Select Section/Program --</option>
+                                @if (ViewData["SectionId"] != null)
+                                {
+                                    var sections = ViewData["SectionId"] as IEnumerable<SelectListItem>;
+                                    var groupedSections = sections.GroupBy(s => s.Group.Name);
+
+                                    foreach (var group in groupedSections)
+                                    {
+                                        <optgroup label="@group.Key">
+                                            @foreach (var sec in group)
+                                            {
+                                                <option value="@sec.Value" data-level="@group.Key">@sec.Text</option>
+                                            }
+                                        </optgroup>
+                                    }
+                                }
+                            </select>
+                            <small class="form-text text-muted">Select the section or program for this subject.</small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="TeacherId" class="form-label">Teacher <span class="text-danger">*</span></label>
+                            <select class="form-select" id="TeacherId" name="TeacherId" required>
+                                <option value="">-- Select Teacher --</option>
+                                @if (ViewData["TeacherId"] != null)
+                                {
+                                    @foreach (var teacher in ViewData["TeacherId"] as SelectList)
+                                    {
+                                        <option value="@teacher.Value">@teacher.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="Schedule" class="form-label">Schedule</label>
+                            <input type="text" class="form-control" id="Schedule" name="Schedule" placeholder="e.g., MWF 10:00-11:30 AM" />
+                            <small class="form-text text-muted">Example: MWF 10:00-11:30 AM, TTH 1:00-2:30 PM</small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveSubjectBtn">
+                    <i class="bi bi-check-circle"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+
+
+    <script>
+        $(document).ready(function () {
+            var toastEl = $('#toast');
+            var toastMessage = $('#toastMessage');
+            var loadingOverlay = $('#loadingOverlay');
+
+            // Store all sections with their level information
+            var allSections = [];
+            $('#SectionId optgroup').each(function() {
+                var levelName = $(this).attr('label');
+                $(this).find('option').each(function() {
+                    if ($(this).val()) {
+                        allSections.push({
+                            value: $(this).val(),
+                            text: $(this).text(),
+                            level: levelName
+                        });
+                    }
+                });
+            });
+
+            function showToast(message, bgClass = 'bg-success') {
+                toastEl.removeClass('bg-success bg-danger bg-warning').addClass(bgClass);
+                toastMessage.text(message);
+                var toast = new bootstrap.Toast(toastEl[0]);
+                toast.show();
+            }
+
+            function showLoading(show = true) {
+                show ? loadingOverlay.show() : loadingOverlay.hide();
+            }
+
+            function filterSections(levelName) {
+                var $sectionSelect = $('#SectionId');
+                var currentValue = $sectionSelect.val();
+
+                // Clear all options and optgroups
+                $sectionSelect.empty();
+                $sectionSelect.append('<option value="">-- Select Section/Program --</option>');
+
+                if (!levelName) {
+                    // Show all sections grouped by level
+                    rebuildAllSections();
+                    return;
+                }
+
+                var levelLower = levelName.toLowerCase();
+                var filteredSections = [];
+
+                if (levelLower.includes('college')) {
+                    // Show only College sections (BSHM, BSIT, etc.)
+                    filteredSections = allSections.filter(s =>
+                        s.level.toLowerCase().includes('college')
+                    );
+                } else if (levelLower.includes('junior')) {
+                    // Show only Junior High sections
+                    filteredSections = allSections.filter(s =>
+                        s.level.toLowerCase().includes('junior')
+                    );
+                } else if (levelLower.includes('senior')) {
+                    // Show only Senior High sections
+                    filteredSections = allSections.filter(s =>
+                        s.level.toLowerCase().includes('senior')
+                    );
+                } else {
+                    // Show all sections if level type is unclear
+                    filteredSections = allSections;
+                }
+
+                // Group filtered sections by level
+                var grouped = {};
+                filteredSections.forEach(function(sec) {
+                    if (!grouped[sec.level]) {
+                        grouped[sec.level] = [];
+                    }
+                    grouped[sec.level].push(sec);
+                });
+
+                // Add grouped sections back with optgroups
+                Object.keys(grouped).forEach(function(levelName) {
+                    var $optgroup = $('<optgroup>').attr('label', levelName);
+                    grouped[levelName].forEach(function(sec) {
+                        $optgroup.append(
+                            $('<option>')
+                                .attr('value', sec.value)
+                                .attr('data-level', sec.level)
+                                .text(sec.text)
+                        );
+                    });
+                    $sectionSelect.append($optgroup);
+                });
+
+                // Restore previous value if it still exists in filtered list
+                if (currentValue && $sectionSelect.find(`option[value="${currentValue}"]`).length > 0) {
+                    $sectionSelect.val(currentValue);
+                } else {
+                    $sectionSelect.val('');
+                }
+            }
+
+            function rebuildAllSections() {
+                var $sectionSelect = $('#SectionId');
+                var grouped = {};
+
+                allSections.forEach(function(sec) {
+                    if (!grouped[sec.level]) {
+                        grouped[sec.level] = [];
+                    }
+                    grouped[sec.level].push(sec);
+                });
+
+                Object.keys(grouped).forEach(function(levelName) {
+                    var $optgroup = $('<optgroup>').attr('label', levelName);
+                    grouped[levelName].forEach(function(sec) {
+                        $optgroup.append(
+                            $('<option>')
+                                .attr('value', sec.value)
+                                .attr('data-level', sec.level)
+                                .text(sec.text)
+                        );
+                    });
+                    $sectionSelect.append($optgroup);
+                });
+            }
+
+            var subjectModalEl = document.getElementById('subjectModal');
+            var subjectModal = new bootstrap.Modal(subjectModalEl);
+
+            var table = $('#subjectsTable').DataTable({
+                "columnDefs": [{ "orderable": false, "targets": 6 }],
+                "order": [[0, 'asc']] // Sort by Subject Code by default
+            });
+
+            // Filter sections when level changes
+            $('#LevelId').change(function () {
+                var selectedText = $(this).find('option:selected').text();
+                filterSections(selectedText);
+            });
+
+            // Open modal for create
+            $('#btnCreateSubject').click(function () {
+                $('#subjectModalLabel').text('Create Subject');
+                $('#subjectForm')[0].reset();
+                $('#SubjectId').val('');
+                // Reset sections to show all grouped
+                filterSections('');
+                subjectModal.show();
+            });
+
+            // Open modal for edit
+            $(document).on('click', '.btn-edit', function () {
+                var id = $(this).data('id');
+                showLoading(true);
+
+                $.get(`/api/SubjectsApi/${id}`, function (res) {
+                    showLoading(false);
+                    if (res.success) {
+                        $('#subjectModalLabel').text('Edit Subject');
+                        $('#SubjectId').val(res.data.subjectId);
+                        $('#SubjectCode').val(res.data.subjectCode);
+                        $('#SubjectName').val(res.data.subjectName);
+                        $('#LevelId').val(res.data.levelId || '');
+
+                        // Filter sections based on level
+                        var levelText = $('#LevelId option:selected').text();
+                        filterSections(levelText);
+
+                        // Set the section value after filtering
+                        $('#SectionId').val(res.data.sectionId || '');
+                        $('#TeacherId').val(res.data.teacherId || '');
+                        $('#Schedule').val(res.data.schedule || '');
+
+                        subjectModal.show();
+                    } else {
+                        showToast(res.message, 'bg-danger');
+                    }
+                }).fail(function (xhr) {
+                    showLoading(false);
+                    var errorMessage = 'Failed to load subject';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    showToast(errorMessage, 'bg-danger');
+                });
+            });
+
+            // Save subject (create or edit)
+            $('#saveSubjectBtn').click(function () {
+                var subjectId = $('#SubjectId').val();
+                var isEdit = subjectId && subjectId != '';
+
+                // Validate required fields
+                if (!$('#SubjectCode').val() || !$('#SubjectName').val() ||
+                    !$('#LevelId').val() || !$('#SectionId').val() || !$('#TeacherId').val()) {
+                    showToast('Please fill in all required fields', 'bg-danger');
+                    return;
+                }
+
+                var subjectData = {
+                    subjectId: isEdit ? parseInt(subjectId) : 0,
+                    subjectCode: $('#SubjectCode').val(),
+                    subjectName: $('#SubjectName').val(),
+                    levelId: parseInt($('#LevelId').val()),
+                    sectionId: parseInt($('#SectionId').val()),
+                    teacherId: parseInt($('#TeacherId').val()),
+                    schedule: $('#Schedule').val() || null
+                };
+
+                var url = isEdit ? `/api/SubjectsApi/${subjectId}` : '/api/SubjectsApi';
+                var type = isEdit ? 'PUT' : 'POST';
+
+                showLoading(true);
+                $.ajax({
+                    url: url,
+                    type: type,
+                    contentType: 'application/json',
+                    data: JSON.stringify(subjectData),
+                    success: function (res) {
+                        showLoading(false);
+                        if (res.success) {
+                            var levelDisplay = res.data.levelName || 'N/A';
+                            var sectionDisplay = res.data.sectionName || 'N/A';
+                            var teacherDisplay = res.data.teacherName || 'N/A';
+                            var scheduleDisplay = res.data.schedule || 'N/A';
+
+                            if (isEdit) {
+                                var row = table.row($(`tr[data-id="${subjectId}"]`));
+                                row.data([
+                                    res.data.subjectCode,
+                                    res.data.subjectName,
+                                    levelDisplay,
+                                    sectionDisplay,
+                                    teacherDisplay,
+                                    scheduleDisplay,
+                                    `<button class="btn btn-sm btn-warning btn-edit" data-id="${res.data.subjectId}"><i class="bi bi-pencil-square"></i></button>
+                                     <button class="btn btn-sm btn-danger btn-delete" data-id="${res.data.subjectId}"><i class="bi bi-trash"></i></button>`
+                                ]).draw(false);
+                                $(`tr[data-id="${subjectId}"]`).attr('data-id', res.data.subjectId);
+                            } else {
+                                var newRow = table.row.add([
+                                    res.data.subjectCode,
+                                    res.data.subjectName,
+                                    levelDisplay,
+                                    sectionDisplay,
+                                    teacherDisplay,
+                                    scheduleDisplay,
+                                    `<button class="btn btn-sm btn-warning btn-edit" data-id="${res.data.subjectId}"><i class="bi bi-pencil-square"></i></button>
+                                     <button class="btn btn-sm btn-danger btn-delete" data-id="${res.data.subjectId}"><i class="bi bi-trash"></i></button>`
+                                ]).draw(false).node();
+                                $(newRow).attr('data-id', res.data.subjectId);
+                            }
+                            showToast(res.message);
+                            subjectModal.hide();
+                        } else {
+                            showToast(res.message, 'bg-danger');
+                        }
+                    },
+                    error: function (xhr) {
+                        showLoading(false);
+                        var errorMessage = 'Failed to save!';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        showToast(errorMessage, 'bg-danger');
+                    }
+                });
+            });
+
+            // Delete subject
+            $(document).on('click', '.btn-delete', function () {
+                if (!confirm('Are you sure you want to delete this subject?')) return;
+                var id = $(this).data('id');
+
+                showLoading(true);
+                $.ajax({
+                    url: `/api/SubjectsApi/${id}`,
+                    type: 'DELETE',
+                    success: function (res) {
+                        showLoading(false);
+                        if (res.success) {
+                            table.row($(`tr[data-id="${id}"]`)).remove().draw();
+                            showToast(res.message);
+                        } else {
+                            showToast(res.message, 'bg-danger');
+                        }
+                    },
+                    error: function (xhr) {
+                        showLoading(false);
+                        var errorMessage = 'Failed to delete!';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        showToast(errorMessage, 'bg-danger');
+                    }
+                });
+            });
+
+        });
+    </script>
+}

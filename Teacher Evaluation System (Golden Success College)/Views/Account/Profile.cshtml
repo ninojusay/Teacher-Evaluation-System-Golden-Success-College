@@ -1,0 +1,437 @@
+﻿@model Teacher_Evaluation_System__Golden_Success_College_.Models.Student
+@{
+    ViewData["Title"] = "My Profile";
+    Layout = "_Layoutadmin";
+}
+
+<!-- Add Boxicons CDN -->
+<link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" />
+
+<style>
+    .profile-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+
+    .profile-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .profile-header {
+        background: #2d3748;
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+        .profile-avatar i {
+            font-size: 2.5rem;
+            color: #2d3748;
+        }
+
+    .profile-name {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .profile-role {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .profile-body {
+        padding: 2rem;
+    }
+
+    .info-group {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+        .info-group:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+    .info-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .info-label i {
+            font-size: 1rem;
+            color: #2d3748;
+        }
+
+    .info-value {
+        font-size: 1rem;
+        color: #2d3748;
+        font-weight: 500;
+    }
+
+    .info-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .btn-change-password {
+        background: #2d3748;
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        width: 100%;
+    }
+
+        .btn-change-password:hover {
+            background: white;
+            transform: translateY(-1px);
+        }
+
+    /* Password Toggle Styling */
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #718096;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        transition: color 0.2s;
+        z-index: 10;
+    }
+
+        .password-toggle:hover {
+            color: #2d3748;
+        }
+
+        .password-toggle i {
+            font-size: 18px;
+            pointer-events: none;
+        }
+
+    .password-wrapper input {
+        padding-right: 45px;
+    }
+
+    /* Modal Styling */
+    .modal-header {
+        background: #2d3748;
+        color: white;
+    }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+    .form-label {
+        font-weight: 500;
+        color: #2d3748;
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        border: 1px solid #e2e8f0;
+        padding: 0.6rem 0.75rem;
+    }
+
+        .form-control:focus {
+            border-color: #2d3748;
+            box-shadow: 0 0 0 0.2rem rgba(45, 55, 72, 0.15);
+        }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .info-row
+
+    {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .profile-header {
+        padding: 1.5rem;
+    }
+
+    .profile-body {
+        padding: 1.5rem;
+    }
+
+    .profile-name {
+        font-size: 1.25rem;
+    }
+
+    }
+</style>
+
+<div class="profile-container">
+    <div class="profile-card">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <i class='bx bxs-user'></i>
+            </div>
+            <h2 class="profile-name">@Model.FullName</h2>
+            <p class="profile-role"><i class='bx bxs-graduation'></i> Student Profile</p>
+        </div>
+
+        <!-- Profile Body -->
+        <div class="profile-body">
+            <!-- Email -->
+            <div class="info-group">
+                <div class="info-label">
+                    <i class='bx bx-envelope'></i>
+                    Email Address
+                </div>
+                <div class="info-value">@Model.Email</div>
+            </div>
+
+            <!-- Level & Section -->
+            <div class="info-row">
+                <div class="info-group">
+                    <div class="info-label">
+                        <i class='bx bx-layer'></i>
+                        Level
+                    </div>
+                    <div class="info-value">@(Model.Level?.LevelName ?? "N/A")</div>
+                </div>
+
+                <div class="info-group">
+                    <div class="info-label">
+                        <i class='bx bx-grid-alt'></i>
+                        Section
+                    </div>
+                    <div class="info-value">@(Model.Section?.SectionName ?? "N/A")</div>
+                </div>
+            </div>
+
+            <!-- College Year -->
+            <div class="info-group">
+                <div class="info-label">
+                    <i class='bx bx-calendar'></i>
+                    College Year Level
+                </div>
+                <div class="info-value">
+                    @if (Model.CollegeYearLevel > 0)
+                    {
+                        <text>Year @Model.CollegeYearLevel</text>
+                    }
+                    else
+                    {
+                        <text>N/A</text>
+                    }
+                </div>
+            </div>
+
+            <!-- Change Password Button -->
+            <div class="mt-4">
+                <button class="btn btn-change-password" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                    <i class='bx bx-lock-alt'></i> Change Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class='bx bx-lock-alt'></i> Change Password</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="StudentId" value="@Model.StudentId" />
+
+                <!-- Current Password -->
+                <div class="mb-3">
+                    <label class="form-label">Current Password</label>
+                    <div class="password-wrapper">
+                        <input type="password"
+                               id="CurrentPassword"
+                               class="form-control"
+                               autocomplete="current-password"
+                               placeholder="Enter current password">
+                        <button type="button"
+                                class="password-toggle"
+                                onclick="togglePassword('CurrentPassword', 'currentIcon')"
+                                aria-label="Toggle password visibility">
+                            <i class='bx bx-hide' id="currentIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- New Password -->
+                <div class="mb-3">
+                    <label class="form-label">New Password</label>
+                    <div class="password-wrapper">
+                        <input type="password"
+                               id="NewPassword"
+                               class="form-control"
+                               autocomplete="new-password"
+                               placeholder="Enter new password">
+                        <button type="button"
+                                class="password-toggle"
+                                onclick="togglePassword('NewPassword', 'newIcon')"
+                                aria-label="Toggle password visibility">
+                            <i class='bx bx-hide' id="newIcon"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">Minimum 6 characters</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-dark" onclick="changePassword()">
+                    <i class='bx bx-save'></i> Update
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100">
+    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Toggle password visibility
+        function togglePassword(inputId, iconId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleIcon = document.getElementById(iconId);
+
+            if (passwordInput && toggleIcon) {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+
+                if (type === 'password') {
+                    toggleIcon.classList.remove('bx-show');
+                    toggleIcon.classList.add('bx-hide');
+                } else {
+                    toggleIcon.classList.remove('bx-hide');
+                    toggleIcon.classList.add('bx-show');
+                }
+            }
+        }
+
+        // Show toast message
+        function showToast(message, bgClass = 'bg-success') {
+            var toastEl = $('#toast');
+            var toastMessage = $('#toastMessage');
+
+            toastEl.removeClass('bg-success bg-danger bg-warning bg-info').addClass(bgClass);
+            toastMessage.text(message);
+
+            var toast = new bootstrap.Toast(toastEl[0], { delay: 3000 });
+            toast.show();
+        }
+
+        // AJAX Change Password
+        function changePassword() {
+            var id = $("#StudentId").val();
+            var currentPass = $("#CurrentPassword").val();
+            var newPass = $("#NewPassword").val();
+
+            if (!currentPass || !newPass) {
+                showToast('Please fill in all fields', 'bg-danger');
+                return;
+            }
+
+            if (newPass.length < 6) {
+                showToast('Password must be at least 6 characters', 'bg-danger');
+                return;
+            }
+
+            $.post("/Account/ChangePassword",
+                {
+                    id: id,
+                    currentPassword: currentPass,
+                    newPassword: newPass
+                },
+                function (response) {
+                    if (response.success) {
+                        showToast(response.message, 'bg-success');
+                        $("#changePasswordModal").modal('hide');
+
+                        $("#CurrentPassword").val('');
+                        $("#NewPassword").val('');
+
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showToast(response.message, 'bg-danger');
+                    }
+                }
+            ).fail(function() {
+                showToast('An error occurred. Please try again.', 'bg-danger');
+            });
+        }
+
+        // Show server-side toast if TempData exists
+        $(function () {
+            @if (TempData["ToastMessage"] != null)
+            {
+                    var message = @Html.Raw(Json.Serialize(TempData["ToastMessage"]));
+                    var type = @Html.Raw(Json.Serialize(TempData["ToastType"] ?? "info"));
+                    <text>
+                        showToast(message, 'bg-' + type);
+                    </text>
+            }
+
+            $('#NewPassword').on('keypress', function(e) {
+                if (e.which === 13) {
+                    changePassword();
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,447 @@
+﻿@using System.Security.Claims
+@{
+    Layout = null;
+    var fullname = User.FindFirstValue(ClaimTypes.Name) ?? "Guest";
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? "None";
+    var isActive = User.FindFirst("IsActive")?.Value == "true";
+
+    bool isAdmin = User.IsInRole("Admin");
+    bool isSuperAdmin = User.IsInRole("Super Admin");
+    bool isStudent = User.IsInRole("Student");
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Teacher Evaluation System</title>
+    <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    <link rel="icon" href="/images/logo/logo.png" type="image/png" />
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <button class="btn d-md-none" id="mobile-menu-btn" style="position: fixed; top: 10px; left: 10px; z-index: 1000; background: #11101d; color: white; border: none; padding: 8px 12px; border-radius: 5px;">
+            <i class='bx bx-menu' style="font-size: 24px;"></i>
+        </button>
+        <a class="navbar-brand" href="#"></a>
+    </nav>
+
+    @if (User.Identity?.IsAuthenticated ?? false)
+    {
+        <div class="sidebar" id="sidebar">
+            <div class="logo-details">
+                <div class="logo_name">Teacher Evaluation System</div>
+                <i class='bx bx-menu' id="btn"></i>
+            </div>
+            <ul class="nav-list">
+                <!-- Dashboard - Common for all roles -->
+                <li>
+                    <a asp-controller="Dashboard" asp-action="Index">
+                        <i class='bx bx-home'></i>
+                        <span class="links_name">Dashboard</span>
+                    </a>
+                </li>
+
+                @if (isSuperAdmin)
+                {
+                    <!-- ================== User Management DROPDOWN ================== -->
+                    <li class="dropdown">
+                        <a href="javascript:void(0);" class="dropdown-btn">
+                            <i class='bx bx-user-circle'></i>
+                            <span class="links_name">User Management</span>
+                            <i class='bx bx-chevron-down arrow'></i>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a asp-controller="Users" asp-action="Index">
+                                    <i class='bx bx-user'></i>
+                                    <span class="links_name">Users</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Roles" asp-action="Index">
+                                    <i class='bx bx-shield-quarter'></i>
+                                    <span class="links_name">Roles</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- ================== Criteria & Questions DROPDOWN ================== -->
+                    <li class="dropdown">
+                        <a href="javascript:void(0);" class="dropdown-btn">
+                            <i class='bx bx-list-check'></i>
+                            <span class="links_name">Criteria & Questions</span>
+                            <i class='bx bx-chevron-down arrow'></i>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a asp-controller="Criteria" asp-action="Index">
+                                    <i class='bx bx-category'></i>
+                                    <span class="links_name">Criteria</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Questions" asp-action="Index">
+                                    <i class='bx bx-help-circle'></i>
+                                    <span class="links_name">Questions</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- ================== Student Registration DROPDOWN ================== -->
+                    <li class="dropdown">
+                        <a href="javascript:void(0);" class="dropdown-btn">
+                            <i class='bx bx-user-plus'></i>
+                            <span class="links_name">Student Registration</span>
+                            <i class='bx bx-chevron-down arrow'></i>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a asp-controller="Levels" asp-action="Index">
+                                    <i class='bx bx-layer'></i>
+                                    <span class="links_name">Level</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Sections" asp-action="Index">
+                                    <i class='bx bx-grid-alt'></i>
+                                    <span class="links_name">Section</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Subjects" asp-action="Index">
+                                    <i class='bx bx-book'></i>
+                                    <span class="links_name">Subject</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Students" asp-action="Index">
+                                    <i class='bx bx-group'></i>
+                                    <span class="links_name">Student</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Enrollments" asp-action="Index">
+                                    <i class='bx bx-list-plus'></i>
+                                    <span class="links_name">Enrollment</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- ================== Teacher & Evaluation DROPDOWN ================== -->
+                    <li class="dropdown">
+                        <a href="javascript:void(0);" class="dropdown-btn">
+                            <i class='bx bx-chalkboard'></i>
+                            <span class="links_name">Teacher & Evaluation</span>
+                            <i class='bx bx-chevron-down arrow'></i>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a asp-controller="Teachers" asp-action="Index">
+                                    <i class='bx bx-user-pin'></i>
+                                    <span class="links_name">Teacher</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="EvaluationPeriods" asp-action="Index">
+                                    <i class='bx bx-calendar'></i>
+                                    <span class="links_name">Evaluation Period</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="TeacherEvaluations" asp-action="Index">
+                                    <i class='bx bx-clipboard'></i>
+                                    <span class="links_name">Teacher Evaluations</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Activity Logs -->
+                    <li>
+                        <a asp-controller="Logs" asp-action="Index">
+                            <i class='bx bx-history'></i>
+                            <span class="links_name">Activity Logs</span>
+                        </a>
+                    </li>
+                }
+
+                @if (isAdmin)
+                {
+                    <!-- ================== Criteria & Questions DROPDOWN ================== -->
+                    <li class="dropdown">
+                        <a href="javascript:void(0);" class="dropdown-btn">
+                            <i class='bx bx-list-check'></i>
+                            <span class="links_name">Criteria & Questions</span>
+                            <i class='bx bx-chevron-down arrow'></i>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a asp-controller="Criteria" asp-action="Index">
+                                    <i class='bx bx-category'></i>
+                                    <span class="links_name">Criteria</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Questions" asp-action="Index">
+                                    <i class='bx bx-help-circle'></i>
+                                    <span class="links_name">Questions</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- ================== Student Registration DROPDOWN ================== -->
+                    <li class="dropdown">
+                        <a href="javascript:void(0);" class="dropdown-btn">
+                            <i class='bx bx-user-plus'></i>
+                            <span class="links_name">Student Registration</span>
+                            <i class='bx bx-chevron-down arrow'></i>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a asp-controller="Levels" asp-action="Index">
+                                    <i class='bx bx-layer'></i>
+                                    <span class="links_name">Level</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Sections" asp-action="Index">
+                                    <i class='bx bx-grid-alt'></i>
+                                    <span class="links_name">Section</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Subjects" asp-action="Index">
+                                    <i class='bx bx-book'></i>
+                                    <span class="links_name">Subject</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Students" asp-action="Index">
+                                    <i class='bx bx-group'></i>
+                                    <span class="links_name">Student</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Enrollments" asp-action="Index">
+                                    <i class='bx bx-list-plus'></i>
+                                    <span class="links_name">Enrollment</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- ================== Teacher & Evaluation DROPDOWN ================== -->
+                    <li class="dropdown">
+                        <a href="javascript:void(0);" class="dropdown-btn">
+                            <i class='bx bx-chalkboard'></i>
+                            <span class="links_name">Teacher & Evaluation</span>
+                            <i class='bx bx-chevron-down arrow'></i>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a asp-controller="Teachers" asp-action="Index">
+                                    <i class='bx bx-user-pin'></i>
+                                    <span class="links_name">Teacher</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="EvaluationPeriods" asp-action="Index">
+                                    <i class='bx bx-calendar'></i>
+                                    <span class="links_name">Evaluation Period</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="TeacherEvaluations" asp-action="Index">
+                                    <i class='bx bx-clipboard'></i>
+                                    <span class="links_name">Teacher Evaluations</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Activity Logs -->
+                    <li>
+                        <a asp-controller="Logs" asp-action="Index">
+                            <i class='bx bx-history'></i>
+                            <span class="links_name">Activity Logs</span>
+                        </a>
+                    </li>
+                }
+
+                @if (isStudent)
+                {
+                    <li>
+                        <a asp-controller="Enrollments" asp-action="Index">
+                            <i class='bx bx-list-plus'></i>
+                            <span class="links_name">Enrollments</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a asp-controller="TeacherEvaluations" asp-action="Index">
+                            <i class='bx bx-clipboard'></i>
+                            <span class="links_name">Teacher Evaluations</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a asp-controller="Account" asp-action="Profile">
+                            <i class='bx bx-user'></i>
+                            <span class="links_name">Profile</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+
+            <!-- Profile section outside nav-list -->
+            <div class="profile">
+                <div class="profile-details">
+                    <img src="/background/images.png" alt="profileImg">
+                    <div class="name_job">
+                        <div class="name text-center">@fullname</div>
+                        <div class="job text-center">@role</div>
+                    </div>
+                </div>
+                <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn text-white border-0 bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                        <i class='bx bx-log-out' id="log_out"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar Overlay for mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    }
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="logoutLabel">Confirm Logout</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <h5 class="fw-bold mb-3">Are you sure you want to log out?</h5>
+                    <p class="text-muted">You will be returned to the login page.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                    <form asp-controller="Auth" asp-action="Logout" method="post" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger px-4">Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="home-section" id="main">
+        <main class="container pt-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="footer text-center text-muted mt-auto py-3 bg-light">
+        <div class="container">
+            &copy; 2025 - Teacher Evaluation System - Golden Success College
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.getElementById("sidebar");
+            const toggleBtn = document.getElementById("btn");
+            const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+            const overlay = document.getElementById("sidebar-overlay");
+
+            if (!sidebar) {
+                console.error("Sidebar not found! User might not be authenticated.");
+                return;
+            }
+
+            function toggleSidebar() {
+                sidebar.classList.toggle("open");
+
+                // On mobile, show/hide overlay
+                if (window.innerWidth <= 700) {
+                    overlay.classList.toggle("active");
+                }
+            }
+
+            // Toggle from sidebar button
+            toggleBtn?.addEventListener("click", toggleSidebar);
+
+            // Toggle from mobile menu button
+            mobileMenuBtn?.addEventListener("click", toggleSidebar);
+
+            // Close sidebar when clicking overlay
+            overlay?.addEventListener("click", function() {
+                sidebar.classList.remove("open");
+                overlay.classList.remove("active");
+            });
+
+            // Close sidebar on window resize if needed
+            window.addEventListener("resize", function() {
+                if (window.innerWidth > 700) {
+                    overlay.classList.remove("active");
+                }
+            });
+
+            // Dropdown toggle functionality
+            const dropdownButtons = document.querySelectorAll(".dropdown-btn");
+            dropdownButtons.forEach(btn => {
+                btn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    const parent = btn.parentElement;
+
+                    // Close other dropdowns
+                    document.querySelectorAll(".dropdown.open").forEach(dropdown => {
+                        if (dropdown !== parent) {
+                            dropdown.classList.remove("open");
+                        }
+                    });
+
+                    // Toggle current dropdown
+                    parent.classList.toggle("open");
+                });
+            });
+
+            // Auto-open sidebar on desktop
+            if (window.innerWidth > 700) {
+                sidebar.classList.add("open");
+            }
+
+            // Add active class to current page link
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll(".nav-list a");
+            navLinks.forEach(link => {
+                if (link.getAttribute("href") === currentPath) {
+                    link.classList.add("active");
+                }
+            });
+        });
+    </script>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

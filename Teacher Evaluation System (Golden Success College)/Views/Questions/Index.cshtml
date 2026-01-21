@@ -1,0 +1,321 @@
+﻿@model IEnumerable<Teacher_Evaluation_System__Golden_Success_College_.ViewModels.QuestionIndexViewModel>
+@{
+    ViewData["Title"] = "Questions";
+    Layout = "_Layoutadmin";
+}
+
+<h1>Questions</h1>
+
+<div class="mb-3">
+    <button class="btn btn-primary" id="btnCreateQuestion">
+        <i class="bi bi-plus-circle"></i> Create New
+    </button>
+</div>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:1050; text-align:center;">
+    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-2">Loading...</div>
+    </div>
+</div>
+
+<table class="table table-bordered table-striped table-sm align-middle w-100" id="questionsTable">
+    <thead>
+        <tr>
+            <th>Criteria</th>
+            <th>Descriptions</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr data-id="@item.QuestionIds.First()">
+                <td>@item.CriteriaName</td>
+                <td>
+                    @foreach (var desc in item.Descriptions)
+                    {
+                        <div>@desc</div>
+                    }
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-warning btn-edit" data-id="@item.QuestionIds.First()">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger btn-delete" data-id="@item.QuestionIds.First()">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal for Create/Edit -->
+<div class="modal fade" id="questionModal" tabindex="-1" aria-labelledby="questionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="questionModalLabel">Create/Edit Questions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="questionForm">
+                    <input type="hidden" id="QuestionId" name="QuestionId" />
+
+                    <div class="mb-3">
+                        <label for="CriteriaId" class="form-label">Criteria</label>
+                        <select class="form-select" id="CriteriaId" name="CriteriaId" required>
+                            <option value="">-- Select Criteria --</option>
+                            @foreach (var criteria in ViewBag.CriteriaId as SelectList)
+                            {
+                                <option value="@criteria.Value">@criteria.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Descriptions</label>
+                        <div id="descriptionContainer">
+                            <div class="input-group mb-2 description-item">
+                                <input type="text" class="form-control description-input" placeholder="Enter description" />
+                                <button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button>
+                            </div>
+                        </div>
+                        <button type="button" id="addDescription" class="btn btn-success btn-sm">
+                            <i class="bi bi-plus-circle"></i> Add Description
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveQuestionBtn">
+                    <i class="bi bi-check-circle"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100">
+    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+
+    <script>
+        $(document).ready(function () {
+            var toastEl = $('#toast');
+            var toastMessage = $('#toastMessage');
+            var loadingOverlay = $('#loadingOverlay');
+
+            function showToast(message, bgClass = 'bg-success') {
+                toastEl.removeClass('bg-success bg-danger bg-warning').addClass(bgClass);
+                toastMessage.text(message);
+                var toast = new bootstrap.Toast(toastEl[0]);
+                toast.show();
+            }
+
+            function showLoading(show = true) {
+                show ? loadingOverlay.show() : loadingOverlay.hide();
+            }
+
+            var questionModalEl = document.getElementById('questionModal');
+            var questionModal = new bootstrap.Modal(questionModalEl);
+
+            var table = $('#questionsTable').DataTable({
+                "columnDefs": [{ "orderable": false, "targets": 2 }]
+            });
+
+            // Add new description field
+            $("#addDescription").click(function () {
+                var newInput = `<div class="input-group mb-2 description-item">
+                                    <input type="text" class="form-control description-input" placeholder="Enter description" />
+                                    <button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button>
+                                </div>`;
+                $("#descriptionContainer").append(newInput);
+            });
+
+            // Remove description field
+            $(document).on("click", ".remove-btn", function () {
+                if ($('.description-item').length > 1) {
+                    $(this).closest(".description-item").remove();
+                } else {
+                    showToast('At least one description is required', 'bg-warning');
+                }
+            });
+
+            // Open modal for create
+            $('#btnCreateQuestion').click(function () {
+                $('#questionModalLabel').text('Create Questions');
+                $('#QuestionId').val('');
+                $('#CriteriaId').val('');
+                $('#descriptionContainer').html(`
+                    <div class="input-group mb-2 description-item">
+                        <input type="text" class="form-control description-input" placeholder="Enter description" />
+                        <button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button>
+                    </div>
+                `);
+                questionModal.show();
+            });
+
+            // Open modal for edit
+            $(document).on('click', '.btn-edit', function () {
+                var questionId = $(this).data('id');
+                showLoading(true);
+
+                $.get(`/api/QuestionsApi/ByQuestion/${questionId}`, function (res) {
+                    showLoading(false);
+                    if (res.success) {
+                        $('#questionModalLabel').text('Edit Questions');
+                        $('#QuestionId').val(questionId);
+                        $('#CriteriaId').val(res.data.criteriaId);
+
+                        $('#descriptionContainer').empty();
+                        res.data.descriptions.forEach(function(desc) {
+                            var input = `<div class="input-group mb-2 description-item">
+                                            <input type="text" class="form-control description-input" value="${desc}" placeholder="Enter description" />
+                                            <button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button>
+                                         </div>`;
+                            $('#descriptionContainer').append(input);
+                        });
+
+                        questionModal.show();
+                    } else {
+                        showToast(res.message, 'bg-danger');
+                    }
+                }).fail(function () {
+                    showLoading(false);
+                    showToast('Failed to load questions', 'bg-danger');
+                });
+            });
+
+            // Save questions - FIXED VERSION
+            $('#saveQuestionBtn').click(function () {
+                var questionId = $('#QuestionId').val();
+                var isEdit = questionId && questionId != '';
+                var criteriaId = parseInt($('#CriteriaId').val());
+
+                if (!criteriaId || criteriaId === 0) {
+                    showToast('Please select a criteria', 'bg-danger');
+                    return;
+                }
+
+                // FIXED: Only collect NON-EMPTY descriptions
+                var descriptions = [];
+                $('.description-input').each(function() {
+                    var val = $(this).val().trim();
+                    if (val !== '') {  // Only add non-empty values
+                        descriptions.push(val);
+                    }
+                });
+
+                if (descriptions.length === 0) {
+                    showToast('Please enter at least one description', 'bg-danger');
+                    return;
+                }
+
+                var requestData = {
+                    criteriaId: criteriaId,
+                    descriptions: descriptions
+                };
+
+                var url = isEdit ? `/api/QuestionsApi/${questionId}` : '/api/QuestionsApi';
+                var type = isEdit ? 'PUT' : 'POST';
+
+                showLoading(true);
+                $.ajax({
+                    url: url,
+                    type: type,
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    success: function(res) {
+                        showLoading(false);
+                        if (res.success) {
+                            var descriptionsHtml = res.data.descriptions.map(d => `<div>${d}</div>`).join('');
+                            var firstQuestionId = res.data.questionIds[0];
+
+                            if (isEdit) {
+                                var row = table.row($(`tr[data-id="${questionId}"]`));
+                                row.data([
+                                    res.data.criteriaName,
+                                    descriptionsHtml,
+                                    `<button class="btn btn-sm btn-warning btn-edit" data-id="${firstQuestionId}"><i class="bi bi-pencil-square"></i></button>
+                                     <button class="btn btn-sm btn-danger btn-delete" data-id="${firstQuestionId}"><i class="bi bi-trash"></i></button>`
+                                ]).draw(false);
+
+                                // Update the data-id attribute with new ID
+                                $(`tr[data-id="${questionId}"]`).attr('data-id', firstQuestionId);
+                            } else {
+                                var newRow = table.row.add([
+                                    res.data.criteriaName,
+                                    descriptionsHtml,
+                                    `<button class="btn btn-sm btn-warning btn-edit" data-id="${firstQuestionId}"><i class="bi bi-pencil-square"></i></button>
+                                     <button class="btn btn-sm btn-danger btn-delete" data-id="${firstQuestionId}"><i class="bi bi-trash"></i></button>`
+                                ]).draw(false).node();
+                                $(newRow).attr('data-id', firstQuestionId);
+                            }
+                            showToast(res.message);
+                            questionModal.hide();
+                        } else {
+                            showToast(res.message, 'bg-danger');
+                        }
+                    },
+                    error: function(xhr) {
+                        showLoading(false);
+                        var errorMsg = 'Failed to save questions!';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        showToast(errorMsg, 'bg-danger');
+                    }
+                });
+            });
+
+            // Delete questions
+            $(document).on('click', '.btn-delete', function () {
+                if (!confirm('Are you sure you want to delete all questions for this criteria?')) return;
+                var id = $(this).data('id');
+
+                showLoading(true);
+                $.ajax({
+                    url: `/api/QuestionsApi/${id}`,
+                    type: 'DELETE',
+                    success: function(res) {
+                        showLoading(false);
+                        if (res.success) {
+                            table.row($(`tr[data-id="${id}"]`)).remove().draw();
+                            showToast(res.message);
+                        } else {
+                            showToast(res.message, 'bg-danger');
+                        }
+                    },
+                    error: function(xhr) {
+                        showLoading(false);
+                        var errorMsg = 'Failed to delete questions!';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        showToast(errorMsg, 'bg-danger');
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,275 @@
+﻿@model IEnumerable<Teacher_Evaluation_System__Golden_Success_College_.ViewModels.EvaluationListItemViewModel>
+
+@{
+    ViewData["Title"] = "Teacher Evaluations";
+    var isStudent = User.IsInRole("Student");
+    var isAdmin = User.IsInRole("Admin") || User.IsInRole("Super Admin");
+    Layout = "_Layoutadmin";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clipboard-check"></i> Teacher Evaluations</h2>
+        @if (ViewBag.CurrentPeriod != null)
+        {
+            <div class="alert alert-info mb-0 py-2">
+                <i class="bi bi-calendar-event"></i>
+                <strong>Current Period:</strong> @ViewBag.CurrentPeriod.PeriodName
+                (@ViewBag.CurrentPeriod.Semester, @ViewBag.CurrentPeriod.AcademicYear)
+            </div>
+        }
+    </div>
+
+    <div class="mb-3">
+        @if (isStudent || isAdmin)
+        {
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create Teacher Evaluation
+            </a>
+        }
+    </div>
+
+
+    <div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:1050; text-align:center;">
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2">Loading...</div>
+        </div>
+    </div>
+
+    <table class="table table-bordered table-striped table-sm align-middle w-100" id="evaluationsTable">
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Teacher</th>
+                @* Removed Picture header to hide column *@
+                <th>Student</th>
+                <th>Date</th>
+                <th>Average Score</th>
+                <th class="text-center">Anonymous</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr data-id="@item.EvaluationId">
+                    <td>@item.SubjectName</td>
+                    <td>@item.TeacherName</td>
+                    @* Removed Picture data cell to hide column *@
+                    <td>
+                        @item.StudentName
+                        @if (item.IsAnonymous)
+                        {
+                            <i class="bi bi-incognito text-warning ms-1" title="Anonymous"></i>
+                        }
+                    </td>
+                    <td>@item.DateEvaluated.ToString("MMM dd, yyyy")</td>
+                    <td>
+                        @{
+                            // Cast item.AverageScore (assuming it's double/float) to decimal for comparison
+                            var averageScoreDecimal = (decimal)item.AverageScore;
+
+                            var scoreBadgeClass = averageScoreDecimal >= 3.2m ? "bg-success" :
+                            averageScoreDecimal >= 2.4m ? "bg-primary" :
+                            averageScoreDecimal >= 1.2m ? "bg-warning text-dark" :
+                            "bg-danger";
+                        }
+                        <span class="badge @scoreBadgeClass fs-6">
+                            @item.AverageScore.ToString("F2") / 4.00
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        @if (item.IsAnonymous)
+                        {
+                            <i class="bi bi-check-circle text-success fs-5" title="Anonymous"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-x-circle text-muted fs-5" title="Not Anonymous"></i>
+                        }
+                    </td>
+                    <td class="text-center">
+                        <a asp-action="Details" asp-route-id="@item.EvaluationId"
+                           class="btn btn-sm btn-info text-white"
+                           title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        @if (isAdmin)
+                        {
+                            <button class="btn btn-sm btn-danger btn-delete"
+                                    data-id="@item.EvaluationId"
+                                    title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle"></i> Confirm Delete
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="fw-bold">Are you sure you want to delete this evaluation?</p>
+                <div id="deleteDetails" class="alert alert-warning"></div>
+                <p class="text-danger mb-0">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <strong>Warning:</strong> This action cannot be undone!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="bi bi-trash"></i> Yes, Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100">
+    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            var toastEl = $('#toast');
+            var toastMessage = $('#toastMessage');
+            var loadingOverlay = $('#loadingOverlay');
+            var isAdmin = @(isAdmin ? "true" : "false");
+            var deleteEvaluationId = null;
+            var deleteModalEl = document.getElementById('deleteModal');
+            var deleteModal = new bootstrap.Modal(deleteModalEl);
+
+            function showToast(message, bgClass = 'bg-success') {
+                toastEl.removeClass('bg-success bg-danger bg-warning bg-info').addClass(bgClass);
+                toastMessage.text(message);
+                var toast = new bootstrap.Toast(toastEl[0], { delay: 4000 });
+                toast.show();
+            }
+
+            function showLoading(show = true) {
+                show ? loadingOverlay.show() : loadingOverlay.hide();
+            }
+
+            var table = $('#evaluationsTable').DataTable({
+                "columnDefs": [
+                    // Adjusted targets based on removed Picture column:
+                    { "orderable": false, "targets": [2, 5, 6] }
+                ],
+                "order": [[3, "desc"]], // Assuming Date is now column 3
+                "pageLength": 25
+            });
+
+            // Delete evaluation - show modal
+            $(document).on('click', '.btn-delete', function () {
+                deleteEvaluationId = $(this).data('id');
+                var row = $(this).closest('tr');
+                var subject = row.find('td:eq(0)').text();
+                var teacher = row.find('td:eq(1)').text();
+                var student = row.find('td:eq(2)').text().trim(); // Index adjusted
+                var date = row.find('td:eq(3)').text();           // Index adjusted
+
+                $('#deleteDetails').html(`
+                    <strong>Subject:</strong> ${subject}<br>
+                    <strong>Teacher:</strong> ${teacher}<br>
+                    <strong>Student:</strong> ${student}<br>
+                    <strong>Date:</strong> ${date}
+                `);
+
+                deleteModal.show();
+            });
+
+            // Confirm delete
+            $('#confirmDeleteBtn').click(function () {
+                if (!deleteEvaluationId) return;
+
+                showLoading(true);
+                $(this).prop('disabled', true);
+
+                $.ajax({
+                    url: `/api/TeacherEvaluationsApi/${deleteEvaluationId}`,
+                    type: 'DELETE',
+                    success: function (res) {
+                        showLoading(false);
+                        deleteModal.hide();
+                        if (res.success) {
+                            // Remove row from DataTable
+                            table.row($(`tr[data-id="${deleteEvaluationId}"]`)).remove().draw();
+                            showToast(res.message, 'bg-success');
+                        } else {
+                            showToast(res.message, 'bg-danger');
+                        }
+                        deleteEvaluationId = null;
+                        $('#confirmDeleteBtn').prop('disabled', false);
+                    },
+                    error: function (xhr) {
+                        showLoading(false);
+                        deleteModal.hide();
+                        var errorMsg = 'Failed to delete evaluation!';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        showToast(errorMsg, 'bg-danger');
+                        deleteEvaluationId = null;
+                        $('#confirmDeleteBtn').prop('disabled', false);
+                    }
+                });
+            });
+
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                $('.alert-dismissible').fadeOut('slow');
+            }, 5000);
+
+            // Show TempData messages as toasts
+            @if (TempData["SuccessMessage"] != null)
+            {
+                            <text>
+                            showToast('@Html.Raw(TempData["SuccessMessage"])', 'bg-success');
+                            </text>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                            <text>
+                            showToast('@Html.Raw(TempData["ErrorMessage"])', 'bg-danger');
+                            </text>
+            }
+
+            @if (TempData["InfoMessage"] != null)
+            {
+                            <text>
+                            showToast('@Html.Raw(TempData["InfoMessage"])', 'bg-info');
+                            </text>
+            }
+        });
+    </script>
+}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">

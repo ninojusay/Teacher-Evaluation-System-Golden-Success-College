@@ -1,0 +1,883 @@
+﻿@model IEnumerable<Teacher_Evaluation_System__Golden_Success_College_.Models.Enrollment>
+
+@{
+    ViewData["Title"] = "Enrollments";
+    Layout = "_Layoutadmin";
+    var userRole = ViewBag.UserRole as string;
+    var isStudentUser = ViewBag.IsStudentUser as bool? ?? false;
+    var currentStudentId = ViewBag.CurrentStudentId;
+    var selectedLevelId = ViewBag.SelectedLevelId;
+    var selectedSectionId = ViewBag.SelectedSectionId;
+}
+
+<h1>Enrollments</h1>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Warning"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        @TempData["Warning"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["Info"] != null)
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        @TempData["Info"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <button class="btn btn-primary" id="btnCreateEnrollment">
+        <i class="bi bi-plus-circle"></i> Create Enrollment
+    </button>
+
+    @if (userRole == "Admin" || userRole == "Super Admin")
+    {
+        <div class="d-flex gap-2">
+            <select class="form-select" id="filterLevel" style="width: 200px;">
+                <option value="">All Levels</option>
+                @foreach (var level in ViewBag.Levels as SelectList)
+                {
+                    if (selectedLevelId?.ToString() == level.Value)
+                    {
+                        <option value="@level.Value" selected>@level.Text</option>
+                    }
+                    else
+                    {
+                        <option value="@level.Value">@level.Text</option>
+                    }
+                }
+            </select>
+            <select class="form-select" id="filterSection" style="width: 250px;" disabled>
+                <option value="">All Sections</option>
+            </select>
+            <button class="btn btn-secondary" id="btnClearFilters">
+                <i class="bi bi-x-circle"></i> Clear
+            </button>
+        </div>
+    }
+</div>
+
+<div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:1050; text-align:center;">
+    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="mt-3 fw-bold">Processing...</div>
+    </div>
+</div>
+
+<div class="row g-4">
+    @if (!Model.Any())
+    {
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle fs-4"></i>
+                <p class="mb-0 mt-2">No enrollments found. Click "Create Enrollment" to get started.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        @foreach (var item in Model)
+        {
+            <div class="col-lg-4 col-md-6 col-sm-12">
+                <div class="card text-center shadow-sm h-100" style="border-radius:1.25rem;">
+                    <div class="card-body d-flex flex-column">
+                        @{
+                            // Teacher picture intentionally removed from index card to follow request
+                            // The card title and info blocks are necessary to identify the student/section on the index
+                            // var firstTeacher = item.Teacher;
+                        }
+
+                        <h5 class="card-title mb-1">@item.Student?.FullName</h5>
+                        <div class="text-muted small mb-1">
+                            <i class="bi bi-building"></i> @item.Student?.Section?.Level?.LevelName
+                        </div>
+                        <div class="text-muted small mb-2">
+                            <i class="bi bi-people"></i> @item.Student?.Section?.SectionName
+                        </div>
+                        <hr />
+
+                        @{
+                            // Retrieve enrollment count from ViewBag (using pattern matching for safety)
+                            var studentEnrollmentCount = 0;
+                            if (ViewBag.EnrollmentCounts is Dictionary<int, int> counts)
+                            {
+                                // Assuming StudentId is non-nullable 'int' in the Model
+                                if (counts.ContainsKey(item.StudentId))
+                                {
+                                    studentEnrollmentCount = counts[item.StudentId];
+                                }
+                            }
+                        }
+                        <div class="mb-3">
+                            <strong><i class="bi bi-book-half"></i> Total Enrollments:</strong><br />
+                            <span class="badge bg-primary fs-5">@studentEnrollmentCount Subject@(studentEnrollmentCount != 1 ? "s" : "")</span>
+                        </div>
+
+                        <div class="mt-auto d-grid gap-2">
+                            <button class="btn btn-info btn-view-details" data-student-id="@item.StudentId" data-student-name="@item.Student?.FullName">
+                                <i class="bi bi-eye"></i> View All Subjects
+                            </button>
+
+                            @if (userRole == "Admin" || userRole == "Super Admin")
+                            {
+                                <button class="btn btn-warning btn-edit" data-id="@item.EnrollmentId" style="display:none;">
+                                    <i class="bi bi-pencil-square"></i> Edit
+                                </button>
+                                <button class="btn btn-danger btn-delete" data-id="@item.EnrollmentId" style="display:none;">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<div class="modal fade" id="viewEnrollmentsModal" tabindex="-1" aria-labelledby="viewEnrollmentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-white text-black">
+                <h5 class="modal-title" id="viewEnrollmentsModalLabel">
+                    <i class="bi bi-list-check"></i> Student Enrollments
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="card mb-3 border-primary">
+                    <div class="card-body">
+                        <h6 class="card-title mb-2">
+                            <i class="bi bi-person-circle text-primary"></i> Student Information
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Name:</strong> <span id="detailStudentName">-</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Level:</strong> <span id="detailStudentLevel">-</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Section:</strong> <span id="detailStudentSection">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0">
+                        <i class="bi bi-book-half"></i> Enrolled Subjects
+                        <span class="badge bg-primary" id="enrollmentCount">0</span>
+                    </h6>
+                </div>
+
+                <div id="enrollmentsList">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading enrollments...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="enrollmentModal" tabindex="-1" aria-labelledby="enrollmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-white text-black">
+                <h5 class="modal-title" id="enrollmentModalLabel">Create Enrollment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="enrollmentForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="EnrollmentId" name="EnrollmentId" />
+
+                    <div class="mb-3">
+                        <label for="StudentId" class="form-label">
+                            <i class="bi bi-person-fill"></i> Student <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="StudentId" name="StudentId" required @(isStudentUser ? "disabled" : "")>
+                            <option value="">-- Select Student --</option>
+                            @if (ViewBag.StudentId != null)
+                            {
+                                foreach (var student in ViewBag.StudentId as SelectList)
+                                {
+                                    var isSelected = currentStudentId != null && currentStudentId.ToString() == student.Value;
+                                    <option value="@student.Value" selected="@isSelected">@student.Text</option>
+                                }
+                            }
+                        </select>
+                        <div class="invalid-feedback">Please select a student.</div>
+                    </div>
+
+                    <div class="mb-3" id="subjectSelectContainer">
+                        <label for="SubjectId" class="form-label">
+                            <i class="bi bi-book-fill"></i> Subject <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="SubjectId" name="SubjectId" required>
+                            <option value="">-- Select Subject --</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a subject.</div>
+                    </div>
+
+                    <div class="mb-3" id="subjectMultiSelectContainer" style="display:none;">
+                        <label for="SubjectIds" class="form-label">
+                            <i class="bi bi-book-fill"></i> Subjects <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="SubjectIds" name="SubjectIds" multiple size="6">
+                            <option disabled>-- Loading subjects... --</option>
+                        </select>
+                        <small class="form-text text-muted">
+                            <i class="bi bi-info-circle"></i> Hold Ctrl (Cmd on Mac) to select multiple subjects.
+                        </small>
+                        <div class="invalid-feedback">Please select at least one subject.</div>
+                    </div>
+
+                    <div id="levelInfo" class="alert alert-info small" style="display:none;">
+                        <i class="bi bi-info-circle"></i>
+                        <span id="levelInfoText"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Close
+                </button>
+                <button type="button" class="btn btn-primary" id="saveEnrollmentBtn">
+                    <i class="bi bi-check-circle"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="4000">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+
+    <script>
+        $(document).ready(function () {
+            var toastEl = $('#toast');
+            var toastMessage = $('#toastMessage');
+            var loadingOverlay = $('#loadingOverlay');
+            var enrollmentModal = new bootstrap.Modal('#enrollmentModal');
+            var viewEnrollmentsModal = new bootstrap.Modal('#viewEnrollmentsModal');
+            var isStudentUser = @Html.Raw(Json.Serialize(isStudentUser));
+            var currentStudentId = @(currentStudentId ?? 0);
+            var userRole = "@userRole"; // Get the role from the ViewBag
+
+            // Setup CSRF token for AJAX requests
+            var token = $('input[name="__RequestVerificationToken"]').val();
+            $.ajaxSetup({
+                headers: {
+                    'RequestVerificationToken': token
+                }
+            });
+
+            // Show toast notification
+            function showToast(message, bgClass = 'bg-success') {
+                toastEl.removeClass('bg-success bg-danger bg-warning bg-info').addClass(bgClass);
+                toastMessage.html(message);
+                new bootstrap.Toast(toastEl[0]).show();
+            }
+
+            // Show/Hide Loading Overlay
+            function showLoading(show = true) {
+                show ? loadingOverlay.show() : loadingOverlay.hide();
+            }
+
+            // Reset form
+            function resetForm() {
+                $('#enrollmentForm')[0].reset();
+                $('#EnrollmentId').val('');
+                $('#SubjectId').html('<option value="">-- Select Subject --</option>');
+                $('#SubjectIds').html('<option disabled>-- Select a student first --</option>');
+                $('#levelInfo').hide();
+                $('.is-invalid').removeClass('is-invalid');
+            }
+
+            // View All Subjects Button (Updated to include Admin Actions)
+            $(document).on('click', '.btn-view-details', function() {
+                var studentId = $(this).data('student-id');
+                var studentName = $(this).data('student-name');
+
+                // Reset modal content
+                $('#detailStudentName').text('-');
+                $('#detailStudentLevel').text('-');
+                $('#detailStudentSection').text('-');
+                $('#enrollmentCount').text('0');
+                $('#enrollmentsList').html(`
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading enrollments...</p>
+                    </div>
+                `);
+
+                // Show modal
+                viewEnrollmentsModal.show();
+
+                // Fetch enrollments
+                $.ajax({
+                    url: `/Enrollments/GetStudentEnrollments?studentId=${studentId}`,
+                    method: 'GET',
+                    success: function(res) {
+                        if (res.success) {
+                            // Update student info
+                            $('#detailStudentName').text(res.student.fullName);
+                            $('#detailStudentLevel').text(res.student.levelName);
+                            $('#detailStudentSection').text(res.student.sectionName);
+                            $('#enrollmentCount').text(res.totalEnrollments);
+
+                            // Build enrollments list
+                            if (res.enrollments.length === 0) {
+                                $('#enrollmentsList').html(`
+                                    <div class="alert alert-info text-center">
+                                        <i class="bi bi-info-circle"></i>
+                                        <p class="mb-0">No enrollments found for this student.</p>
+                                    </div>
+                                `);
+                            } else {
+                                var html = '<div class="list-group">';
+                                res.enrollments.forEach((enrollment, index) => {
+                                    // Conditional actions block for Admin/Super Admin
+                                    var adminActions = (userRole === "Admin" || userRole === "Super Admin") ? `
+                                        <div class="d-flex gap-2 align-items-center">
+                                            <button class="btn btn-sm btn-warning btn-edit-in-modal" data-id="${enrollment.enrollmentId}" title="Edit Subject">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger btn-delete-in-modal" data-id="${enrollment.enrollmentId}" title="Delete Enrollment">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    ` : `<span class="badge bg-success">#${index + 1}</span>`;
+
+                                    html += `
+                                        <div class="list-group-item list-group-item-action" data-enrollment-id="${enrollment.enrollmentId}">
+                                            <div class="d-flex align-items-center">
+                                                <img src="${enrollment.teacherPicture}"
+                                                     alt="Teacher"
+                                                     class="rounded-circle me-3"
+                                                     style="width:50px;height:50px;object-fit:cover;border:2px solid #43a047;">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <h6 class="mb-1">
+                                                                <i class="bi bi-book text-primary"></i>
+                                                                ${enrollment.subjectName}
+                                                            </h6>
+                                                            <p class="mb-1 text-muted small">
+                                                                <i class="bi bi-person text-success"></i>
+                                                                <strong>Teacher:</strong> ${enrollment.teacherName}
+                                                            </p>
+                                                            <p class="mb-0 text-muted small">
+                                                                <i class="bi bi-building"></i>
+                                                                ${enrollment.levelName}
+                                                            </p>
+                                                        </div>
+                                                        ${adminActions}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+                                html += '</div>';
+                                $('#enrollmentsList').html(html);
+                            }
+                        } else {
+                            $('#enrollmentsList').html(`
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    ${res.message || 'Failed to load enrollments'}
+                                </div>
+                            `);
+                        }
+                    },
+                    error: function(xhr) {
+                        var errorMsg = xhr.responseJSON?.message || 'Failed to load enrollments';
+                        $('#enrollmentsList').html(`
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                ${errorMsg}
+                            </div>
+                        `);
+                    }
+                });
+            });
+
+            // Handle Edit Enrollment Button inside the modal (Admin/Super Admin only)
+            $(document).on('click', '.btn-edit-in-modal', function () {
+                viewEnrollmentsModal.hide(); // Hide the details modal
+                var id = $(this).data('id');
+                showLoading(true);
+
+                $.ajax({
+                    url: `/api/EnrollmentsApi/${id}`,
+                    method: 'GET',
+                    success: function (res) {
+                        showLoading(false);
+                        if (res.success) {
+                            $('#enrollmentModalLabel').text('Edit Enrollment');
+                            $('#EnrollmentId').val(res.data.enrollmentId);
+                            $('#StudentId').val(res.data.studentId).prop('disabled', true);
+
+                            // Show single subject select for editing
+                            $('#subjectSelectContainer').show();
+                            $('#subjectMultiSelectContainer').hide();
+                            $('#SubjectId').prop('required', true);
+                            $('#SubjectIds').prop('required', false);
+
+                            // Load available subjects, including the currently selected one
+                            $.ajax({
+                                url: `/Enrollments/GetSubjectsByStudent?studentId=${res.data.studentId}&excludeEnrollmentId=${res.data.enrollmentId}&showEnrolled=true`,
+                                method: 'GET',
+                                success: function (subjects) {
+                                    if (subjects.success) {
+                                        var html = '';
+                                        subjects.data.forEach(s => {
+                                            // Mark the current enrollment's subject as selected
+                                            var selected = s.subjectId == res.data.subjectId ? 'selected' : '';
+                                            var enrolledTag = (s.isEnrolled && s.subjectId != res.data.subjectId) ? ' (Already Enrolled)' : (s.subjectId == res.data.subjectId ? ' (Current)' : '');
+                                            html += `<option value="${s.subjectId}" ${selected}>${s.subjectName} (${s.teacherName})${enrolledTag}</option>`;
+                                        });
+
+                                        $('#SubjectId').html(html);
+
+                                        if (subjects.studentLevel && subjects.studentSection) {
+                                            var availableCount = subjects.data.filter(s => !s.isEnrolled || s.subjectId == res.data.subjectId).length;
+                                            var infoText = `${subjects.studentLevel} - ${subjects.studentSection} - ${availableCount} available`;
+                                            $('#levelInfoText').text(infoText);
+                                            $('#levelInfo').removeClass('alert-warning').addClass('alert-info').fadeIn();
+                                        }
+
+                                        enrollmentModal.show();
+                                    } else {
+                                        showToast(subjects.message || 'Failed to load subjects for editing', 'bg-danger');
+                                    }
+                                },
+                                error: function() {
+                                    showToast('Failed to load subjects for editing', 'bg-danger');
+                                }
+                            });
+                        } else {
+                            showToast(res.message || 'Failed to load enrollment', 'bg-danger');
+                        }
+                    },
+                    error: function (xhr) {
+                        showLoading(false);
+                        var errorMsg = xhr.responseJSON?.message || 'Failed to load enrollment';
+                        showToast(errorMsg, 'bg-danger');
+                    }
+                });
+            });
+
+
+            // Handle Delete Enrollment Button inside the modal (Admin/Super Admin only)
+            $(document).on('click', '.btn-delete-in-modal', function () {
+                var id = $(this).data('id');
+                if (!confirm(`Are you sure you want to delete this specific subject enrollment (ID: ${id})? This action cannot be undone.`)) {
+                    return;
+                }
+
+                $.ajax({
+                    url: `/api/EnrollmentsApi/${id}`,
+                    method: 'DELETE',
+                    beforeSend: function() {
+                        showLoading(true);
+                    },
+                    success: function (res) {
+                        showLoading(false);
+                        if (res.success) {
+                            showToast(res.message || 'Enrollment deleted successfully', 'bg-success');
+                            viewEnrollmentsModal.hide(); // Hide the details modal
+
+                            setTimeout(function() {
+                                location.reload(); // Reload the main page to update student cards
+                            }, 1500);
+                        } else {
+                            showToast(res.message || 'Failed to delete enrollment', 'bg-danger');
+                        }
+                    },
+                    error: function (xhr) {
+                        showLoading(false);
+                        var errorMsg = xhr.responseJSON?.message || 'Failed to delete enrollment';
+                        showToast(errorMsg, 'bg-danger');
+                    }
+                });
+            });
+            // --- End of new logic for Edit/Delete inside modal ---
+
+
+            // Filter: Load sections when level changes
+            $('#filterLevel').change(function() {
+                var levelId = $(this).val();
+                var $sectionFilter = $('#filterSection');
+
+                if (!levelId) {
+                    $sectionFilter.html('<option value="">All Sections</option>').prop('disabled', true);
+                    window.location.href = '/Enrollments/Index';
+                    return;
+                }
+
+                $.ajax({
+                    url: `/Enrollments/GetSectionsByLevel?levelId=${levelId}`,
+                    method: 'GET',
+                    success: function(res) {
+                        if (res.success) {
+                            var html = '<option value="">All Sections</option>';
+                            res.data.forEach(s => {
+                                html += `<option value="${s.sectionId}">${s.sectionName}</option>`;
+                            });
+                            $sectionFilter.html(html).prop('disabled', false);
+
+                            // Apply level filter
+                            window.location.href = `/Enrollments/Index?levelId=${levelId}`;
+                        }
+                    }
+                });
+            });
+
+            // Filter: Apply section filter
+            $('#filterSection').change(function() {
+                var levelId = $('#filterLevel').val();
+                var sectionId = $(this).val();
+
+                if (levelId) {
+                    var url = `/Enrollments/Index?levelId=${levelId}`;
+                    if (sectionId) {
+                        url += `&sectionId=${sectionId}`;
+                    }
+                    window.location.href = url;
+                }
+            });
+
+            // Clear filters
+            $('#btnClearFilters').click(function() {
+                window.location.href = '/Enrollments/Index';
+            });
+
+            // Load sections on page load if level is selected
+            @if (selectedLevelId != null)
+            {
+                    <text>
+                    $.ajax({
+                        url: `/Enrollments/GetSectionsByLevel?levelId=@selectedLevelId`,
+                        method: 'GET',
+                        success: function(res) {
+                            if (res.success) {
+                                var html = '<option value="">All Sections</option>';
+                                res.data.forEach(s => {
+                                    var selected = @(selectedSectionId ?? 0) == s.sectionId ? 'selected' : '';
+                                    html += `<option value="${s.sectionId}" ${selected}>${s.sectionName}</option>`;
+                                });
+                                $('#filterSection').html(html).prop('disabled', false);
+                            }
+                        }
+                    });
+                    </text>
+            }
+
+            // Create Enrollment Button
+            $('#btnCreateEnrollment').click(function () {
+                $('#enrollmentModalLabel').text('Create Enrollment');
+                resetForm();
+
+                // FIX: Ensure button is explicitly enabled on modal open
+                $('#saveEnrollmentBtn').prop('disabled', false);
+
+                if (isStudentUser) {
+                    $('#StudentId').val(currentStudentId).prop('disabled', true);
+
+                    // *** FIX FOR STUDENT MULTI-SELECT ***
+                    $('#subjectSelectContainer').hide();      // Hide single select
+                    $('#subjectMultiSelectContainer').show(); // Show multi-select
+                    $('#SubjectId').prop('required', false);
+                    $('#SubjectIds').prop('required', true);  // Require multi-select
+                    // **********************************
+
+                    loadSubjectsForStudent(currentStudentId);
+                } else {
+                    // Admin logic (remains multi-select for creation)
+                    $('#StudentId').prop('disabled', false);
+                    $('#subjectSelectContainer').hide();
+                    $('#subjectMultiSelectContainer').show();
+                    $('#SubjectId').prop('required', false);
+                    $('#SubjectIds').prop('required', true);
+                }
+
+                enrollmentModal.show();
+            });
+
+            // Load subjects dynamically when student changes
+            $('#StudentId').change(function () {
+                var studentId = $(this).val();
+                if (!studentId) {
+                    $('#SubjectId').html('<option value="">-- Select Subject --</option>');
+                    $('#SubjectIds').html('<option disabled>-- Select a student first --</option>');
+                    $('#levelInfo').hide();
+                    return;
+                }
+                loadSubjectsForStudent(studentId);
+            });
+
+            // Function to load subjects for a student
+            function loadSubjectsForStudent(studentId, excludeEnrollmentId = null) {
+                var url = `/Enrollments/GetSubjectsByStudent?studentId=${studentId}`;
+                if (excludeEnrollmentId) {
+                    url += `&excludeEnrollmentId=${excludeEnrollmentId}`;
+                }
+
+                $.ajax({
+                    url: url,
+                    method: 'GET',
+                    beforeSend: function() {
+                        if (excludeEnrollmentId) { // Only for Edit mode (single select)
+                            $('#SubjectId').html('<option value="">-- Loading... --</option>');
+                        } else { // Student Create or Admin Create (multi select)
+                            $('#SubjectIds').html('<option disabled>-- Loading... --</option>');
+                        }
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            var availableSubjects = res.data.filter(s => !s.isEnrolled);
+
+                            if (availableSubjects.length === 0 && !excludeEnrollmentId) {
+                                var message = 'No available subjects';
+                                if (res.enrolledCount > 0) {
+                                    message += ` (already enrolled in ${res.enrolledCount} subject${res.enrolledCount > 1 ? 's' : ''})`;
+                                }
+                                showToast(message, 'bg-info');
+                                $('#SubjectId').html('<option value="">-- All subjects enrolled --</option>');
+                                $('#SubjectIds').html('<option disabled>-- All subjects enrolled --</option>');
+
+                                if (res.studentLevel && res.studentSection) {
+                                    $('#levelInfoText').text(`${res.studentLevel} - ${res.studentSection} - Already enrolled in all available subjects`);
+                                    $('#levelInfo').removeClass('alert-info').addClass('alert-warning').fadeIn();
+                                }
+                                return;
+                            }
+
+                            if (res.studentLevel && res.studentSection) {
+                                var infoText = `${res.studentLevel} - ${res.studentSection} - ${availableSubjects.length} available subject${availableSubjects.length > 1 ? 's' : ''}`;
+                                if (res.enrolledCount > 0) {
+                                    infoText += ` (${res.enrolledCount} already enrolled)`;
+                                }
+                                $('#levelInfoText').text(infoText);
+                                $('#levelInfo').removeClass('alert-warning').addClass('alert-info').fadeIn();
+                            }
+
+                            if (excludeEnrollmentId) {
+                                // Edit mode (single select #SubjectId)
+                                var html = '<option value="">-- Select Subject --</option>';
+                                res.data.forEach(s => {
+                                    var selected = s.subjectId == res.data.subjectId ? 'selected' : '';
+                                    var enrolledTag = (s.isEnrolled && s.subjectId != res.data.subjectId) ? ' (Already Enrolled)' : (s.subjectId == res.data.subjectId ? ' (Current)' : '');
+                                    html += `<option value="${s.subjectId}" ${selected}>${s.subjectName} (${s.teacherName})${enrolledTag}</option>`;
+                                });
+                                $('#SubjectId').html(html);
+                            } else {
+                                // Create mode (multi select #SubjectIds)
+                                var html = '';
+                                // The requirement is to show ALL available subjects for multi-select
+                                availableSubjects.forEach(s => {
+                                    html += `<option value="${s.subjectId}">${s.subjectName} (${s.teacherName})</option>`;
+                                });
+                                $('#SubjectIds').html(html);
+                            }
+                        } else {
+                            showToast(res.message || 'Failed to load subjects', 'bg-danger');
+                            $('#SubjectId').html('<option value="">-- Error loading subjects --</option>');
+                            $('#SubjectIds').html('<option disabled>-- Error loading subjects --</option>');
+                        }
+                    },
+                    error: function (xhr) {
+                        var errorMsg = xhr.responseJSON?.message || 'Failed to load subjects';
+                        showToast(errorMsg, 'bg-danger');
+                        $('#SubjectId').html('<option value="">-- Error loading subjects --</option>');
+                        $('#SubjectIds').html('<option disabled>-- Error loading subjects --</option>');
+                    }
+                });
+            }
+
+            // Save Enrollment
+            $('#saveEnrollmentBtn').click(function () {
+                $('.is-invalid').removeClass('is-invalid');
+
+                var enrollmentId = $('#EnrollmentId').val();
+                var isEdit = enrollmentId && enrollmentId != '';
+                var studentId = $('#StudentId').val();
+
+                if (!studentId) {
+                    $('#StudentId').addClass('is-invalid');
+                    showToast('Please select a student', 'bg-warning');
+                    return;
+                }
+
+                // *** CRITICAL FIX: Logic to read selected subjects ***
+                var subjects = [];
+                if (isEdit) {
+                    // Edit mode uses the visible single select #SubjectId
+                    subjects = [$('#SubjectId').val()].filter(Boolean);
+                } else {
+                    // Create mode (Admin OR Student) uses the multi select #SubjectIds
+                    subjects = $('#SubjectIds').val() || [];
+                }
+                // ***************************************************
+
+
+                if (subjects.length === 0) {
+                    // Validation check uses the element that is visible/required
+                    if (isEdit) {
+                        $('#SubjectId').addClass('is-invalid');
+                    } else { // This covers both Admin and Student Create modes now
+                        $('#SubjectIds').addClass('is-invalid');
+                    }
+                    showToast('Please select at least one subject', 'bg-warning');
+                    return;
+                }
+
+                var payload = isEdit
+                    ? {
+                        enrollmentId: parseInt(enrollmentId),
+                        studentId: parseInt(studentId),
+                        subjectId: parseInt(subjects[0]),
+                        teacherId: 0
+                      }
+                    : {
+                        studentId: parseInt(studentId),
+                        subjectIds: subjects.map(x => parseInt(x))
+                      };
+
+                $.ajax({
+                    url: isEdit ? `/api/EnrollmentsApi/${enrollmentId}` : '/api/EnrollmentsApi',
+                    method: isEdit ? 'PUT' : 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    beforeSend: function() {
+                        showLoading(true);
+                        $('#saveEnrollmentBtn').prop('disabled', true);
+                    },
+                    success: function (res) {
+                        showLoading(false);
+                        $('#saveEnrollmentBtn').prop('disabled', false);
+
+                        if (res.success) {
+                            var message = res.message;
+                            if (res.errors && res.errors.length > 0) {
+                                message += '<br><small>' + res.errors.join('<br>') + '</small>';
+                            }
+                            showToast(message, res.errors && res.errors.length > 0 ? 'bg-warning' : 'bg-success');
+                            enrollmentModal.hide();
+
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            var errorMsg = res.message || 'Operation failed';
+                            if (res.errors && res.errors.length > 0) {
+                                errorMsg += '<br><small>' + res.errors.join('<br>') + '</small>';
+                            }
+                            showToast(errorMsg, 'bg-danger');
+                        }
+                    },
+                    error: function (xhr) {
+                        showLoading(false);
+                        $('#saveEnrollmentBtn').prop('disabled', false);
+
+                        var errorMsg = 'Failed to save enrollment';
+                        if (xhr.responseJSON) {
+                            errorMsg = xhr.responseJSON.message || errorMsg;
+                            if (xhr.responseJSON.errors && xhr.responseJSON.errors.length > 0) {
+                                errorMsg += '<br><small>' + xhr.responseJSON.errors.join('<br>') + '</small>';
+                            }
+                        }
+                        showToast(errorMsg, 'bg-danger');
+                    }
+                });
+            });
+
+            // Delete Enrollment (Original function, still runs if the hidden card buttons are clicked, but deprecated)
+            $(document).on('click', '.btn-delete', function () {
+                if (!confirm('Are you sure you want to delete this enrollment? This action cannot be undone.')) {
+                    return;
+                }
+
+                var id = $(this).data('id');
+
+                $.ajax({
+                    url: `/api/EnrollmentsApi/${id}`,
+                    method: 'DELETE',
+                    beforeSend: function() {
+                        showLoading(true);
+                    },
+                    success: function (res) {
+                        showLoading(false);
+                        if (res.success) {
+                            showToast(res.message || 'Enrollment deleted successfully', 'bg-success');
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            showToast(res.message || 'Failed to delete enrollment', 'bg-danger');
+                        }
+                    },
+                    error: function (xhr) {
+                        showLoading(false);
+                        var errorMsg = xhr.responseJSON?.message || 'Failed to delete enrollment';
+                        showToast(errorMsg, 'bg-danger');
+                    }
+                });
+            });
+
+            // Reset form on modal close
+            $('#enrollmentModal').on('hidden.bs.modal', function () {
+                resetForm();
+            });
+        });
+    </script>
+}

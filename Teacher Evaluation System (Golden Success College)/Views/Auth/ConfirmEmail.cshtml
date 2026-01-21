@@ -1,0 +1,72 @@
+﻿@model Teacher_Evaluation_System__Golden_Success_College_.ViewModels.LoginViewModel
+
+@{
+    ViewData["Title"] = "Student Login";
+    // Assuming your main layout handles Bootstrap/CSS links
+    Layout = "_LayoutLogin";
+}
+
+<div class="login-container d-flex justify-content-center align-items-center vh-100 bg-light">
+    <div class="card shadow-lg" style="width: 100%; max-width: 400px;">
+        <div class="card-header bg-primary text-white text-center">
+            <h4 class="mb-0">Golden Success College</h4>
+            <p class="mb-0">Student Login</p>
+        </div>
+        <div class="card-body p-4">
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["WarningMessage"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i> @TempData["WarningMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <form asp-controller="Auth" asp-action="Login" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label for="Email" class="form-label">Email</label>
+                    <input type="email" asp-for="Email" class="form-control" required />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label for="Password" class="form-label">Password</label>
+                    <input type="password" asp-for="Password" class="form-control" required />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div class="d-grid mb-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> Log In
+                    </button>
+                </div>
+
+                <p class="text-center">
+                    <a asp-controller="Auth" asp-action="ForgotPassword" class="text-muted">Forgot Password?</a>
+                </p>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

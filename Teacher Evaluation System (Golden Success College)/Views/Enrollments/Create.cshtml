@@ -1,0 +1,94 @@
+﻿@model Teacher_Evaluation_System__Golden_Success_College_.ViewModels.EnrollmentCreateViewModel
+@{
+    ViewData["Title"] = "Create Enrollment";
+    Layout = "_Layoutadmin";
+}
+
+<h1>Create Enrollment</h1>
+
+<form asp-action="Create" method="post">
+    <div class="form-group">
+        <label asp-for="StudentId">Student</label>
+        <select asp-for="StudentId" class="form-control" asp-items="ViewBag.StudentId">
+            <option value="">-- Select Student --</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Subjects</label>
+        <div id="subjects-container">
+            <div class="subject-row mb-2">
+                <div class="input-group">
+                    <select name="SubjectIds" class="form-control subject-select">
+                        <option value="">-- Select Subject --</option>
+                        @foreach (var item in (SelectList)ViewBag.SubjectId)
+                        {
+                            var teacherName = ((Dictionary<int, string>)ViewBag.SubjectTeacher)[int.Parse(item.Value)];
+                            <option value="@item.Value" data-teacher="@teacherName">
+                                @item.Text
+                            </option>
+                        }
+                    </select>
+                    <input type="text" class="form-control teacher-name" placeholder="Teacher" readonly />
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-danger btn-remove-subject" disabled>Remove</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button type="button" id="btn-add-subject" class="btn btn-success btn-sm mt-2">Add Another Subject</button>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Create</button>
+</form>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+
+            // Update teacher name when subject changes
+            $(document).on('change', '.subject-select', function() {
+                var teacherName = $(this).find(':selected').data('teacher') || '';
+                $(this).closest('.input-group').find('.teacher-name').val(teacherName);
+            });
+
+            // Add subject row
+            $('#btn-add-subject').click(function() {
+                var newRow = `<div class="subject-row mb-2">
+                    <div class="input-group">
+                                <select name="SubjectIds" class="form-control subject-select">
+            <option value="">-- Select Subject --</option>
+            @foreach (var item in (SelectList)ViewBag.SubjectId)
+            {
+                    var teacherName = ((Dictionary<int, string>)ViewBag.SubjectTeacher)[int.Parse(item.Value)];
+                    <option value="@item.Value" data-teacher="@teacherName">
+                        @item.Text
+                    </option>
+            }
+        </select>
+
+                        <input type="text" class="form-control teacher-name" placeholder="Teacher" readonly />
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-danger btn-remove-subject">Remove</button>
+                        </div>
+                    </div>
+                </div>`;
+                $('#subjects-container').append(newRow);
+                updateRemoveButtons();
+            });
+
+            // Remove subject row
+            $(document).on('click', '.btn-remove-subject', function() {
+                $(this).closest('.subject-row').remove();
+                updateRemoveButtons();
+            });
+
+            function updateRemoveButtons() {
+                var rowCount = $('.subject-row').length;
+                $('.btn-remove-subject').prop('disabled', rowCount === 1);
+            }
+
+            updateRemoveButtons();
+        });
+    </script>
+}
