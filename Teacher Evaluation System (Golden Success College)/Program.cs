@@ -59,6 +59,7 @@ var app = builder.Build();
 // Development vs Production Pipeline
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage(); // Add this
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {

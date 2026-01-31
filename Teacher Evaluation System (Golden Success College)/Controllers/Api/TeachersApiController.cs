@@ -83,58 +83,43 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
 
         // POST: api/TeachersApi
         [HttpPost]
-        public async Task<IActionResult> CreateTeacher([FromForm] string fullName, [FromForm] string department,
-            [FromForm] int levelId, [FromForm] bool isActive, [FromForm] IFormFile? pictureFile)
+        public async Task<IActionResult> CreateTeacher([FromForm] CreateTeacherDto dto)
         {
             try
             {
-                // Validate required fields
-                if (string.IsNullOrWhiteSpace(fullName))
-                    return BadRequest(new { success = false, message = "Full Name is required." });
-
-                if (string.IsNullOrWhiteSpace(department))
-                    return BadRequest(new { success = false, message = "Department is required." });
-
-                if (levelId == 0)
-                    return BadRequest(new { success = false, message = "Level is required." });
-
-                // Verify level exists
-                var levelExists = await _context.Level.AnyAsync(l => l.LevelId == levelId);
+                // Validate level exists
+                var levelExists = await _context.Level.AnyAsync(l => l.LevelId == dto.LevelId);
                 if (!levelExists)
                     return BadRequest(new { success = false, message = "Invalid Level selected." });
 
                 var teacher = new Teacher
                 {
-                    FullName = fullName.Trim(),
-                    Department = department.Trim(),
-                    LevelId = levelId,
-                    IsActive = isActive
+                    FullName = dto.FullName.Trim(),
+                    Department = dto.Department.Trim(),
+                    LevelId = dto.LevelId,
+                    IsActive = dto.IsActive
                 };
 
-                // Handle picture upload
-                if (pictureFile != null && pictureFile.Length > 0)
+                // Handle file upload
+                if (dto.PictureFile != null && dto.PictureFile.Length > 0)
                 {
-                    // Validate file type
                     var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-                    var extension = Path.GetExtension(pictureFile.FileName).ToLowerInvariant();
+                    var ext = Path.GetExtension(dto.PictureFile.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(ext))
+                        return BadRequest(new { success = false, message = "Only image files are allowed." });
 
-                    if (!allowedExtensions.Contains(extension))
-                        return BadRequest(new { success = false, message = "Only image files are allowed (jpg, jpeg, png, gif)." });
-
-                    // Validate file size (max 5MB)
-                    if (pictureFile.Length > 5 * 1024 * 1024)
+                    if (dto.PictureFile.Length > 5 * 1024 * 1024)
                         return BadRequest(new { success = false, message = "File size must not exceed 5MB." });
 
-                    string uploadFolder = Path.Combine(_env.WebRootPath, "images/teachers");
-                    if (!Directory.Exists(uploadFolder))
-                        Directory.CreateDirectory(uploadFolder);
+                    var uploadFolder = Path.Combine(_env.WebRootPath, "images/teachers");
+                    if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
 
-                    string fileName = Guid.NewGuid() + extension;
-                    string filePath = Path.Combine(uploadFolder, fileName);
+                    var fileName = Guid.NewGuid() + ext;
+                    var filePath = Path.Combine(uploadFolder, fileName);
 
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
-                        await pictureFile.CopyToAsync(stream);
+                        await dto.PictureFile.CopyToAsync(stream);
                     }
 
                     teacher.PicturePath = "/images/teachers/" + fileName;
@@ -143,9 +128,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                 _context.Teacher.Add(teacher);
                 await _context.SaveChangesAsync();
 
-                // Reload with Level for response
-                var savedTeacher = await _context.Teacher
-                    .Include(t => t.Level)
+                var savedTeacher = await _context.Teacher.Include(t => t.Level)
                     .FirstOrDefaultAsync(t => t.TeacherId == teacher.TeacherId);
 
                 return Ok(new
@@ -170,10 +153,10 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
             }
         }
 
+
         // PUT: api/TeachersApi/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTeacher(int id, [FromForm] string fullName, [FromForm] string department,
-            [FromForm] int levelId, [FromForm] bool isActive, [FromForm] IFormFile? pictureFile)
+        public async Task<IActionResult> UpdateTeacher(int id, [FromForm] CreateTeacherDto dto)
         {
             try
             {
@@ -183,65 +166,42 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                 if (existingTeacher == null)
                     return NotFound(new { success = false, message = "Teacher not found" });
 
-                // Validate required fields
-                if (string.IsNullOrWhiteSpace(fullName))
-                    return BadRequest(new { success = false, message = "Full Name is required." });
-
-                if (string.IsNullOrWhiteSpace(department))
-                    return BadRequest(new { success = false, message = "Department is required." });
-
-                if (levelId == 0)
-                    return BadRequest(new { success = false, message = "Level is required." });
-
-                // Verify level exists
-                var levelExists = await _context.Level.AnyAsync(l => l.LevelId == levelId);
-                if (!levelExists)
-                    return BadRequest(new { success = false, message = "Invalid Level selected." });
-
                 var teacher = new Teacher
                 {
                     TeacherId = id,
-                    FullName = fullName.Trim(),
-                    Department = department.Trim(),
-                    LevelId = levelId,
-                    IsActive = isActive,
+                    FullName = dto.FullName.Trim(),
+                    Department = dto.Department.Trim(),
+                    LevelId = dto.LevelId,
+                    IsActive = dto.IsActive,
                     PicturePath = existingTeacher.PicturePath
                 };
 
-                // Handle picture upload
-                if (pictureFile != null && pictureFile.Length > 0)
+                // Handle file upload
+                if (dto.PictureFile != null && dto.PictureFile.Length > 0)
                 {
-                    // Validate file type
                     var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-                    var extension = Path.GetExtension(pictureFile.FileName).ToLowerInvariant();
+                    var ext = Path.GetExtension(dto.PictureFile.FileName).ToLowerInvariant();
+                    if (!allowedExtensions.Contains(ext))
+                        return BadRequest(new { success = false, message = "Only image files are allowed." });
 
-                    if (!allowedExtensions.Contains(extension))
-                        return BadRequest(new { success = false, message = "Only image files are allowed (jpg, jpeg, png, gif)." });
-
-                    // Validate file size (max 5MB)
-                    if (pictureFile.Length > 5 * 1024 * 1024)
+                    if (dto.PictureFile.Length > 5 * 1024 * 1024)
                         return BadRequest(new { success = false, message = "File size must not exceed 5MB." });
 
-                    string uploadFolder = Path.Combine(_env.WebRootPath, "images/teachers");
-                    if (!Directory.Exists(uploadFolder))
-                        Directory.CreateDirectory(uploadFolder);
+                    var uploadFolder = Path.Combine(_env.WebRootPath, "images/teachers");
+                    if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
 
-                    // Delete old picture if exists
+                    // Delete old picture
                     if (!string.IsNullOrEmpty(existingTeacher.PicturePath))
                     {
-                        string oldFilePath = Path.Combine(_env.WebRootPath, existingTeacher.PicturePath.TrimStart('/'));
-                        if (System.IO.File.Exists(oldFilePath))
-                        {
-                            System.IO.File.Delete(oldFilePath);
-                        }
+                        var oldPath = Path.Combine(_env.WebRootPath, existingTeacher.PicturePath.TrimStart('/'));
+                        if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
                     }
 
-                    string fileName = Guid.NewGuid() + extension;
-                    string filePath = Path.Combine(uploadFolder, fileName);
-
+                    var fileName = Guid.NewGuid() + ext;
+                    var filePath = Path.Combine(uploadFolder, fileName);
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
-                        await pictureFile.CopyToAsync(stream);
+                        await dto.PictureFile.CopyToAsync(stream);
                     }
 
                     teacher.PicturePath = "/images/teachers/" + fileName;
@@ -250,9 +210,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                 _context.Entry(teacher).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 
-                // Reload with Level for response
-                var updatedTeacher = await _context.Teacher
-                    .Include(t => t.Level)
+                var updatedTeacher = await _context.Teacher.Include(t => t.Level)
                     .FirstOrDefaultAsync(t => t.TeacherId == id);
 
                 return Ok(new
@@ -271,15 +229,12 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                     }
                 });
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                return NotFound(new { success = false, message = "Teacher not found" });
-            }
             catch (Exception ex)
             {
                 return StatusCode(500, new { success = false, message = "Failed to update teacher: " + ex.Message });
             }
         }
+
 
         // DELETE: api/TeachersApi/5
         [HttpDelete("{id}")]

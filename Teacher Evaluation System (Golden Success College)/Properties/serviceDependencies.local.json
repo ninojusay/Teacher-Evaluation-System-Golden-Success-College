@@ -1,8 +1,10 @@
 {
   "dependencies": {
     "mssql1": {
+      "secretStore": null,
+      "resourceId": null,
       "type": "mssql.local",
-      "connectionId": "ConnectionStrings:Teacher_Evaluation_System__Golden_Success_College_Context"
+      "connectionId": "ConnectionStrings:Teacher_Evaluation_System:Golden_Success_College_Context"
     }
   }
 }
