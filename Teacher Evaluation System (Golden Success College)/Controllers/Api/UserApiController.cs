@@ -135,6 +135,26 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
             });
         }
 
+
+        // UsersApiController for deactivate/reactivate user
+        [HttpPost("ToggleActive/{id}")]
+        public async Task<IActionResult> ToggleActiveUser(int id)
+        {
+            var user = await _context.User.FindAsync(id);
+            if (user == null)
+                return NotFound(new { success = false, message = "User not found" });
+
+            user.IsActive = !user.IsActive; // toggle status
+            _context.User.Update(user);
+            await _context.SaveChangesAsync();
+
+            string action = user.IsActive ? "reactivated" : "deactivated";
+            return Ok(new { success = true, message = $"User {action} successfully", isActive = user.IsActive });
+        }
+
+
+
+
         // DELETE: api/UsersApi/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)

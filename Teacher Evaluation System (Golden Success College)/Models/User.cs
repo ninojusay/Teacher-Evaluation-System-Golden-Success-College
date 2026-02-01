@@ -24,5 +24,8 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Models
         // ADD THESE TWO PROPERTIES
         public string? ResetToken { get; set; }
         public DateTime? ResetTokenExpiry { get; set; }
+
+        public bool IsActive { get; set; } = true; // default is active
+
     }
 }
