@@ -41,6 +41,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                     email = s.Email,
                     emailConfirmed = s.EmailConfirmed,
                     isTemporaryPassword = s.IsTemporaryPassword,
+                    isActive = s.IsActive,
                     levelId = s.LevelId,
                     levelName = s.Level?.LevelName,
                     sectionId = s.SectionId,
@@ -97,6 +98,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                     email = student.Email,
                     emailConfirmed = student.EmailConfirmed,
                     isTemporaryPassword = student.IsTemporaryPassword,
+                    isActive = student.IsActive,
                     levelId = student.LevelId,
                     levelName = student.Level?.LevelName,
                     sectionId = student.SectionId,
@@ -167,7 +169,8 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                     EmailConfirmed = false,
                     EmailConfirmationToken = confirmationToken,
                     TokenExpirationDate = DateTime.UtcNow.AddHours(24),
-                    IsTemporaryPassword = true
+                    IsTemporaryPassword = true,
+                    IsActive = true // New students are active by default
                 };
 
                 var level = await _context.Level.FindAsync(student.LevelId);
@@ -214,6 +217,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                     email = student.Email,
                     emailConfirmed = student.EmailConfirmed,
                     isTemporaryPassword = student.IsTemporaryPassword,
+                    isActive = student.IsActive,
                     levelId = student.LevelId,
                     levelName = student.Level?.LevelName,
                     sectionId = student.SectionId,
@@ -300,7 +304,8 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                     EmailConfirmed = existingStudent.EmailConfirmed,
                     EmailConfirmationToken = existingStudent.EmailConfirmationToken,
                     TokenExpirationDate = existingStudent.TokenExpirationDate,
-                    IsTemporaryPassword = existingStudent.IsTemporaryPassword
+                    IsTemporaryPassword = existingStudent.IsTemporaryPassword,
+                    IsActive = existingStudent.IsActive // Preserve the existing IsActive status
                 };
 
                 var level = await _context.Level.FindAsync(student.LevelId);
@@ -338,6 +343,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                     email = student.Email,
                     emailConfirmed = student.EmailConfirmed,
                     isTemporaryPassword = student.IsTemporaryPassword,
+                    isActive = student.IsActive,
                     levelId = student.LevelId,
                     levelName = student.Level?.LevelName,
                     sectionId = student.SectionId,
@@ -427,6 +433,22 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                     Data = null
                 });
             }
+        }
+
+        // POST: api/StudentsApi/ToggleActive/5 - Deactivate/Reactivate student
+        [HttpPost("ToggleActive/{id}")]
+        public async Task<ActionResult> ToggleActiveStudent(int id)
+        {
+            var student = await _context.Student.FindAsync(id);
+            if (student == null)
+                return NotFound(new { success = false, message = "Student not found" });
+
+            student.IsActive = !student.IsActive; // toggle status
+            _context.Student.Update(student);
+            await _context.SaveChangesAsync();
+
+            string action = student.IsActive ? "reactivated" : "deactivated";
+            return Ok(new { success = true, message = $"Student {action} successfully", isActive = student.IsActive });
         }
 
         private bool StudentExists(int id)

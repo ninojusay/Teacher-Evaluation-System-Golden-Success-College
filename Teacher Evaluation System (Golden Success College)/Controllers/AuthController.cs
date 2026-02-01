@@ -50,7 +50,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
 
             if (user != null && !string.IsNullOrEmpty(user.Password) && PasswordHelper.VerifyPassword(password, user.Password))
             {
-                // FIX: Check if user account is active before signing in
+                // Check if user account is active before signing in
                 if (!user.IsActive)
                 {
                     TempData["ErrorMessage"] = "This account has been deactivated. Please contact an administrator.";
@@ -86,6 +86,13 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
 
             if (student != null && PasswordHelper.VerifyPassword(password, student.Password))
             {
+                // Check if student account is active before signing in
+                if (!student.IsActive)
+                {
+                    TempData["ErrorMessage"] = "This account has been deactivated. Please contact an administrator.";
+                    return View();
+                }
+
                 // Sign in student first
                 await SignInUser(student.StudentId, student.FullName!, student.Role!.Name);
 
