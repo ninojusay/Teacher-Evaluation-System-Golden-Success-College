@@ -10,7 +10,7 @@
     var selectedSectionId = ViewBag.SelectedSectionId;
 }
 
-<h1>Enrollments</h1>
+<h1>Subjects Attended</h1>
 
 @if (TempData["Success"] != null)
 {
@@ -46,7 +46,8 @@
 
 <div class="mb-3 d-flex justify-content-between align-items-center">
     <button class="btn btn-primary" id="btnCreateEnrollment">
-        <i class="bi bi-plus-circle"></i> Create Enrollment
+        <i class="bi bi-plus-circle"></i> Create Subjects Attended
+
     </button>
 
     @if (userRole == "Admin" || userRole == "Super Admin")
@@ -91,7 +92,7 @@
         <div class="col-12">
             <div class="alert alert-info text-center">
                 <i class="bi bi-info-circle fs-4"></i>
-                <p class="mb-0 mt-2">No enrollments found. Click "Create Enrollment" to get started.</p>
+                <p class="mb-0 mt-2">No subject attended  found. Click "Create  Subjects Attended" to get started.</p>
             </div>
         </div>
     }
@@ -130,7 +131,10 @@
                             }
                         }
                         <div class="mb-3">
-                            <strong><i class="bi bi-book-half"></i> Total Enrollments:</strong><br />
+                            <strong>
+                                <i class="bi bi-book-half"></i> Total Subjects Attended
+                                :
+                            </strong><br />
                             <span class="badge bg-primary fs-5">@studentEnrollmentCount Subject@(studentEnrollmentCount != 1 ? "s" : "")</span>
                         </div>
 
@@ -161,7 +165,8 @@
         <div class="modal-content">
             <div class="modal-header bg-white text-black">
                 <h5 class="modal-title" id="viewEnrollmentsModalLabel">
-                    <i class="bi bi-list-check"></i> Student Enrollments
+                    <i class="bi bi-list-check"></i> Student Subjects Attended
+
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -197,7 +202,10 @@
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="mt-2">Loading enrollments...</p>
+                        <p class="mt-2">
+                            Loading Subjects Attended
+                           ...
+                        </p>
                     </div>
                 </div>
             </div>
@@ -214,7 +222,8 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-white text-black">
-                <h5 class="modal-title" id="enrollmentModalLabel">Create Enrollment</h5>
+                <h5 class="modal-title" id="enrollmentModalLabel">
+                    Create  Subjects Attended</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -624,7 +633,7 @@
 
             // Create Enrollment Button
             $('#btnCreateEnrollment').click(function () {
-                $('#enrollmentModalLabel').text('Create Enrollment');
+                $('#enrollmentModalLabel').text('Create Subjects Attended');
                 resetForm();
 
                 // FIX: Ensure button is explicitly enabled on modal open
