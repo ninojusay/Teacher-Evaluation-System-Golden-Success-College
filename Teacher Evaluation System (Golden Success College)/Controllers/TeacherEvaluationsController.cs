@@ -27,6 +27,54 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             _periodService = periodService;
         }
 
+        // GET: TeacherEvaluations/TeacherDetails/5
+        [Authorize(Roles = "Admin,Super Admin,Student")]
+        public async Task<IActionResult> TeacherDetails(int teacherId)
+        {
+            if (teacherId <= 0) return BadRequest();
+
+            var teacher = await _context.Teacher.FindAsync(teacherId);
+            if (teacher == null) return NotFound();
+
+            var currentPeriod = await _periodService.GetCurrentPeriodAsync();
+            var periodId = currentPeriod?.EvaluationPeriodId ?? 0;
+
+            // Get all students enrolled with this teacher for the current period (via Enrollment table)
+            var enrollments = await _context.Enrollment
+                .Include(e => e.Student)
+                .Include(e => e.Subject)
+                .Where(e => e.TeacherId == teacherId)
+                .ToListAsync();
+
+            var evaluated = await _context.Evaluation
+                .Where(e => e.TeacherId == teacherId && e.EvaluationPeriodId == periodId)
+                .ToListAsync();
+
+            var statuses = enrollments
+                .GroupBy(e => e.Student)
+                .SelectMany(g => g.Select(en => new ViewModels.TeacherStudentStatusViewModel
+                {
+                    StudentId = en.StudentId,
+                    StudentName = en.Student.FullName,
+                    SubjectId = en.SubjectId,
+                    SubjectName = en.Subject.SubjectCode + " - " + en.Subject.SubjectName,
+                    HasEvaluated = evaluated.Any(ev => ev.StudentId == en.StudentId && ev.SubjectId == en.SubjectId),
+                    EvaluationId = evaluated.FirstOrDefault(ev => ev.StudentId == en.StudentId && ev.SubjectId == en.SubjectId)?.EvaluationId,
+                    IsAnonymous = evaluated.FirstOrDefault(ev => ev.StudentId == en.StudentId && ev.SubjectId == en.SubjectId)?.IsAnonymous ?? false
+                }))
+                .ToList();
+
+            var vm = new ViewModels.TeacherDetailsViewModel
+            {
+                TeacherId = teacherId,
+                TeacherName = teacher.FullName,
+                TeacherPicturePath = string.IsNullOrEmpty(teacher.PicturePath) ? "/images/default-teacher.png" : teacher.PicturePath,
+                StudentStatuses = statuses
+            };
+
+            return View(vm);
+        }
+
         // GET: TeacherEvaluations/Index
         [Authorize(Roles = "Admin,Super Admin,Student")]
         public async Task<IActionResult> Index()
@@ -54,6 +102,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 .Select(e => new EvaluationListItemViewModel
                 {
                     EvaluationId = e.EvaluationId,
+                    TeacherId = e.TeacherId,
                     SubjectName = $"{e.Subject.SubjectCode} - {e.Subject.SubjectName}",
                     TeacherName = e.Teacher.FullName,
                     TeacherPicturePath = string.IsNullOrEmpty(e.Teacher.PicturePath)
@@ -67,6 +116,49 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 .ToListAsync();
 
             return View(evaluations);
+        }
+
+        // GET: TeacherEvaluations/GetEvaluationsByTeacher/5
+        [HttpGet]
+        [Authorize(Roles = "Admin,Super Admin,Student")]
+        public async Task<IActionResult> GetEvaluationsByTeacher(int teacherId)
+        {
+            if (teacherId <= 0)
+                return BadRequest();
+
+            var isAdmin = User.IsInRole("Admin") || User.IsInRole("Super Admin");
+            var studentId = GetCurrentStudentId();
+
+            IQueryable<Evaluation> query = _context.Evaluation
+                .Include(e => e.Student)
+                .Include(e => e.Subject)
+                .Include(e => e.EvaluationPeriod)
+                .Where(e => e.TeacherId == teacherId)
+                .OrderByDescending(e => e.DateEvaluated);
+
+            if (!isAdmin)
+            {
+                query = query.Where(e => e.StudentId == studentId);
+            }
+
+            var evaluations = await query
+                .Select(e => new EvaluationListItemViewModel
+                {
+                    EvaluationId = e.EvaluationId,
+                    SubjectId = e.SubjectId,
+                    SubjectName = e.Subject.SubjectCode + " - " + e.Subject.SubjectName,
+                    TeacherId = e.TeacherId,
+                    TeacherName = e.Teacher.FullName,
+                    TeacherPicturePath = string.IsNullOrEmpty(e.Teacher.PicturePath) ? "/images/default-teacher.png" : e.Teacher.PicturePath,
+                    StudentName = e.IsAnonymous && !isAdmin ? "Anonymous" : e.Student.FullName,
+                    IsAnonymous = e.IsAnonymous,
+                    DateEvaluated = e.DateEvaluated,
+                    AverageScore = e.AverageScore,
+                    Comments = e.Comments
+                })
+                .ToListAsync();
+
+            return PartialView("_TeacherEvaluationsList", evaluations);
         }
 
         // GET: TeacherEvaluations/Create
@@ -256,6 +348,56 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 .ToList();
 
             return Json(availableStudents);
+        }
+
+        // GET: TeacherEvaluations/ByTeacher/5
+        [Authorize(Roles = "Admin,Super Admin,Student")]
+        public async Task<IActionResult> ByTeacher(int? teacherId)
+        {
+            // If no teacher specified, redirect back to index with a message instead of returning HTTP 400
+            if (!teacherId.HasValue || teacherId.Value <= 0)
+            {
+                TempData["ErrorMessage"] = "No teacher selected. Please select a teacher from the list.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var isAdmin = User.IsInRole("Admin") || User.IsInRole("Super Admin");
+            var studentId = GetCurrentStudentId();
+
+            IQueryable<Evaluation> query = _context.Evaluation
+                .Include(e => e.Student)
+                .Include(e => e.Subject)
+                .Include(e => e.Teacher)
+                .Include(e => e.EvaluationPeriod)
+                .Where(e => e.TeacherId == teacherId);
+
+            if (!isAdmin)
+            {
+                // Students can only see their own evaluations; admin can see all
+                query = query.Where(e => e.StudentId == studentId);
+            }
+
+            var evaluations = await query
+                .OrderByDescending(e => e.DateEvaluated)
+                .Select(e => new EvaluationListItemViewModel
+                {
+                    EvaluationId = e.EvaluationId,
+                    SubjectId = e.SubjectId,
+                    SubjectName = e.Subject.SubjectCode + " - " + e.Subject.SubjectName,
+                    TeacherId = e.TeacherId,
+                    TeacherName = e.Teacher.FullName,
+                    TeacherPicturePath = string.IsNullOrEmpty(e.Teacher.PicturePath) ? "/images/default-teacher.png" : e.Teacher.PicturePath,
+                    StudentName = e.IsAnonymous && !isAdmin ? "Anonymous" : e.Student.FullName,
+                    IsAnonymous = e.IsAnonymous,
+                    DateEvaluated = e.DateEvaluated,
+                    AverageScore = e.AverageScore
+                })
+                .ToListAsync();
+
+            var teacher = await _context.Teacher.FindAsync(teacherId.Value);
+            ViewBag.TeacherName = teacher?.FullName ?? "Teacher";
+            ViewBag.TeacherId = teacherId.Value;
+            return View(evaluations);
         }
 
         // POST: TeacherEvaluations/Create

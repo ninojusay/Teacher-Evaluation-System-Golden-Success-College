@@ -5,6 +5,68 @@
     var isStudent = User.IsInRole("Student");
     var isAdmin = User.IsInRole("Admin") || User.IsInRole("Super Admin");
     Layout = "_Layoutadmin";
+
+    <style>
+        /* Teacher cards container styling */
+        .teacher-cards-wrapper { max-width: 1100px; margin: 0 auto 1.5rem; }
+        .teacher-card-avatar { width:48px; height:48px; object-fit:cover; }
+        .teacher-rank-badge { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; color:#fff; font-size:0.75rem; margin-left:6px; flex-shrink: 0; }
+        .teacher-card .card-header { 
+            padding: 0.75rem;
+            align-items: flex-start;
+        }
+        .teacher-card .card-header h6 { margin-bottom:0; }
+        .teacher-info-section { flex: 1; min-width: 0; }
+        .teacher-actions-section { flex-shrink: 0; margin-left: 1rem; }
+
+        /* Search and filter styling */
+        .search-filter-wrapper { max-width: 1100px; margin: 0 auto 2rem; }
+        .teacher-search-input { 
+            border: 2px solid #e0e0e0; 
+            border-radius: 8px; 
+            padding: 12px 16px; 
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .teacher-search-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+            outline: none;
+        }
+        .search-icon { position: relative; }
+        .search-icon i { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #6c757d; pointer-events: none; }
+        .filter-buttons-container { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .filter-btn { 
+            padding: 6px 12px; 
+            font-size: 0.9rem; 
+            border-radius: 6px; 
+            border: 1px solid #dee2e6;
+            background-color: #fff;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .filter-btn:hover { background-color: #f8f9fa; border-color: #0d6efd; }
+        .filter-btn.active { 
+            background-color: #0d6efd; 
+            color: #fff; 
+            border-color: #0d6efd;
+        }
+        .filter-group { margin-bottom: 1rem; }
+        .filter-group-label { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: #495057; }
+        .clear-filters-btn { padding: 6px 12px; font-size: 0.9rem; }
+        .no-results-message { 
+            text-align: center; 
+            padding: 3rem 2rem; 
+            color: #6c757d; 
+            font-size: 1.1rem;
+        }
+        .search-results-info { 
+            font-size: 0.9rem; 
+            color: #6c757d; 
+            margin-top: 0.5rem;
+        }
+    </style>
 }
 
 <div class="container-fluid mt-4">
@@ -20,135 +82,195 @@
         }
     </div>
 
-    <div class="mb-3">
-        @if (isStudent || isAdmin)
-        {
-            <a asp-action="Create" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Create Teacher Evaluation
-            </a>
-        }
-    </div>
-
-
-    <div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:1050; text-align:center;">
-        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <div class="mt-2">Loading...</div>
+    @* Search and Filter Section *@
+    <div class="search-filter-wrapper">
+        <div class="search-icon">
+            <input 
+                type="text" 
+                id="teacherSearchInput" 
+                class="form-control teacher-search-input w-100" 
+                placeholder="Search by teacher name or subject..." 
+                aria-label="Search teachers"
+            />
+            <i class="bi bi-search"></i>
         </div>
-    </div>
 
-    <table class="table table-bordered table-striped table-sm align-middle w-100" id="evaluationsTable">
-        <thead>
-            <tr>
-                <th>Subject</th>
-                <th>Teacher</th>
-                @* Removed Picture header to hide column *@
-                <th>Student</th>
-                <th>Date</th>
-                <th>Average Score</th>
-                <th class="text-center">Anonymous</th>
-                <th class="text-center">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
+        <div class="filter-buttons-container">
+            <!-- Rating Filter -->
+            <div class="filter-group">
+                <span class="filter-group-label">Rating:</span>
+                <button class="filter-btn filter-rating" data-rating="excellent">
+                    <i class="bi bi-star-fill text-warning"></i> Excellent
+                </button>
+                <button class="filter-btn filter-rating" data-rating="good">
+                    <i class="bi bi-star-fill text-info"></i> Good
+                </button>
+                <button class="filter-btn filter-rating" data-rating="fair">
+                    <i class="bi bi-star-half text-warning"></i> Fair
+                </button>
+                <button class="filter-btn filter-rating" data-rating="poor">
+                    <i class="bi bi-star text-danger"></i> Poor
+                </button>
+            </div>
+
+            <!-- Status Filter -->
+            @if (ViewBag.CurrentPeriod != null)
             {
-                <tr data-id="@item.EvaluationId">
-                    <td>@item.SubjectName</td>
-                    <td>@item.TeacherName</td>
-                    @* Removed Picture data cell to hide column *@
-                    <td>
-                        @item.StudentName
-                        @if (item.IsAnonymous)
-                        {
-                            <i class="bi bi-incognito text-warning ms-1" title="Anonymous"></i>
-                        }
-                    </td>
-                    <td>@item.DateEvaluated.ToString("MMM dd, yyyy")</td>
-                    <td>
-                        @{
-                            // Cast item.AverageScore (assuming it's double/float) to decimal for comparison
-                            var averageScoreDecimal = (decimal)item.AverageScore;
-
-                            var scoreBadgeClass = averageScoreDecimal >= 3.2m ? "bg-success" :
-                            averageScoreDecimal >= 2.4m ? "bg-primary" :
-                            averageScoreDecimal >= 1.2m ? "bg-warning text-dark" :
-                            "bg-danger";
-                        }
-                        <span class="badge @scoreBadgeClass fs-6">
-                            @item.AverageScore.ToString("F2") / 4.00
-                        </span>
-                    </td>
-                    <td class="text-center">
-                        @if (item.IsAnonymous)
-                        {
-                            <i class="bi bi-check-circle text-success fs-5" title="Anonymous"></i>
-                        }
-                        else
-                        {
-                            <i class="bi bi-x-circle text-muted fs-5" title="Not Anonymous"></i>
-                        }
-                    </td>
-                    <td class="text-center">
-                        <a asp-action="Details" asp-route-id="@item.EvaluationId"
-                           class="btn btn-sm btn-info text-white"
-                           title="View Details">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        @if (isAdmin)
-                        {
-                            <button class="btn btn-sm btn-danger btn-delete"
-                                    data-id="@item.EvaluationId"
-                                    title="Delete">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        }
-                    </td>
-                </tr>
+                <div class="filter-group">
+                    <span class="filter-group-label">Status:</span>
+                    <button class="filter-btn filter-status" data-status="active">
+                        <span class="badge bg-success me-1"></span>Active
+                    </button>
+                    <button class="filter-btn filter-status" data-status="upcoming">
+                        <span class="badge bg-info me-1"></span>Upcoming
+                    </button>
+                    <button class="filter-btn filter-status" data-status="inactive">
+                        <span class="badge bg-danger me-1"></span>Inactive
+                    </button>
+                </div>
             }
-        </tbody>
-    </table>
-</div>
 
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteModalLabel">
-                    <i class="bi bi-exclamation-triangle"></i> Confirm Delete
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <!-- Evaluations Filter -->
+            <div class="filter-group">
+                <span class="filter-group-label">Evaluations:</span>
+                <button class="filter-btn filter-evaluations" data-min="5">5+</button>
+                <button class="filter-btn filter-evaluations" data-min="10">10+</button>
+                <button class="filter-btn filter-evaluations" data-min="20">20+</button>
             </div>
-            <div class="modal-body">
-                <p class="fw-bold">Are you sure you want to delete this evaluation?</p>
-                <div id="deleteDetails" class="alert alert-warning"></div>
-                <p class="text-danger mb-0">
-                    <i class="bi bi-exclamation-circle"></i>
-                    <strong>Warning:</strong> This action cannot be undone!
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x"></i> Cancel
-                </button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="bi bi-trash"></i> Yes, Delete
-                </button>
-            </div>
+
+            <!-- Clear Filters -->
+            <button id="clearFiltersBtn" class="filter-btn clear-filters-btn">
+                <i class="bi bi-arrow-clockwise"></i> Clear All
+            </button>
+        </div>
+
+        <div id="searchResultsInfo" class="search-results-info d-none">
+            Showing <span id="visibleCount">0</span> of <span id="totalCount">0</span> teachers
         </div>
     </div>
-</div>
 
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100">
-    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body" id="toastMessage"></div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    @* Grouped teacher cards to avoid duplicate teacher rows when many evaluations exist *@
+    @{ 
+        var teachersGroup = Model
+            .GroupBy(m => new { m.TeacherId, m.TeacherName, m.TeacherPicturePath })
+            .Select(g => new {
+                TeacherId = g.Key.TeacherId,
+                TeacherName = g.Key.TeacherName,
+                TeacherPicturePath = string.IsNullOrEmpty(g.Key.TeacherPicturePath) ? "/images/default-teacher.png" : g.Key.TeacherPicturePath,
+                Average = g.Average(x => (decimal)x.AverageScore),
+                UniqueStudents = g.Select(x => x.StudentName).Distinct().Count(),
+                TotalEvaluations = g.Count(),
+                Subjects = g.Select(x => x.SubjectName).Distinct().ToList()
+            })
+            .OrderByDescending(t => t.Average)
+            .ToList();
+
+        var ranked = teachersGroup.Select((t, idx) => new { Item = t, Rank = idx + 1 }).ToList();
+
+        string PeriodStatusClass(string status) => status == "Active" ? "bg-success" : status == "Upcoming" ? "bg-info" : "bg-danger";
+        string RatingLabel(decimal avg) => avg >= 3.2m ? "Excellent" : avg >= 2.4m ? "Good" : avg >= 1.2m ? "Fair" : "Poor";
+        string RatingColor(decimal avg) => avg >= 3.2m ? "#198754" : avg >= 2.4m ? "#0d6efd" : avg >= 1.2m ? "#ffc107" : "#dc3545";
+    }
+
+    <div class="teacher-cards-wrapper">
+        <div class="row mb-4 gx-3">
+        @foreach (var t in ranked)
+        {
+            var item = t.Item;
+            var rank = t.Rank;
+            var badgeColor = rank == 1 ? "#d4af37" : rank == 2 ? "#c0c0c0" : rank == 3 ? "#cd7f32" : "transparent";
+            var subjectsData = string.Join(",", item.Subjects).ToLower();
+            var ratingLabel = RatingLabel(item.Average).ToLower();
+            var status = (ViewBag.CurrentPeriod?.Status as string ?? "").ToLower();
+
+            <div class="col-md-6 col-lg-4 mb-3 teacher-card-item" 
+                 data-teacher-name="@item.TeacherName.ToLower()" 
+                 data-subjects="@subjectsData" 
+                 data-rating="@ratingLabel" 
+                 data-score="@item.Average"
+                 data-evaluations="@item.TotalEvaluations"
+                 data-status="@status">
+                <div class="card h-100 position-relative card-teacher teacher-card" data-teacher-url="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })">
+                    <div class="card-header d-flex gap-2">
+                        <div class="d-flex align-items-start flex-shrink-0">
+                            <img src="@Url.Content(item.TeacherPicturePath)" alt="Teacher" class="rounded-circle teacher-cards-avatar" style="width:48px;height:48px;object-fit:cover;" />
+                        </div>
+                        <div class="teacher-info-section">
+                            <h6 class="mb-1 text-truncate d-flex align-items-center" style="max-width:100%;">
+                                <span>@item.TeacherName</span>
+                                @if (rank <= 3)
+                                {
+                                    <span class="teacher-rank-badge ms-2" style="background:@badgeColor;">@rank</span>
+                                }
+                            </h6>
+                            <div class="small text-muted">
+                                <a href="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="text-muted me-2" style="text-decoration:none;" onclick="event.stopPropagation();">
+                                    <i class="bi bi-people-fill"></i> @item.UniqueStudents
+                                </a>
+                                <a href="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="text-muted" style="text-decoration:none;" onclick="event.stopPropagation();">
+                                    <i class="bi bi-card-list"></i> @item.TotalEvaluations
+                                </a>
+                            </div>
+                        </div>
+                        <div class="teacher-actions-section d-flex flex-column gap-2 align-items-end">
+                            @if (ViewBag.CurrentPeriod != null)
+                            {
+                                var periodStatus = ViewBag.CurrentPeriod.Status as string ?? "";
+                                <span class="badge @PeriodStatusClass(periodStatus)" style="white-space: nowrap;">@periodStatus</span>
+                            }
+                            <a href="@Url.Action("TeacherDetails", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="btn btn-sm btn-outline-primary" style="z-index:1100; white-space: nowrap;" onclick="event.stopPropagation();">
+                                <i class="bi bi-file-earmark-text"></i> Details
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-4 text-center">
+                                <div style="width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:@RatingColor(item.Average);color:#fff;font-weight:700;margin:0 auto;">
+                                    @item.Average.ToString("F2")
+                                </div>
+                                <div class="small mt-1 text-center">@RatingLabel(item.Average)</div>
+                            </div>
+                            <div class="col-8">
+                                <div>
+                                    @for (int i = 1; i <= 4; i++)
+                                    {
+                                        if (i <= (int)Math.Round(item.Average))
+                                        {
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-star text-muted"></i>
+                                        }
+                                    }
+                                </div>
+                                <div class="progress mt-2" style="height:8px;border-radius:6px;">
+                                    <div class="progress-bar" role="progressbar" style="width:@( (double)(item.Average / 4.0m) * 100 )%; background:@RatingColor(item.Average);" aria-valuenow="@item.Average" aria-valuemin="0" aria-valuemax="4"></div>
+                                </div>
+                                <div class="mt-2">
+                                    @foreach (var subj in item.Subjects.Take(3))
+                                    {
+                                        <span class="badge bg-light text-dark me-1 small">@subj</span>
+                                    }
+                                    @if (item.Subjects.Count > 3)
+                                    {
+                                        <span class="badge bg-secondary text-white small">+@((item.Subjects.Count)-3) more</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        </div>
+
+        <div id="noResultsMessage" class="no-results-message d-none">
+            <i class="bi bi-search" style="font-size: 2rem; color: #ccc; display: block; margin-bottom: 1rem;"></i>
+            <p>No teachers found matching your search or filter criteria.</p>
         </div>
     </div>
-</div>
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -167,6 +289,13 @@
             var deleteModalEl = document.getElementById('deleteModal');
             var deleteModal = new bootstrap.Modal(deleteModalEl);
 
+            // Filter state
+            var activeFilters = {
+                ratings: [],
+                statuses: [],
+                evaluations: []
+            };
+
             function showToast(message, bgClass = 'bg-success') {
                 toastEl.removeClass('bg-success bg-danger bg-warning bg-info').addClass(bgClass);
                 toastMessage.text(message);
@@ -180,11 +309,139 @@
 
             var table = $('#evaluationsTable').DataTable({
                 "columnDefs": [
-                    // Adjusted targets based on removed Picture column:
                     { "orderable": false, "targets": [2, 5, 6] }
                 ],
-                "order": [[3, "desc"]], // Assuming Date is now column 3
+                "order": [[3, "desc"]],
                 "pageLength": 25
+            });
+
+            // Apply filters and search
+            function applyFiltersAndSearch() {
+                var searchTerm = $('#teacherSearchInput').val().toLowerCase();
+                var cards = $('#teacherCardsContainer .teacher-card-item');
+                var visibleCount = 0;
+
+                cards.each(function() {
+                    var teacherName = $(this).data('teacher-name');
+                    var subjects = $(this).data('subjects');
+                    var rating = $(this).data('rating');
+                    var score = $(this).data('score');
+                    var evaluations = $(this).data('evaluations');
+                    var status = $(this).data('status');
+
+                    // Search filter
+                    var matchesSearch = teacherName.includes(searchTerm) || 
+                                       subjects.includes(searchTerm);
+
+                    // Rating filter
+                    var matchesRating = activeFilters.ratings.length === 0 || 
+                                       activeFilters.ratings.includes(rating);
+
+                    // Status filter
+                    var matchesStatus = activeFilters.statuses.length === 0 || 
+                                       activeFilters.statuses.includes(status);
+
+                    // Evaluations filter
+                    var matchesEvaluations = true;
+                    if (activeFilters.evaluations.length > 0) {
+                        matchesEvaluations = activeFilters.evaluations.some(function(minVal) {
+                            return evaluations >= minVal;
+                        });
+                    }
+
+                    var show = matchesSearch && matchesRating && matchesStatus && matchesEvaluations;
+
+                    if (show) {
+                        $(this).show();
+                        visibleCount++;
+                    } else {
+                        $(this).hide();
+                    }
+                });
+
+                var totalCount = cards.length;
+                var noResultsMessage = $('#noResultsMessage');
+                var searchResultsInfo = $('#searchResultsInfo');
+
+                if (visibleCount === 0) {
+                    noResultsMessage.removeClass('d-none');
+                    searchResultsInfo.addClass('d-none');
+                } else {
+                    noResultsMessage.addClass('d-none');
+                    if (searchTerm.length > 0 || activeFilters.ratings.length > 0 || 
+                        activeFilters.statuses.length > 0 || activeFilters.evaluations.length > 0) {
+                        searchResultsInfo.removeClass('d-none');
+                        $('#visibleCount').text(visibleCount);
+                        $('#totalCount').text(totalCount);
+                    } else {
+                        searchResultsInfo.addClass('d-none');
+                    }
+                }
+            }
+
+            // Search input
+            $('#teacherSearchInput').on('keyup', function() {
+                applyFiltersAndSearch();
+            });
+
+            // Rating filter buttons
+            $('.filter-rating').on('click', function() {
+                var rating = $(this).data('rating');
+                $(this).toggleClass('active');
+
+                if ($(this).hasClass('active')) {
+                    if (!activeFilters.ratings.includes(rating)) {
+                        activeFilters.ratings.push(rating);
+                    }
+                } else {
+                    activeFilters.ratings = activeFilters.ratings.filter(r => r !== rating);
+                }
+
+                applyFiltersAndSearch();
+            });
+
+            // Status filter buttons
+            $('.filter-status').on('click', function() {
+                var status = $(this).data('status');
+                $(this).toggleClass('active');
+
+                if ($(this).hasClass('active')) {
+                    if (!activeFilters.statuses.includes(status)) {
+                        activeFilters.statuses.push(status);
+                    }
+                } else {
+                    activeFilters.statuses = activeFilters.statuses.filter(s => s !== status);
+                }
+
+                applyFiltersAndSearch();
+            });
+
+            // Evaluations filter buttons
+            $('.filter-evaluations').on('click', function() {
+                var minVal = parseInt($(this).data('min'));
+                $(this).toggleClass('active');
+
+                if ($(this).hasClass('active')) {
+                    if (!activeFilters.evaluations.includes(minVal)) {
+                        activeFilters.evaluations.push(minVal);
+                    }
+                } else {
+                    activeFilters.evaluations = activeFilters.evaluations.filter(v => v !== minVal);
+                }
+
+                applyFiltersAndSearch();
+            });
+
+            // Clear filters
+            $('#clearFiltersBtn').on('click', function() {
+                activeFilters.ratings = [];
+                activeFilters.statuses = [];
+                activeFilters.evaluations = [];
+
+                $('.filter-btn').removeClass('active');
+                $('#teacherSearchInput').val('');
+
+                applyFiltersAndSearch();
             });
 
             // Delete evaluation - show modal
@@ -272,4 +529,28 @@
         });
     </script>
 }
+
+<script>
+    // Handle clicks on teacher cards to navigate to ByTeacher while allowing internal links/buttons to work
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.card-teacher').forEach(function (card) {
+            card.addEventListener('click', function (e) {
+                // If click originated from an anchor, button, or form inside card, ignore so their handlers run
+                var el = e.target;
+                while (el && el !== card) {
+                    if (el.tagName === 'A' || el.tagName === 'BUTTON' || el.tagName === 'FORM' || (el.getAttribute && el.getAttribute('data-no-propagate') === 'true')) {
+                        return; // allow default behavior
+                    }
+                    el = el.parentElement;
+                }
+
+                var url = card.getAttribute('data-teacher-url');
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+        });
+    });
+</script>
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">

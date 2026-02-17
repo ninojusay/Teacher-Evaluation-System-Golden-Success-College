@@ -1,0 +1,70 @@
+@model Teacher_Evaluation_System__Golden_Success_College_.ViewModels.TeacherDetailsViewModel
+
+@{
+    ViewData["Title"] = "Teacher Details";
+    Layout = "_Layoutadmin";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3><i class="bi bi-person-lines-fill"></i> @Model.TeacherName</h3>
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body d-flex align-items-center">
+            <img src="@Url.Content(Model.TeacherPicturePath)" class="rounded-circle me-3" style="width:80px;height:80px;object-fit:cover;" />
+            <div>
+                <h5 class="mb-0">@Model.TeacherName</h5>
+                <div class="small text-muted">@Model.StudentStatuses.Select(s => s.SubjectName).Distinct().Count() subjects</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <strong>Students & Evaluation Status</strong>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.StudentStatuses)
+                    {
+                        <tr>
+                            <td>@s.StudentName</td>
+                            <td class="text-truncate" title="@s.SubjectName">@s.SubjectName</td>
+                            <td>
+                                @if (s.HasEvaluated)
+                                {
+                                    <span class="badge bg-success">Evaluated</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Not Evaluated</span>
+                                }
+                            </td>
+                            <td>
+                                @if (s.HasEvaluated && s.EvaluationId.HasValue)
+                                {
+                                    <a asp-action="Details" asp-route-id="@s.EvaluationId.Value" class="btn btn-sm btn-info"><i class="bi bi-eye"></i> View</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

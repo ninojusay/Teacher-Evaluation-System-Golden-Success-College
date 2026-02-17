@@ -1,0 +1,67 @@
+@model IEnumerable<Teacher_Evaluation_System__Golden_Success_College_.ViewModels.EvaluationListItemViewModel>
+
+@{
+    ViewData["Title"] = "Evaluations by Teacher";
+    Layout = "_Layoutadmin";
+    var isAdmin = User.IsInRole("Admin") || User.IsInRole("Super Admin");
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3><i class="bi bi-person-lines-fill"></i> Evaluations for @ViewBag.TeacherName</h3>
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div id="evaluationsListContainer">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading evaluations...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @{
+        // Ensure we have a teacherId to use for AJAX. Try ViewBag then querystring.
+        int parsedTeacherId = 0;
+        if (ViewBag.TeacherId != null)
+        {
+            int.TryParse(ViewBag.TeacherId.ToString(), out parsedTeacherId);
+        }
+        if (parsedTeacherId == 0)
+        {
+            var qs = Context.Request.Query["teacherId"].FirstOrDefault();
+            if (!string.IsNullOrEmpty(qs))
+            {
+                int.TryParse(qs, out parsedTeacherId);
+            }
+        }
+    }
+
+    <script>
+        (function() {
+            var teacherId = @parsedTeacherId;
+            var container = document.getElementById('evaluationsListContainer');
+
+            if (!teacherId || teacherId <= 0) {
+                container.innerHTML = '<div class="alert alert-warning">No teacher selected. Please go back and select a teacher.</div>';
+                return;
+            }
+
+            var url = '/TeacherEvaluations/GetEvaluationsByTeacher?teacherId=' + encodeURIComponent(teacherId);
+
+            fetch(url)
+                .then(function(res) { return res.text(); })
+                .then(function(html) {
+                    container.innerHTML = html;
+                })
+                .catch(function() {
+                    container.innerHTML = '<div class="alert alert-danger">Failed to load evaluations.</div>';
+                });
+        })();
+    </script>
+</div>
