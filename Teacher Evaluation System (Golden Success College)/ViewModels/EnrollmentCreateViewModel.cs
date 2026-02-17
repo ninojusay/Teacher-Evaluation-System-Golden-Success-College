@@ -160,6 +160,9 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.ViewModels
     public class EvaluationListItemViewModel
     {
         public int EvaluationId { get; set; }
+
+        // Add these IDs to fix your controller errors
+        public int TeacherId { get; set; }
         public string? SubjectName { get; set; }
         public string? TeacherName { get; set; }
         public string? TeacherPicturePath { get; set; }
@@ -168,7 +171,9 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.ViewModels
         public DateTime DateEvaluated { get; set; }
         public string? Comments { get; set; }
         public double AverageScore { get; set; }
+        public int SubjectId { get; set; }
     }
+
 
     // ViewModel for criteria management
     public class CriteriaManagementViewModel
