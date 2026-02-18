@@ -350,6 +350,42 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             return Json(availableStudents);
         }
 
+        // GET: TeacherEvaluations/MyEvaluations
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> MyEvaluations()
+        {
+            var studentId = GetCurrentStudentId();
+
+            var currentPeriod = await _periodService.GetCurrentPeriodAsync();
+            ViewBag.CurrentPeriod = currentPeriod;
+
+            var evaluations = await _context.Evaluation
+                .Include(e => e.Teacher)
+                .Include(e => e.Subject)
+                .Include(e => e.EvaluationPeriod)
+                .Where(e => e.StudentId == studentId)
+                .OrderByDescending(e => e.DateEvaluated)
+                .Select(e => new EvaluationListItemViewModel
+                {
+                    EvaluationId = e.EvaluationId,
+                    TeacherId = e.TeacherId,
+                    SubjectName = $"{e.Subject.SubjectCode} - {e.Subject.SubjectName}",
+                    TeacherName = e.Teacher.FullName,
+                    TeacherPicturePath = string.IsNullOrEmpty(e.Teacher.PicturePath)
+                        ? "/images/default-teacher.png"
+                        : e.Teacher.PicturePath,
+                    IsAnonymous = e.IsAnonymous,
+                    DateEvaluated = e.DateEvaluated,
+                    AverageScore = e.AverageScore
+                })
+                .ToListAsync();
+
+            return View(evaluations);
+        }
+
+
+
+
         // GET: TeacherEvaluations/ByTeacher/5
         [Authorize(Roles = "Admin,Super Admin,Student")]
         public async Task<IActionResult> ByTeacher(int? teacherId)
