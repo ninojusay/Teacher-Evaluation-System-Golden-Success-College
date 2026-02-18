@@ -83,7 +83,7 @@
                         </div>
                         <div class="col-md-6">
                             <strong><i class="bi bi-book"></i> Subject:</strong>
-                            <p class="mb-1 text-truncate" title="@Model.SubjectName">@Model.SubjectName</p>
+                            <p class="mb-1">@Model.SubjectName</p>
                         </div>
                         <div class="col-md-6">
                             <strong><i class="bi bi-building"></i> Dept:</strong>
@@ -276,7 +276,7 @@
                     <p class="fw-bold mb-2">Delete this evaluation?</p>
                     <div class="alert alert-warning py-1 px-2 mb-2">
                         <strong>Teacher:</strong> @Model.TeacherName<br>
-                        <strong>Subject:</strong> <span title="@Model.SubjectName" style="display: block; word-break: break-word;">@Model.SubjectName</span><br>
+                        <strong>Subject:</strong> @Model.SubjectName<br>
                         <strong>Date:</strong> @Model.DateEvaluated.ToString("MMM dd, yyyy")
                     </div>
                     <p class="text-danger mb-0">

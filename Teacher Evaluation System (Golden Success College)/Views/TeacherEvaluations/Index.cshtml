@@ -10,14 +10,8 @@
         /* Teacher cards container styling */
         .teacher-cards-wrapper { max-width: 1100px; margin: 0 auto 1.5rem; }
         .teacher-card-avatar { width:48px; height:48px; object-fit:cover; }
-        .teacher-rank-badge { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; color:#fff; font-size:0.75rem; margin-left:6px; flex-shrink: 0; }
-        .teacher-card .card-header { 
-            padding: 0.75rem;
-            align-items: flex-start;
-        }
+        .teacher-rank-badge { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; color:#fff; font-size:0.75rem; margin-left:6px; }
         .teacher-card .card-header h6 { margin-bottom:0; }
-        .teacher-info-section { flex: 1; min-width: 0; }
-        .teacher-actions-section { flex-shrink: 0; margin-left: 1rem; }
 
         /* Search and filter styling */
         .search-filter-wrapper { max-width: 1100px; margin: 0 auto 2rem; }
@@ -191,35 +185,35 @@
                  data-evaluations="@item.TotalEvaluations"
                  data-status="@status">
                 <div class="card h-100 position-relative card-teacher teacher-card" data-teacher-url="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })">
-                    <div class="card-header d-flex gap-2">
-                        <div class="d-flex align-items-start flex-shrink-0">
-                            <img src="@Url.Content(item.TeacherPicturePath)" alt="Teacher" class="rounded-circle teacher-cards-avatar" style="width:48px;height:48px;object-fit:cover;" />
-                        </div>
-                        <div class="teacher-info-section">
-                            <h6 class="mb-1 text-truncate d-flex align-items-center" style="max-width:100%;">
-                                <span>@item.TeacherName</span>
-                                @if (rank <= 3)
-                                {
-                                    <span class="teacher-rank-badge ms-2" style="background:@badgeColor;">@rank</span>
-                                }
-                            </h6>
-                            <div class="small text-muted">
-                                <a href="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="text-muted me-2" style="text-decoration:none;" onclick="event.stopPropagation();">
-                                    <i class="bi bi-people-fill"></i> @item.UniqueStudents
-                                </a>
-                                <a href="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="text-muted" style="text-decoration:none;" onclick="event.stopPropagation();">
-                                    <i class="bi bi-card-list"></i> @item.TotalEvaluations
-                                </a>
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <img src="@Url.Content(item.TeacherPicturePath)" alt="Teacher" class="rounded-circle me-3 teacher-cards-avatar" style="width:48px;height:48px;object-fit:cover;" />
+                            <div>
+                                <h6 class="mb-0 text-truncate d-flex align-items-center" style="max-width:220px;">
+                                    <span class="me-1">@item.TeacherName</span>
+                                    @if (rank <= 3)
+                                    {
+                                        <span class="teacher-rank-badge" style="background:@badgeColor;">@rank</span>
+                                    }
+                                </h6>
+                                <div class="small text-muted">
+                                    <a href="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="text-muted me-2" style="text-decoration:none;" onclick="event.stopPropagation();">
+                                        <i class="bi bi-people-fill"></i> @item.UniqueStudents
+                                    </a>
+                                    <a href="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="text-muted" style="text-decoration:none;" onclick="event.stopPropagation();">
+                                        <i class="bi bi-card-list"></i> @item.TotalEvaluations
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                        <div class="teacher-actions-section d-flex flex-column gap-2 align-items-end">
+                        <div class="d-flex align-items-center">
                             @if (ViewBag.CurrentPeriod != null)
                             {
-                                var periodStatus = ViewBag.CurrentPeriod.Status as string ?? "";
-                                <span class="badge @PeriodStatusClass(periodStatus)" style="white-space: nowrap;">@periodStatus</span>
+                                var currentStatus = ViewBag.CurrentPeriod.Status as string ?? "";
+                                <span class="badge @PeriodStatusClass(currentStatus) me-2">@currentStatus</span>
                             }
-                            <a href="@Url.Action("TeacherDetails", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="btn btn-sm btn-outline-primary" style="z-index:1100; white-space: nowrap;" onclick="event.stopPropagation();">
-                                <i class="bi bi-file-earmark-text"></i> Details
+                            <a href="@Url.Action("TeacherDetails", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="btn btn-sm btn-outline-primary" style="z-index:1100;" onclick="event.stopPropagation();">
+                                <i class="bi bi-file-earmark-text"></i> Evaluation Details
                             </a>
                         </div>
                     </div>
@@ -249,10 +243,12 @@
                                     <div class="progress-bar" role="progressbar" style="width:@( (double)(item.Average / 4.0m) * 100 )%; background:@RatingColor(item.Average);" aria-valuenow="@item.Average" aria-valuemin="0" aria-valuemax="4"></div>
                                 </div>
                                 <div class="mt-2">
-                                    @foreach (var subj in item.Subjects.Take(3))
-                                    {
-                                        <span class="badge bg-light text-dark me-1 small">@subj</span>
-                                    }
+                                        @foreach (var subj in item.Subjects.Take(3))
+                                        {
+                                            var shortSubj = subj.Split('-')[0].Trim();
+                                            <span class="badge bg-light text-dark me-1 small">@shortSubj</span>
+                                        }
+
                                     @if (item.Subjects.Count > 3)
                                     {
                                         <span class="badge bg-secondary text-white small">+@((item.Subjects.Count)-3) more</span>
