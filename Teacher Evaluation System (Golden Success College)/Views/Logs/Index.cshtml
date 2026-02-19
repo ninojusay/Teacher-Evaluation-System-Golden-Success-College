@@ -4,6 +4,346 @@
     Layout = "_Layoutadmin";
 }
 
+
+<style>
+    /* ── Design tokens (copied exactly from EvaluationIndex) ── */
+    :root {
+        --primary: #1e3a5f;
+        --accent: #2e86de;
+        --accent-light: #e8f1fb;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --surface: #ffffff;
+        --surface-2: #f4f7fb;
+        --border: #dce3ee;
+        --text: #1a2535;
+        --text-muted: #6b7c99;
+        --shadow: 0 2px 12px rgba(30,58,95,0.08);
+        --radius: 10px;
+    }
+
+    /* ── Page heading — matches .page-header ── */
+    .container-fluid h2 {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff;
+        border-radius: var(--radius);
+        padding: 22px 28px 18px;
+        margin-bottom: 4px;
+        font-size: 1.55rem;
+        font-weight: 700;
+        letter-spacing: -.3px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 20px rgba(30,58,95,0.2);
+    }
+
+        .container-fluid h2 + p.text-muted {
+            padding: 0 4px;
+            font-size: .85rem;
+            color: var(--text-muted) !important;
+            margin-bottom: 0;
+        }
+
+    .row.mb-4:first-child {
+        margin-bottom: 1.25rem !important;
+    }
+
+    /* ── Filter card — matches .filter-panel ── */
+    .card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        background: var(--surface);
+    }
+
+        .card .card-body {
+            padding: 20px 22px;
+        }
+
+    /* ── Filter form labels — matches .fg-label ── */
+    .form-label {
+        font-size: .75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        margin-bottom: 6px;
+    }
+
+    /* ── Filter inputs — matches .filter-search-wrap input ── */
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1.5px solid var(--border);
+        padding: 9px 13px;
+        font-size: .9rem;
+        background: var(--surface-2);
+        color: var(--text);
+        transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(46,134,222,.12);
+            outline: none;
+        }
+
+    /* ── Filter buttons — matches .fb pill style ── */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 18px;
+        font-weight: 600;
+        letter-spacing: .3px;
+        box-shadow: 0 4px 12px rgba(30,58,95,0.25);
+        transition: transform .15s ease, box-shadow .15s ease;
+        color: #fff;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(30,58,95,0.35);
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        }
+
+    .btn-secondary {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 8px 18px;
+        border: 1.5px solid var(--border);
+        background: #fff;
+        color: var(--text-muted);
+        transition: all .15s;
+    }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--accent-light);
+        }
+
+    /* ── Stat cards — matches .stat-card ── */
+    .row.mb-4 .card {
+        border-left: 4px solid transparent;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+        .row.mb-4 .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(30,58,95,0.13);
+        }
+
+        .row.mb-4 .card.bg-primary {
+            background: var(--surface) !important;
+            border-left-color: var(--primary);
+        }
+
+        .row.mb-4 .card.bg-success {
+            background: var(--surface) !important;
+            border-left-color: var(--success);
+        }
+
+        .row.mb-4 .card.bg-info {
+            background: var(--surface) !important;
+            border-left-color: var(--accent);
+        }
+
+        .row.mb-4 .card.bg-warning {
+            background: var(--surface) !important;
+            border-left-color: var(--warning);
+        }
+
+        .row.mb-4 .card h5 {
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--text-muted) !important;
+            margin-bottom: 6px;
+        }
+
+        .row.mb-4 .card.bg-primary h2 {
+            color: #ffffff !important;
+            font-weight: 900;
+            font-size: 2rem;
+            line-height: 1;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .row.mb-4 .card.bg-success h2 {
+            color: #2ecc71 !important;
+            font-weight: 900;
+            font-size: 2rem;
+            line-height: 1;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .row.mb-4 .card.bg-info h2 {
+            color: #5dade2 !important;
+            font-weight: 900;
+            font-size: 2rem;
+            line-height: 1;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .row.mb-4 .card.bg-warning h2 {
+            color: #f39c12 !important;
+            font-weight: 900;
+            font-size: 2rem;
+            line-height: 1;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .row.mb-4 .card h5 {
+            color: var(--text-muted) !important;
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+        }
+
+        .row.mb-4 .card .text-white {
+            color: #fff !important;
+        }
+
+    /* ── Table card ── */
+    .card:last-child {
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+
+    /* ── Table — matches EvaluationIndex card headers ── */
+    .table-hover thead tr {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+    }
+
+    .table-hover thead th {
+        color: #fff;
+        font-weight: 600;
+        letter-spacing: .5px;
+        padding: 13px 14px;
+        border: none !important;
+        font-size: .75rem;
+        text-transform: uppercase;
+    }
+
+    .table-hover tbody tr {
+        transition: background-color .15s ease;
+    }
+
+        .table-hover tbody tr:hover {
+            background-color: var(--accent-light) !important;
+        }
+
+    .table-hover tbody td {
+        padding: 11px 14px;
+        vertical-align: middle;
+        border-color: var(--border) !important;
+        color: var(--text);
+        font-size: .88rem;
+    }
+
+        .table-hover tbody td strong {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .table-hover tbody td code {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 2px 7px;
+            font-size: .78rem;
+            color: var(--accent);
+        }
+
+    /* ── Badge overrides — keep semantic colors, just round them ── */
+    .badge {
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: .72rem;
+        padding: 3px 8px;
+    }
+
+        .badge.bg-secondary {
+            background: var(--surface-2) !important;
+            color: var(--text-muted) !important;
+            border: 1px solid var(--border);
+        }
+
+        .badge.bg-light {
+            background: var(--surface-2) !important;
+            border: 1px solid var(--border);
+        }
+
+    /* ── View details button — matches .btn-details ── */
+    .btn-sm.btn-info {
+        padding: 5px 11px;
+        border-radius: 7px;
+        border: 1.5px solid var(--accent);
+        background: #fff;
+        color: var(--accent);
+        font-size: .78rem;
+        font-weight: 700;
+        transition: all .15s;
+    }
+
+        .btn-sm.btn-info:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+    /* ── Empty state ── */
+    tbody td[colspan] {
+        color: var(--text-muted);
+        padding: 48px 20px !important;
+    }
+
+        tbody td[colspan] p {
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+    /* ── Pagination — matches DataTable paginate style ── */
+    .pagination .page-link {
+        border-radius: 6px !important;
+        margin: 0 2px;
+        border: 1.5px solid var(--border);
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: .85rem;
+        transition: all .15s;
+    }
+
+        .pagination .page-link:hover {
+            background: var(--accent-light);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, var(--primary), #2c5282) !important;
+        border-color: transparent !important;
+        color: #fff !important;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        background: var(--surface-2);
+        color: var(--border);
+        border-color: var(--border);
+    }
+</style>
+
+@* ═══════════════════════════════════════════
+   ORIGINAL CODE — NOT MODIFIED
+   ═══════════════════════════════════════════ *@
+
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col">
@@ -129,7 +469,7 @@
                                                 <strong>Teacher:</strong> @log.TeacherName<br />
                                                 @if (log.SubjectName != null)
                                                 {
-                                                    <strong>Subject:</strong> 
+                                                    <strong>Subject:</strong>
                                                     @log.SubjectName
                                                 }
                                             </small>

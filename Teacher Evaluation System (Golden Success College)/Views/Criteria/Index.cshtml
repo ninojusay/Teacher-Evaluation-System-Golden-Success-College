@@ -5,6 +5,325 @@
     Layout = "_Layoutadmin";
 }
 
+
+<style>
+    /* ── Design tokens (copied exactly from EvaluationIndex) ── */
+    :root {
+        --primary: #1e3a5f;
+        --accent: #2e86de;
+        --accent-light: #e8f1fb;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --surface: #ffffff;
+        --surface-2: #f4f7fb;
+        --border: #dce3ee;
+        --text: #1a2535;
+        --text-muted: #6b7c99;
+        --shadow: 0 2px 12px rgba(30,58,95,0.08);
+        --radius: 10px;
+    }
+
+    /* ── Page title — matches .page-header from EvaluationIndex ── */
+    h1 {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff;
+        border-radius: var(--radius);
+        padding: 22px 28px;
+        margin-bottom: 22px;
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: -.3px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 4px 20px rgba(30,58,95,0.2);
+    }
+
+    /* ── Create button — matches EvaluationIndex primary action style ── */
+    #btnCreateCriteria {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 9px 20px;
+        font-weight: 600;
+        letter-spacing: .3px;
+        box-shadow: 0 4px 14px rgba(30,58,95,0.25);
+        transition: transform .15s ease, box-shadow .15s ease;
+        color: #fff;
+    }
+
+        #btnCreateCriteria:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30,58,95,0.35);
+            color: #fff;
+        }
+
+        #btnCreateCriteria:active {
+            transform: translateY(0);
+        }
+
+    /* ── Loading overlay — same as EvaluationIndex ── */
+    #loadingOverlay {
+        background: rgba(255,255,255,0.82) !important;
+        backdrop-filter: blur(4px);
+    }
+
+        #loadingOverlay .mt-2 {
+            font-weight: 600;
+            color: var(--primary);
+            letter-spacing: .5px;
+        }
+
+    /* ── Table wrapper — matches .filter-panel card style ── */
+    #criteriaTable_wrapper {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 18px;
+        box-shadow: var(--shadow);
+    }
+
+    /* ── Table — matches EvaluationIndex card headers ── */
+    #criteriaTable {
+        border-radius: var(--radius);
+        overflow: hidden;
+        border: none !important;
+    }
+
+        #criteriaTable thead tr {
+            background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        }
+
+        #criteriaTable thead th {
+            color: #fff;
+            font-weight: 600;
+            letter-spacing: .5px;
+            padding: 13px 16px;
+            border: none !important;
+            font-size: .78rem;
+            text-transform: uppercase;
+        }
+
+        #criteriaTable tbody tr {
+            transition: background-color .15s ease;
+        }
+
+            #criteriaTable tbody tr:hover {
+                background-color: var(--accent-light) !important;
+            }
+
+        #criteriaTable tbody td {
+            padding: 12px 16px;
+            vertical-align: middle;
+            border-color: var(--border) !important;
+            color: var(--text);
+            font-size: .9rem;
+        }
+            /* Criteria name cell — matches .t-name style */
+            #criteriaTable tbody td:first-child {
+                font-weight: 700;
+                color: var(--primary);
+                font-size: .92rem;
+            }
+
+    /* ── Edit button — matches .btn-details style ── */
+    .btn-edit {
+        padding: 5px 12px;
+        border-radius: 7px;
+        border: 1.5px solid var(--accent);
+        background: #fff;
+        color: var(--accent);
+        font-size: .78rem;
+        font-weight: 700;
+        transition: all .15s;
+    }
+
+        .btn-edit:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+    /* ── Delete button — consistent danger style ── */
+    .btn-delete {
+        padding: 5px 12px;
+        border-radius: 7px;
+        border: 1.5px solid var(--danger);
+        background: #fff;
+        color: var(--danger);
+        font-size: .78rem;
+        font-weight: 700;
+        transition: all .15s;
+    }
+
+        .btn-delete:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+    /* ── Modal — matches EvaluationIndex card aesthetic ── */
+    .modal-content {
+        border: none;
+        border-radius: 14px;
+        box-shadow: 0 20px 60px rgba(30,58,95,.18);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff;
+        padding: 18px 22px;
+        border-bottom: none;
+    }
+
+        .modal-header .modal-title {
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: .3px;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+            opacity: .85;
+        }
+
+            .modal-header .btn-close:hover {
+                opacity: 1;
+            }
+
+    .modal-body {
+        padding: 24px 24px 12px;
+        background: var(--surface);
+    }
+
+    .modal-footer {
+        padding: 14px 22px;
+        border-top: 1px solid var(--border);
+        background: var(--surface-2);
+    }
+
+    /* ── Form label — matches .fg-label from EvaluationIndex ── */
+    .form-label {
+        font-size: .75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        margin-bottom: 6px;
+    }
+
+    /* ── Form input — matches .filter-search-wrap input ── */
+    .form-control {
+        border-radius: 8px;
+        border: 1.5px solid var(--border);
+        padding: 10px 13px;
+        font-size: .9rem;
+        background: var(--surface-2);
+        color: var(--text);
+        transition: border-color .2s ease, box-shadow .2s ease;
+        outline: none;
+    }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(46,134,222,.12);
+        }
+
+    /* ── Save button — same navy gradient as all primary actions ── */
+    #saveCriteriaBtn {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 8px 22px;
+        box-shadow: 0 4px 12px rgba(30,58,95,.25);
+        transition: transform .15s ease, box-shadow .15s ease;
+        color: #fff;
+    }
+
+        #saveCriteriaBtn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(30,58,95,.35);
+            color: #fff;
+        }
+
+    /* ── Modal footer close button ── */
+    .modal-footer .btn-secondary {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 8px 18px;
+    }
+
+    /* ── Toast — same as EvaluationIndex ── */
+    #toast {
+        min-width: 280px;
+        border-radius: 10px !important;
+        box-shadow: 0 6px 24px rgba(0,0,0,.15) !important;
+        font-weight: 500;
+    }
+
+    /* ── DataTable controls — consistent with design system ── */
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 8px;
+        border: 1.5px solid var(--border);
+        padding: 8px 14px;
+        font-size: .9rem;
+        background: var(--surface-2);
+        color: var(--text);
+        margin-left: 6px;
+        transition: border-color .2s;
+        outline: none;
+    }
+
+        .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(46,134,222,.1);
+        }
+
+    .dataTables_wrapper .dataTables_length select {
+        border-radius: 8px;
+        border: 1.5px solid var(--border);
+        padding: 6px 10px;
+        margin: 0 6px;
+        background: var(--surface-2);
+        color: var(--text);
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        font-size: .82rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        padding-top: 10px;
+    }
+
+    .dataTables_paginate .paginate_button.current,
+    .dataTables_paginate .paginate_button.current:hover {
+        background: linear-gradient(135deg, var(--primary), #2c5282) !important;
+        border-color: transparent !important;
+        color: #fff !important;
+        border-radius: 6px;
+    }
+
+    .dataTables_paginate .paginate_button:hover {
+        background: var(--accent-light) !important;
+        border-color: transparent !important;
+        color: var(--accent) !important;
+        border-radius: 6px;
+    }
+
+    .dataTables_paginate .paginate_button {
+        border-radius: 6px;
+        font-weight: 600;
+        color: var(--text-muted) !important;
+    }
+</style>
+
+@* ═══════════════════════════════════════════
+   ORIGINAL CODE — NOT MODIFIED
+   ═══════════════════════════════════════════ *@
+
 <h1>Criteria</h1>
 
 <div class="mb-3">
@@ -39,7 +358,7 @@
                     <button class="btn btn-sm btn-warning btn-edit" data-id="@item.CriteriaId">
                         <i class="bi bi-pencil-square"></i>
                     </button>
-                 @*  <button class="btn btn-sm btn-danger btn-delete" data-id="@item.CriteriaId">
+                    @*  <button class="btn btn-sm btn-danger btn-delete" data-id="@item.CriteriaId">
                         <i class="bi bi-trash"></i>
                     </button> *@
                 </td>
