@@ -5,127 +5,6 @@
     var isStudent = User.IsInRole("Student");
     var isAdmin = User.IsInRole("Admin") || User.IsInRole("Super Admin");
     Layout = "_Layoutadmin";
-
-    <style>
-        /* Teacher cards container styling */
-        .teacher-cards-wrapper {
-            max-width: 1100px;
-            margin: 0 auto 1.5rem;
-        }
-
-        .teacher-card-avatar {
-            width: 48px;
-            height: 48px;
-            object-fit: cover;
-        }
-
-        .teacher-rank-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            color: #fff;
-            font-size: 0.75rem;
-            margin-left: 6px;
-        }
-
-        .teacher-card .card-header h6 {
-            margin-bottom: 0;
-        }
-
-        /* Search and filter styling */
-        .search-filter-wrapper {
-            max-width: 1100px;
-            margin: 0 auto 2rem;
-        }
-
-        .teacher-search-input {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-            .teacher-search-input:focus {
-                border-color: #0d6efd;
-                box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-                outline: none;
-            }
-
-        .search-icon {
-            position: relative;
-        }
-
-            .search-icon i {
-                position: absolute;
-                right: 12px;
-                top: 50%;
-                transform: translateY(-50%);
-                color: #6c757d;
-                pointer-events: none;
-            }
-
-        .filter-buttons-container {
-            margin-top: 1rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .filter-btn {
-            padding: 6px 12px;
-            font-size: 0.9rem;
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
-            background-color: #fff;
-            color: #495057;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-            .filter-btn:hover {
-                background-color: #f8f9fa;
-                border-color: #0d6efd;
-            }
-
-            .filter-btn.active {
-                background-color: #0d6efd;
-                color: #fff;
-                border-color: #0d6efd;
-            }
-
-        .filter-group {
-            margin-bottom: 1rem;
-        }
-
-        .filter-group-label {
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-            color: #495057;
-        }
-
-        .clear-filters-btn {
-            padding: 6px 12px;
-            font-size: 0.9rem;
-        }
-
-        .no-results-message {
-            text-align: center;
-            padding: 3rem 2rem;
-            color: #6c757d;
-            font-size: 1.1rem;
-        }
-
-        .search-results-info {
-            font-size: 0.9rem;
-            color: #6c757d;
-            margin-top: 0.5rem;
-        }
-    </style>
 }
 
 @{
@@ -144,513 +23,931 @@
         })
         .OrderByDescending(t => t.Average)
         .ToList();
+
     var rankedIndex = teachersGroupIndex.Select((t, idx) => new { Item = t, Rank = idx + 1 }).ToList();
-    var distinctDepartmentsIndex = teachersGroupIndex.Select(t => t.TeacherDepartment).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct().OrderBy(d => d).ToList();
+    var distinctDepartments = teachersGroupIndex.Select(t => t.TeacherDepartment).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct().OrderBy(d => d).ToList();
+
+    string RatingLabel(decimal avg) => avg >= 3.2m ? "Excellent" : avg >= 2.4m ? "Good" : avg >= 1.2m ? "Fair" : "Poor";
+    string RatingColor(decimal avg) => avg >= 3.2m ? "#27ae60" : avg >= 2.4m ? "#2e86de" : avg >= 1.2m ? "#f39c12" : "#e74c3c";
+    string RatingBg(decimal avg) => avg >= 3.2m ? "#d4edda" : avg >= 2.4m ? "#e8f1fb" : avg >= 1.2m ? "#fef3c7" : "#f8d7da";
 }
 
-<div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <h2 class="mb-0"><i class="bi bi-clipboard-check"></i> Teacher Evaluations <span class="badge bg-secondary fs-6" id="totalTeachersBadge">@rankedIndex.Count teachers</span></h2>
+<style>
+    :root {
+        --primary: #1e3a5f;
+        --accent: #2e86de;
+        --accent-light: #e8f1fb;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --surface: #ffffff;
+        --surface-2: #f4f7fb;
+        --border: #dce3ee;
+        --text: #1a2535;
+        --text-muted: #6b7c99;
+        --shadow: 0 2px 12px rgba(30,58,95,0.08);
+        --radius: 10px;
+    }
+
+    body {
+        background: var(--surface-2);
+    }
+
+    /* ── Page Header ── */
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff;
+        border-radius: var(--radius);
+        padding: 22px 28px;
+        margin-bottom: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 14px;
+        box-shadow: 0 4px 20px rgba(30,58,95,0.2);
+    }
+
+        .page-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -.3px;
+        }
+
+        .page-header .subtitle {
+            font-size: .85rem;
+            opacity: .75;
+            margin-top: 3px;
+        }
+
+    .ph-badge {
+        background: rgba(255,255,255,.18);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
+    /* ── Period Banner ── */
+    .period-banner {
+        border-radius: var(--radius);
+        padding: 14px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: linear-gradient(135deg,#d1ecf1,#bee5eb);
+        border-left: 4px solid var(--accent);
+        box-shadow: var(--shadow);
+    }
+
+        .period-banner i {
+            font-size: 1.3rem;
+            color: var(--info,#2980b9);
+        }
+
+        .period-banner .pb-name {
+            font-weight: 800;
+            color: var(--primary);
+            font-size: .95rem;
+        }
+
+        .period-banner .pb-sub {
+            font-size: .82rem;
+            color: var(--text-muted);
+        }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 13px 18px;
+        flex: 1 1 120px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+        .stat-card .sv {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .stat-card .sl {
+            font-size: .72rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .stat-card.exc .sv {
+            color: var(--success);
+        }
+
+        .stat-card.avg .sv {
+            color: var(--accent);
+        }
+
+    /* ── Filter Panel ── */
+    .filter-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 22px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+    }
+
+    .filter-title {
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--text-muted);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .filter-search-wrap {
+        position: relative;
+        margin-bottom: 16px;
+    }
+
+        .filter-search-wrap input {
+            width: 100%;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 40px 10px 14px;
+            font-size: .9rem;
+            outline: none;
+            background: var(--surface-2);
+            color: var(--text);
+            transition: border-color .2s;
+        }
+
+            .filter-search-wrap input:focus {
+                border-color: var(--accent);
+                background: #fff;
+            }
+
+        .filter-search-wrap .si {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+    .filter-groups {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: flex-start;
+    }
+
+    .fg {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .fg-label {
+        font-size: .75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: .07em;
+    }
+
+    .fg-btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .fb {
+        padding: 5px 12px;
+        font-size: .82rem;
+        border-radius: 20px;
+        border: 1.5px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        cursor: pointer;
+        transition: all .18s;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .fb:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .fb.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .fb.clear {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+            .fb.clear:hover {
+                background: var(--danger);
+                color: #fff;
+            }
+
+    /* ── Results bar ── */
+    .results-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .results-count {
+        font-size: .88rem;
+        color: var(--text-muted);
+    }
+
+        .results-count strong {
+            color: var(--primary);
+        }
+
+    /* ── Teacher Cards ── */
+    .teacher-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+        gap: 16px;
+    }
+
+    .t-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform .22s, box-shadow .22s;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .t-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 28px rgba(30,58,95,.15);
+        }
+
+    .t-card-header {
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface-2);
+    }
+
+    .t-avatar-wrap {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .t-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2.5px solid var(--border);
+    }
+
+    .t-avatar-placeholder {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1rem;
+    }
+
+    .rank-badge {
+        position: absolute;
+        bottom: -2px;
+        right: -4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .65rem;
+        font-weight: 900;
+        color: #fff;
+        border: 2px solid #fff;
+    }
+
+    .t-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .t-name {
+        font-weight: 800;
+        font-size: .95rem;
+        color: var(--primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 4px;
+    }
+
+    .t-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .t-tag {
+        font-size: .73rem;
+        padding: 2px 7px;
+        border-radius: 5px;
+        font-weight: 600;
+        background: var(--accent-light);
+        color: var(--accent);
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .t-card-body {
+        padding: 14px 16px;
+        flex: 1;
+    }
+
+    .score-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 10px;
+    }
+
+    .score-circle {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 1.05rem;
+        line-height: 1.1;
+    }
+
+        .score-circle .sc-sub {
+            font-size: .58rem;
+            font-weight: 600;
+            opacity: .75;
+        }
+
+    .score-right {
+        flex: 1;
+    }
+
+    .stars {
+        display: flex;
+        gap: 2px;
+        margin-bottom: 6px;
+    }
+
+    .star-fill {
+        color: var(--warning);
+    }
+
+    .star-empty {
+        color: #d0d5dd;
+    }
+
+    .prog-track {
+        background: #e9ecef;
+        border-radius: 99px;
+        height: 7px;
+        overflow: hidden;
+    }
+
+    .prog-fill {
+        height: 100%;
+        border-radius: 99px;
+    }
+
+    .subjects-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 10px;
+    }
+
+    .subj-tag {
+        font-size: .72rem;
+        padding: 2px 8px;
+        border-radius: 5px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .subj-more {
+        background: #e2e3e5;
+        color: #495057;
+    }
+
+    .t-card-footer {
+        padding: 10px 16px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--surface-2);
+    }
+
+        .t-card-footer .meta-item {
+            font-size: .78rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+    .btn-details {
+        padding: 5px 12px;
+        border-radius: 7px;
+        border: 1.5px solid var(--accent);
+        background: #fff;
+        color: var(--accent);
+        font-size: .78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        text-decoration: none;
+    }
+
+        .btn-details:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+    /* Period status badge in card */
+    .period-pill {
+        padding: 3px 9px;
+        border-radius: 20px;
+        font-size: .72rem;
+        font-weight: 700;
+    }
+
+    .pill-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .pill-upcoming {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .pill-completed {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+
+    /* No results */
+    .no-results {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+    }
+
+        .no-results i {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 12px;
+            opacity: .3;
+        }
+
+    #toast {
+        min-width: 280px;
+        border-radius: 10px;
+        box-shadow: 0 6px 24px rgba(0,0,0,.15);
+    }
+
+    #loadingOverlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(255,255,255,.82);
+        z-index: 9999;
+        place-items: center;
+    }
+
+        #loadingOverlay.show {
+            display: grid;
+        }
+
+    @@media (max-width: 768px) {
+        .teacher-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .filter-groups {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay">
+    <div class="text-center">
+        <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+        <div class="mt-3 fw-bold text-primary">Loading...</div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index:11000">
+    <div id="toast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage"></div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1>
+            <i class="bi bi-clipboard-check-fill me-2"></i>Teacher Evaluations
+            <span class="ph-badge ms-2" id="totalBadge">@rankedIndex.Count teacher@(rankedIndex.Count != 1 ? "s" : "")</span>
+        </h1>
+        <div class="subtitle">Ranked by average evaluation score</div>
+    </div>
+</div>
+
+<!-- Current Period Banner -->
+@if (ViewBag.CurrentPeriod != null)
+{
+    var cp = ViewBag.CurrentPeriod;
+    <div class="period-banner">
+        <i class="bi bi-calendar-event-fill"></i>
+        <div>
+            <div class="pb-name">@cp.PeriodName</div>
+            <div class="pb-sub">@cp.Semester &bull; @cp.AcademicYear &bull; @cp.StartDate.ToString("MMM dd") – @cp.EndDate.ToString("MMM dd, yyyy")</div>
+        </div>
+        @{
+            string pillClass = (cp.Status as string) == "Active" ? "pill-active" : (cp.Status as string) == "Upcoming" ? "pill-upcoming" : "pill-completed";
+        }
+        <span class="period-pill @pillClass ms-auto">@cp.Status</span>
+    </div>
+}
+
+<!-- Stats Bar -->
+@{
+    var avgAll = rankedIndex.Any() ? rankedIndex.Average(r => r.Item.Average) : 0m;
+    var excCount = rankedIndex.Count(r => RatingLabel(r.Item.Average) == "Excellent");
+}
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="sv">@rankedIndex.Count</div>
+        <div class="sl">Teachers</div>
+    </div>
+    <div class="stat-card exc">
+        <div class="sv">@excCount</div>
+        <div class="sl">Excellent</div>
+    </div>
+    <div class="stat-card avg">
+        <div class="sv">@avgAll.ToString("F2")</div>
+        <div class="sl">Avg Score</div>
+    </div>
+    <div class="stat-card">
+        <div class="sv">@rankedIndex.Sum(r => r.Item.TotalEvaluations)</div>
+        <div class="sl">Total Evaluations</div>
+    </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="filter-panel">
+    <div class="filter-title"><i class="bi bi-funnel-fill"></i> Search & Filter</div>
+    <div class="filter-search-wrap">
+        <input type="text" id="teacherSearchInput" placeholder="Search by teacher name or subject…" />
+        <i class="bi bi-search si"></i>
+    </div>
+    <div class="filter-groups">
+        <div class="fg">
+            <div class="fg-label">Rating</div>
+            <div class="fg-btns">
+                <button class="fb filter-rating" data-rating="excellent"><i class="bi bi-star-fill" style="color:var(--warning)"></i> Excellent</button>
+                <button class="fb filter-rating" data-rating="good"><i class="bi bi-star-fill" style="color:var(--accent)"></i> Good</button>
+                <button class="fb filter-rating" data-rating="fair"><i class="bi bi-star-half" style="color:var(--warning)"></i> Fair</button>
+                <button class="fb filter-rating" data-rating="poor"><i class="bi bi-star" style="color:var(--danger)"></i> Poor</button>
+            </div>
+        </div>
         @if (ViewBag.CurrentPeriod != null)
         {
-            <div class="alert alert-info mb-0 py-2">
-                <i class="bi bi-calendar-event"></i>
-                <strong>Current Period:</strong> @ViewBag.CurrentPeriod.PeriodName
-                (@ViewBag.CurrentPeriod.Semester, @ViewBag.CurrentPeriod.AcademicYear)
+            <div class="fg">
+                <div class="fg-label">Status</div>
+                <div class="fg-btns">
+                    <button class="fb filter-status" data-status="active"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;"></span> Active</button>
+                    <button class="fb filter-status" data-status="upcoming"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;"></span> Upcoming</button>
+                    <button class="fb filter-status" data-status="inactive"><span style="width:8px;height:8px;border-radius:50%;background:var(--danger);display:inline-block;"></span> Inactive</button>
+                </div>
             </div>
         }
-    </div>
-
-@* Search and Filter Section *@
-    <div class="search-filter-wrapper">
-        <div class="search-icon">
-            <input type="text"
-                   id="teacherSearchInput"
-                   class="form-control teacher-search-input w-100"
-                   placeholder="Search by teacher name or subject..."
-                   aria-label="Search teachers" />
-            <i class="bi bi-search"></i>
+        <div class="fg">
+            <div class="fg-label">Min. Evaluations</div>
+            <div class="fg-btns">
+                <button class="fb filter-evaluations" data-min="5">5+</button>
+                <button class="fb filter-evaluations" data-min="10">10+</button>
+                <button class="fb filter-evaluations" data-min="20">20+</button>
+            </div>
         </div>
-
-        <div class="filter-buttons-container">
-            <!-- Rating Filter -->
-            <div class="filter-group">
-                <span class="filter-group-label">Rating:</span>
-                <button class="filter-btn filter-rating" data-rating="excellent">
-                    <i class="bi bi-star-fill text-warning"></i> Excellent
-                </button>
-                <button class="filter-btn filter-rating" data-rating="good">
-                    <i class="bi bi-star-fill text-info"></i> Good
-                </button>
-                <button class="filter-btn filter-rating" data-rating="fair">
-                    <i class="bi bi-star-half text-warning"></i> Fair
-                </button>
-                <button class="filter-btn filter-rating" data-rating="poor">
-                    <i class="bi bi-star text-danger"></i> Poor
-                </button>
-            </div>
-
-            <!-- Status Filter -->
-            @if (ViewBag.CurrentPeriod != null)
-            {
-                <div class="filter-group">
-                    <span class="filter-group-label">Status:</span>
-                    <button class="filter-btn filter-status" data-status="active">
-                        <span class="badge bg-success me-1"></span>Active
-                    </button>
-                    <button class="filter-btn filter-status" data-status="upcoming">
-                        <span class="badge bg-info me-1"></span>Upcoming
-                    </button>
-                    <button class="filter-btn filter-status" data-status="inactive">
-                        <span class="badge bg-danger me-1"></span>Inactive
-                    </button>
-                </div>
-            }
-
-            <!-- Evaluations Filter -->
-            <div class="filter-group">
-                <span class="filter-group-label">Evaluations:</span>
-                <button class="filter-btn filter-evaluations" data-min="5">5+</button>
-                <button class="filter-btn filter-evaluations" data-min="10">10+</button>
-                <button class="filter-btn filter-evaluations" data-min="20">20+</button>
-            </div>
-
-            @if (distinctDepartmentsIndex.Any())
-            {
-                <div class="filter-group">
-                    <span class="filter-group-label">Department:</span>
-                    @foreach (var dept in distinctDepartmentsIndex)
+        @if (distinctDepartments.Any())
+        {
+            <div class="fg">
+                <div class="fg-label">Department</div>
+                <div class="fg-btns">
+                    @foreach (var dept in distinctDepartments)
                     {
-                        <button class="filter-btn filter-department" data-department="@dept.ToLower()"><i class="bi bi-building me-1"></i>@dept</button>
+                        <button class="fb filter-department" data-department="@dept.ToLower()"><i class="bi bi-building"></i> @dept</button>
                     }
                 </div>
-            }
-
-            <!-- Clear Filters -->
-            <button id="clearFiltersBtn" class="filter-btn clear-filters-btn">
-                <i class="bi bi-arrow-clockwise"></i> Clear All
-            </button>
-        </div>
-
-        <div id="searchResultsInfo" class="search-results-info d-none">
-            Showing <span id="visibleCount">0</span> of <span id="totalCount">0</span> teachers
+            </div>
+        }
+        <div class="fg" style="margin-top:auto;">
+            <div class="fg-label">&nbsp;</div>
+            <div class="fg-btns">
+                <button class="fb clear" id="clearFiltersBtn"><i class="bi bi-x-circle"></i> Clear All</button>
+            </div>
         </div>
     </div>
+</div>
 
-@{
-    string PeriodStatusClass(string status) => status == "Active" ? "bg-success" : status == "Upcoming" ? "bg-info" : "bg-danger";
-    string RatingLabel(decimal avg) => avg >= 3.2m ? "Excellent" : avg >= 2.4m ? "Good" : avg >= 1.2m ? "Fair" : "Poor";
-    string RatingColor(decimal avg) => avg >= 3.2m ? "#198754" : avg >= 2.4m ? "#0d6efd" : avg >= 1.2m ? "#ffc107" : "#dc3545";
-}
+<!-- Results Bar -->
+<div class="results-bar">
+    <div class="results-count" id="resultsCount">Showing <strong>@rankedIndex.Count</strong> teacher@(rankedIndex.Count != 1 ? "s" : "")</div>
+</div>
 
-    <div class="teacher-cards-wrapper">
-        <div id="teacherCardsContainer" class="row mb-4 gx-3">
-            @foreach (var t in rankedIndex)
-            {
-                var item = t.Item;
-                var rank = t.Rank;
-                var badgeColor = rank == 1 ? "#d4af37" : rank == 2 ? "#c0c0c0" : rank == 3 ? "#cd7f32" : "transparent";
-                var subjectsData = string.Join(",", item.Subjects).ToLower();
-                var ratingLabel = RatingLabel(item.Average).ToLower();
-                var status = (ViewBag.CurrentPeriod?.Status as string ?? "").ToLower();
+<!-- Teacher Cards Grid -->
+<div class="teacher-grid" id="teacherCardsContainer">
+    @foreach (var t in rankedIndex)
+    {
+        var item = t.Item;
+        var rank = t.Rank;
+        var rColor = RatingColor(item.Average);
+        var rBg = RatingBg(item.Average);
+        var rLabel = RatingLabel(item.Average);
+        var badgeColor = rank == 1 ? "#d4af37" : rank == 2 ? "#a8a9ad" : rank == 3 ? "#cd7f32" : "";
+        var subjectsData = string.Join(",", item.Subjects).ToLower();
+        var currentStatus = (ViewBag.CurrentPeriod?.Status as string ?? "").ToLower();
+        var pillCls = currentStatus == "active" ? "pill-active" : currentStatus == "upcoming" ? "pill-upcoming" : "pill-completed";
+        var initials = string.Join("", item.TeacherName.Split(' ').Take(2).Select(w => w.Length > 0 ? w[0].ToString().ToUpper() : ""));
 
-                var departmentData = (item.TeacherDepartment ?? "").ToLower();
-                <div class="col-md-6 col-lg-4 mb-3 teacher-card-item"
-                     data-teacher-name="@item.TeacherName.ToLower()"
-                     data-subjects="@subjectsData"
-                     data-rating="@ratingLabel"
-                     data-score="@item.Average"
-                     data-evaluations="@item.TotalEvaluations"
-                     data-status="@status"
-                     data-department="@departmentData">
-                    <div class="card h-100 position-relative card-teacher teacher-card" data-teacher-url="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })">
-                        <div class="card-header d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center">
-                                <img src="@Url.Content(item.TeacherPicturePath)" alt="Teacher" class="rounded-circle me-3 teacher-cards-avatar" style="width:48px;height:48px;object-fit:cover;" />
-                                <div>
-                                    <h6 class="mb-0 text-truncate d-flex align-items-center" style="max-width:220px;">
-                                        <span class="me-1">@item.TeacherName</span>
-                                        @if (rank <= 3)
-                                        {
-                                            <span class="teacher-rank-badge" style="background:@badgeColor;">@rank</span>
-                                        }
-                                    </h6>
-                                    <div class="small text-muted">
-                                        @if (!string.IsNullOrEmpty(item.TeacherDepartment))
-                                        {
-                                            <span class="badge bg-light text-dark me-1"><i class="bi bi-building"></i> @item.TeacherDepartment</span>
-                                        }
-                                        <a href="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="text-muted me-2" style="text-decoration:none;" onclick="event.stopPropagation();">
-                                            <i class="bi bi-people-fill"></i> @item.UniqueStudents
-                                        </a>
-                                        <a href="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="text-muted" style="text-decoration:none;" onclick="event.stopPropagation();">
-                                            <i class="bi bi-card-list"></i> @item.TotalEvaluations
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center">
-                                @if (ViewBag.CurrentPeriod != null)
-                                {
-                                    var currentStatus = ViewBag.CurrentPeriod.Status as string ?? "";
-                                    <span class="badge @PeriodStatusClass(currentStatus) me-2">@currentStatus</span>
-                                }
-                                <a href="@Url.Action("TeacherDetails", "TeacherEvaluations", new { teacherId = item.TeacherId })" class="btn btn-sm btn-outline-primary" style="z-index:1100;" onclick="event.stopPropagation();">
-                                    <i class="bi bi-file-earmark-text"></i> Evaluation Details
-                                </a>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-2 align-items-center">
-                                <div class="col-4 text-center">
-                                    <div style="width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:@RatingColor(item.Average);color:#fff;font-weight:700;margin:0 auto;">
-                                        @item.Average.ToString("F2")
-                                    </div>
-                                    <div class="small mt-1 text-center">@RatingLabel(item.Average)</div>
-                                </div>
-                                <div class="col-8">
-                                    <div>
-                                        @for (int i = 1; i <= 4; i++)
-                                        {
-                                            if (i <= (int)Math.Round(item.Average))
-                                            {
-                                                <i class="bi bi-star-fill text-warning"></i>
-                                            }
-                                            else
-                                            {
-                                                <i class="bi bi-star text-muted"></i>
-                                            }
-                                        }
-                                    </div>
-                                    <div class="progress mt-2" style="height:8px;border-radius:6px;">
-                                        <div class="progress-bar" role="progressbar" style="width:@( (double)(item.Average / 4.0m) * 100 )%; background:@RatingColor(item.Average);" aria-valuenow="@item.Average" aria-valuemin="0" aria-valuemax="4"></div>
-                                    </div>
-                                    <div class="mt-2">
-                                        @foreach (var subj in item.Subjects.Take(3))
-                                        {
-                                            var shortSubj = subj.Split('-')[0].Trim();
-                                            <span class="badge bg-light text-dark me-1 small">@shortSubj</span>
-                                        }
+        <div class="t-card teacher-card-item"
+             data-teacher-name="@item.TeacherName.ToLower()"
+             data-subjects="@subjectsData"
+             data-rating="@rLabel.ToLower()"
+             data-score="@item.Average"
+             data-evaluations="@item.TotalEvaluations"
+             data-status="@currentStatus"
+             data-department="@item.TeacherDepartment.ToLower()"
+             data-teacher-url="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })">
 
-                                        @if (item.Subjects.Count > 3)
-                                        {
-                                            <span class="badge bg-secondary text-white small">+@((item.Subjects.Count) - 3) more</span>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
+            <!-- Header -->
+            <div class="t-card-header">
+                <div class="d-flex align-items-center gap-3" style="min-width:0;flex:1;">
+                    <div class="t-avatar-wrap">
+                        <img src="@Url.Content(item.TeacherPicturePath)"
+                             class="t-avatar"
+                             alt="@item.TeacherName"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                        <div class="t-avatar-placeholder" style="display:none;">@initials</div>
+                        @if (rank <= 3 && !string.IsNullOrEmpty(badgeColor))
+                        {
+                            <div class="rank-badge" style="background:@badgeColor;">@rank</div>
+                        }
+                    </div>
+                    <div class="t-info">
+                        <div class="t-name">@item.TeacherName</div>
+                        <div class="t-meta">
+                            @if (!string.IsNullOrEmpty(item.TeacherDepartment))
+                            {
+                                <span class="t-tag"><i class="bi bi-building"></i>@item.TeacherDepartment</span>
+                            }
+                            @if (ViewBag.CurrentPeriod != null)
+                            {
+                                <span class="period-pill @pillCls">@(ViewBag.CurrentPeriod.Status)</span>
+                            }
                         </div>
                     </div>
                 </div>
-            }
-        </div>
+                <a href="@Url.Action("TeacherDetails", "TeacherEvaluations", new { teacherId = item.TeacherId })"
+                   class="btn-details" onclick="event.stopPropagation();">
+                    <i class="bi bi-file-earmark-text"></i> Details
+                </a>
+            </div>
 
-        <div id="noResultsMessage" class="no-results-message d-none">
-            <i class="bi bi-search" style="font-size: 2rem; color: #ccc; display: block; margin-bottom: 1rem;"></i>
-            <p>No teachers found matching your search or filter criteria.</p>
+            <!-- Body -->
+            <div class="t-card-body">
+                <div class="score-row">
+                    <div class="score-circle" style="background:@rBg;color:@rColor;">
+                        @item.Average.ToString("F2")
+                        <div class="sc-sub">/ 4.00</div>
+                    </div>
+                    <div class="score-right">
+                        <div class="stars">
+                            @for (int i = 1; i <= 4; i++)
+                            {
+                                if (i <= (int)Math.Round(item.Average))
+                                {
+                                    <i class="bi bi-star-fill star-fill"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-star star-empty"></i>
+                                }
+                            }
+                            <span style="font-size:.75rem;color:var(--text-muted);margin-left:4px;font-weight:700;">@rLabel</span>
+                        </div>
+                        <div class="prog-track">
+                            <div class="prog-fill" style="width:@((double)(item.Average / 4.0m) * 100)%;background:@rColor;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subjects-row">
+                    @foreach (var subj in item.Subjects.Take(3))
+                    {
+                        <span class="subj-tag">@subj.Split('-')[0].Trim()</span>
+                    }
+                    @if (item.Subjects.Count > 3)
+                    {
+                        <span class="subj-tag subj-more">+@(item.Subjects.Count - 3) more</span>
+                    }
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="t-card-footer">
+                <span class="meta-item"><i class="bi bi-people-fill"></i> @item.UniqueStudents student@(item.UniqueStudents != 1 ? "s" : "")</span>
+                <span class="meta-item"><i class="bi bi-card-list"></i> @item.TotalEvaluations evaluation@(item.TotalEvaluations != 1 ? "s" : "")</span>
+                <a href="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })"
+                   class="meta-item" style="text-decoration:none;color:var(--accent);font-weight:700;" onclick="event.stopPropagation();">
+                    <i class="bi bi-arrow-right-circle"></i> View All
+                </a>
+            </div>
         </div>
-    </div>
+    }
+</div>
+
+<!-- No Results -->
+<div class="no-results d-none" id="noResultsMessage">
+    <i class="bi bi-search"></i>
+    <div class="fw-bold">No teachers found</div>
+    <div class="small mt-1">Try adjusting your search or filters</div>
+</div>
 
 @section Scripts {
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-        <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-        <script>
-            $(document).ready(function () {
-                var toastEl = $('#toast');
-                var toastMessage = $('#toastMessage');
-                var loadingOverlay = $('#loadingOverlay');
-                var isAdmin = @(isAdmin ? "true" : "false");
-                var deleteEvaluationId = null;
-                var deleteModalEl = document.getElementById('deleteModal');
-                var deleteModal = new bootstrap.Modal(deleteModalEl);
-
-                // Filter state
-                var activeFilters = {
-                    ratings: [],
-                    statuses: [],
-                    evaluations: [],
-                    departments: []
-                };
-
-                function showToast(message, bgClass = 'bg-success') {
-                    toastEl.removeClass('bg-success bg-danger bg-warning bg-info').addClass(bgClass);
-                    toastMessage.text(message);
-                    var toast = new bootstrap.Toast(toastEl[0], { delay: 4000 });
-                    toast.show();
-                }
-
-                function showLoading(show = true) {
-                    show ? loadingOverlay.show() : loadingOverlay.hide();
-                }
-
-                var table = $('#evaluationsTable').DataTable({
-                    "columnDefs": [
-                        { "orderable": false, "targets": [2, 5, 6] }
-                    ],
-                    "order": [[3, "desc"]],
-                    "pageLength": 25
-                });
-
-                // Apply filters and search
-                function applyFiltersAndSearch() {
-                    var searchTerm = $('#teacherSearchInput').val().toLowerCase();
-                    var cards = $('#teacherCardsContainer .teacher-card-item');
-                    var visibleCount = 0;
-
-                    cards.each(function() {
-                        var teacherName = $(this).data('teacher-name');
-                        var subjects = $(this).data('subjects');
-                        var rating = $(this).data('rating');
-                        var score = $(this).data('score');
-                        var evaluations = $(this).data('evaluations');
-                        var status = $(this).data('status');
-                        var department = $(this).data('department') || '';
-
-                        // Search filter
-                        var matchesSearch = teacherName.includes(searchTerm) ||
-                                           subjects.includes(searchTerm);
-
-                        // Rating filter
-                        var matchesRating = activeFilters.ratings.length === 0 ||
-                                           activeFilters.ratings.includes(rating);
-
-                        // Status filter
-                        var matchesStatus = activeFilters.statuses.length === 0 ||
-                                           activeFilters.statuses.includes(status);
-
-                        // Evaluations filter
-                        var matchesEvaluations = true;
-                        if (activeFilters.evaluations.length > 0) {
-                            matchesEvaluations = activeFilters.evaluations.some(function(minVal) {
-                                return evaluations >= minVal;
-                            });
-                        }
-
-                        // Department filter
-                        var matchesDepartment = activeFilters.departments.length === 0 ||
-                                                (department && activeFilters.departments.includes(department));
-
-                        var show = matchesSearch && matchesRating && matchesStatus && matchesEvaluations && matchesDepartment;
-
-                        if (show) {
-                            $(this).show();
-                            visibleCount++;
-                        } else {
-                            $(this).hide();
-                        }
-                    });
-
-                    var totalCount = cards.length;
-                    var noResultsMessage = $('#noResultsMessage');
-                    var searchResultsInfo = $('#searchResultsInfo');
-
-                    if (visibleCount === 0) {
-                        noResultsMessage.removeClass('d-none');
-                        searchResultsInfo.addClass('d-none');
-                    } else {
-                        noResultsMessage.addClass('d-none');
-                        if (searchTerm.length > 0 || activeFilters.ratings.length > 0 ||
-                            activeFilters.statuses.length > 0 || activeFilters.evaluations.length > 0 || activeFilters.departments.length > 0) {
-                            searchResultsInfo.removeClass('d-none');
-                            $('#visibleCount').text(visibleCount);
-                            $('#totalCount').text(totalCount);
-                        } else {
-                            searchResultsInfo.addClass('d-none');
-                        }
-                    }
-                }
-
-                // Department filter buttons
-                $('.filter-department').on('click', function() {
-                    var dept = $(this).data('department');
-                    $(this).toggleClass('active');
-                    if ($(this).hasClass('active')) {
-                        if (!activeFilters.departments.includes(dept)) {
-                            activeFilters.departments.push(dept);
-                        }
-                    } else {
-                        activeFilters.departments = activeFilters.departments.filter(function(d) { return d !== dept; });
-                    }
-                    applyFiltersAndSearch();
-                });
-
-                // Search input
-                $('#teacherSearchInput').on('keyup', function() {
-                    applyFiltersAndSearch();
-                });
-
-                // Rating filter buttons
-                $('.filter-rating').on('click', function() {
-                    var rating = $(this).data('rating');
-                    $(this).toggleClass('active');
-
-                    if ($(this).hasClass('active')) {
-                        if (!activeFilters.ratings.includes(rating)) {
-                            activeFilters.ratings.push(rating);
-                        }
-                    } else {
-                        activeFilters.ratings = activeFilters.ratings.filter(r => r !== rating);
-                    }
-
-                    applyFiltersAndSearch();
-                });
-
-                // Status filter buttons
-                $('.filter-status').on('click', function() {
-                    var status = $(this).data('status');
-                    $(this).toggleClass('active');
-
-                    if ($(this).hasClass('active')) {
-                        if (!activeFilters.statuses.includes(status)) {
-                            activeFilters.statuses.push(status);
-                        }
-                    } else {
-                        activeFilters.statuses = activeFilters.statuses.filter(s => s !== status);
-                    }
-
-                    applyFiltersAndSearch();
-                });
-
-                // Evaluations filter buttons
-                $('.filter-evaluations').on('click', function() {
-                    var minVal = parseInt($(this).data('min'));
-                    $(this).toggleClass('active');
-
-                    if ($(this).hasClass('active')) {
-                        if (!activeFilters.evaluations.includes(minVal)) {
-                            activeFilters.evaluations.push(minVal);
-                        }
-                    } else {
-                        activeFilters.evaluations = activeFilters.evaluations.filter(v => v !== minVal);
-                    }
-
-                    applyFiltersAndSearch();
-                });
-
-                // Clear filters
-                $('#clearFiltersBtn').on('click', function() {
-                    activeFilters.ratings = [];
-                    activeFilters.statuses = [];
-                    activeFilters.evaluations = [];
-                    activeFilters.departments = [];
-
-                    $('.filter-btn').removeClass('active');
-                    $('#teacherSearchInput').val('');
-
-                    applyFiltersAndSearch();
-                });
-
-                // Delete evaluation - show modal
-                $(document).on('click', '.btn-delete', function () {
-                    deleteEvaluationId = $(this).data('id');
-                    var row = $(this).closest('tr');
-                    var subject = row.find('td:eq(0)').text();
-                    var teacher = row.find('td:eq(1)').text();
-                    var student = row.find('td:eq(2)').text().trim(); // Index adjusted
-                    var date = row.find('td:eq(3)').text();           // Index adjusted
-
-                    $('#deleteDetails').html(`
-                        <strong>Subject:</strong> ${subject}<br>
-                        <strong>Teacher:</strong> ${teacher}<br>
-                        <strong>Student:</strong> ${student}<br>
-                        <strong>Date:</strong> ${date}
-                    `);
-
-                    deleteModal.show();
-                });
-
-                // Confirm delete
-                $('#confirmDeleteBtn').click(function () {
-                    if (!deleteEvaluationId) return;
-
-                    showLoading(true);
-                    $(this).prop('disabled', true);
-
-                    $.ajax({
-                        url: `/api/TeacherEvaluationsApi/${deleteEvaluationId}`,
-                        type: 'DELETE',
-                        success: function (res) {
-                            showLoading(false);
-                            deleteModal.hide();
-                            if (res.success) {
-                                // Remove row from DataTable
-                                table.row($(`tr[data-id="${deleteEvaluationId}"]`)).remove().draw();
-                                showToast(res.message, 'bg-success');
-                            } else {
-                                showToast(res.message, 'bg-danger');
-                            }
-                            deleteEvaluationId = null;
-                            $('#confirmDeleteBtn').prop('disabled', false);
-                        },
-                        error: function (xhr) {
-                            showLoading(false);
-                            deleteModal.hide();
-                            var errorMsg = 'Failed to delete evaluation!';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                errorMsg = xhr.responseJSON.message;
-                            }
-                            showToast(errorMsg, 'bg-danger');
-                            deleteEvaluationId = null;
-                            $('#confirmDeleteBtn').prop('disabled', false);
-                        }
-                    });
-                });
-
-                // Auto-dismiss alerts after 5 seconds
-                setTimeout(function() {
-                    $('.alert-dismissible').fadeOut('slow');
-                }, 5000);
-
-                // Show TempData messages as toasts
-                @if (TempData["SuccessMessage"] != null)
-                {
-                                    <text>
-                                    showToast('@Html.Raw(TempData["SuccessMessage"])', 'bg-success');
-                                    </text>
-                }
-
-                @if (TempData["ErrorMessage"] != null)
-                {
-                                    <text>
-                                    showToast('@Html.Raw(TempData["ErrorMessage"])', 'bg-danger');
-                                    </text>
-                }
-
-                @if (TempData["InfoMessage"] != null)
-                {
-                                    <text>
-                                    showToast('@Html.Raw(TempData["InfoMessage"])', 'bg-info');
-                                    </text>
-                }
-            });
-        </script>
-}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <script>
-        // Handle clicks on teacher cards to navigate to ByTeacher while allowing internal links/buttons to work
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.card-teacher').forEach(function (card) {
-                card.addEventListener('click', function (e) {
-                    // If click originated from an anchor, button, or form inside card, ignore so their handlers run
-                    var el = e.target;
-                    while (el && el !== card) {
-                        if (el.tagName === 'A' || el.tagName === 'BUTTON' || el.tagName === 'FORM' || (el.getAttribute && el.getAttribute('data-no-propagate') === 'true')) {
-                            return; // allow default behavior
-                        }
-                        el = el.parentElement;
+        $(function () {
+
+            /* ── Filter state ── */
+            var activeFilters = { ratings:[], statuses:[], evaluations:[], departments:[] };
+
+            /* ── Apply all filters + search ── */
+            function applyAll() {
+                var search  = $('#teacherSearchInput').val().toLowerCase().trim();
+                var visible = 0;
+
+                $('.teacher-card-item').each(function () {
+                    var $c   = $(this);
+                    var name = $c.data('teacher-name') || '';
+                    var subj = String($c.data('subjects') || '');
+                    var rat  = $c.data('rating')  || '';
+                    var evs  = parseInt($c.data('evaluations')) || 0;
+                    var sta  = $c.data('status')   || '';
+                    var dep  = String($c.data('department') || '');
+
+                    var ok = true;
+                    if (search && !name.includes(search) && !subj.includes(search)) ok = false;
+                    if (ok && activeFilters.ratings.length     && !activeFilters.ratings.includes(rat)) ok = false;
+                    if (ok && activeFilters.statuses.length    && !activeFilters.statuses.includes(sta)) ok = false;
+                    if (ok && activeFilters.departments.length && !activeFilters.departments.includes(dep)) ok = false;
+                    if (ok && activeFilters.evaluations.length) {
+                        ok = activeFilters.evaluations.some(function(m) { return evs >= m; });
                     }
 
-                    var url = card.getAttribute('data-teacher-url');
-                    if (url) {
-                        window.location.href = url;
-                    }
+                    $c.toggle(ok);
+                    if (ok) visible++;
                 });
+
+                $('#resultsCount').html(`Showing <strong>${visible}</strong> teacher${visible !== 1 ? 's' : ''}`);
+                $('#noResultsMessage').toggleClass('d-none', visible > 0);
+            }
+
+            /* ── Toggle filter button ── */
+            function toggleFilter(arr, val, $btn) {
+                $btn.toggleClass('active');
+                var idx = arr.indexOf(val);
+                if (idx === -1) arr.push(val);
+                else arr.splice(idx, 1);
+                applyAll();
+            }
+
+            $('#teacherSearchInput').on('input', applyAll);
+
+            $(document).on('click', '.filter-rating',     function () { toggleFilter(activeFilters.ratings,     $(this).data('rating'), $(this)); });
+            $(document).on('click', '.filter-status',     function () { toggleFilter(activeFilters.statuses,    $(this).data('status'), $(this)); });
+            $(document).on('click', '.filter-department', function () { toggleFilter(activeFilters.departments,  $(this).data('department'), $(this)); });
+            $(document).on('click', '.filter-evaluations',function () { toggleFilter(activeFilters.evaluations,  parseInt($(this).data('min')), $(this)); });
+
+            $('#clearFiltersBtn').on('click', function () {
+                activeFilters = { ratings:[], statuses:[], evaluations:[], departments:[] };
+                $('.fb').removeClass('active');
+                $('#teacherSearchInput').val('');
+                applyAll();
             });
+
+            /* ── Click card to navigate ── */
+            $(document).on('click', '.t-card', function (e) {
+                var el = e.target;
+                while (el && el !== this) {
+                    if (el.tagName === 'A' || el.tagName === 'BUTTON') return;
+                    el = el.parentElement;
+                }
+                var url = $(this).data('teacher-url');
+                if (url) window.location.href = url;
+            });
+
+            /* ── TempData toasts ── */
+            function showToast(msg, type) {
+                var cls = { success:'bg-success text-white', danger:'bg-danger text-white', info:'bg-info text-white' };
+                $('#toast').removeClass('bg-success bg-danger bg-info text-white').addClass(cls[type]||cls.success);
+                $('#toastMessage').text(msg);
+                new bootstrap.Toast($('#toast')[0], { delay:4500 }).show();
+            }
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>showToast('@Html.Raw(TempData["SuccessMessage"])', 'success');</text>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <text>showToast('@Html.Raw(TempData["ErrorMessage"])',   'danger');</text>
+            }
+            @if (TempData["InfoMessage"] != null)
+            {
+                <text>showToast('@Html.Raw(TempData["InfoMessage"])',    'info');</text>
+            }
         });
     </script>
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+}

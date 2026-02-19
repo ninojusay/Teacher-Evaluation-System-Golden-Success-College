@@ -5,6 +5,243 @@
     Layout = "_Layoutadmin";
 }
 
+@* ═══════════════════════════════════════════════════
+ 
+   ═══════════════════════════════════════════════════ *@
+<style>
+    /* ── Page title ── */
+    h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #0d6efd;
+        display: inline-block;
+        margin-bottom: 1.25rem;
+    }
+
+    /* ── Create button ── */
+    #btnCreateRole {
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 20px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        box-shadow: 0 4px 14px rgba(13, 110, 253, 0.35);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+        #btnCreateRole:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(13, 110, 253, 0.45);
+        }
+
+        #btnCreateRole:active {
+            transform: translateY(0);
+        }
+
+    /* ── Loading overlay ── */
+    #loadingOverlay {
+        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(4px);
+    }
+
+        #loadingOverlay .mt-2 {
+            font-weight: 600;
+            color: #0d6efd;
+            letter-spacing: 0.5px;
+        }
+
+    /* ── Table ── */
+    #rolesTable {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+        border: none !important;
+    }
+
+        #rolesTable thead tr {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        #rolesTable thead th {
+            color: #fff;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            padding: 13px 16px;
+            border: none !important;
+            font-size: 0.88rem;
+            text-transform: uppercase;
+        }
+
+        #rolesTable tbody tr {
+            transition: background-color 0.15s ease, transform 0.1s ease;
+        }
+
+            #rolesTable tbody tr:hover {
+                background-color: #eef3ff !important;
+            }
+
+        #rolesTable tbody td {
+            padding: 11px 16px;
+            vertical-align: middle;
+            border-color: #f0f0f0 !important;
+        }
+
+    .role-name {
+        font-weight: 600;
+        color: #1a1a2e;
+        font-size: 0.95rem;
+    }
+
+    /* ── Edit button ── */
+    .btn-edit {
+        border-radius: 6px;
+        padding: 5px 11px;
+        font-size: 0.82rem;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+    }
+
+        .btn-edit:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(255, 193, 7, 0.45);
+        }
+
+    /* ── Modal ── */
+    .modal-content {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+        color: #fff;
+        padding: 18px 22px;
+        border-bottom: none;
+    }
+
+        .modal-header .modal-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+            letter-spacing: 0.3px;
+        }
+
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+            opacity: 0.85;
+        }
+
+            .modal-header .btn-close:hover {
+                opacity: 1;
+            }
+
+    .modal-body {
+        padding: 26px 24px 16px;
+    }
+
+    .modal-footer {
+        padding: 14px 22px;
+        border-top: 1px solid #f2f2f2;
+        background: #fafafa;
+    }
+
+    /* ── Form ── */
+    .form-label {
+        font-weight: 600;
+        font-size: 0.88rem;
+        color: #444;
+        margin-bottom: 6px;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        border: 1.5px solid #dee2e6;
+        padding: 10px 13px;
+        font-size: 0.93rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3.5px rgba(13, 110, 253, 0.14);
+        }
+
+    /* ── Modal buttons ── */
+    .modal-footer .btn-secondary {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 8px 18px;
+    }
+
+    #saveRoleBtn {
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 8px 22px;
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+        #saveRoleBtn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(13, 110, 253, 0.4);
+        }
+
+    /* ── Toast ── */
+    #toast {
+        border-radius: 10px !important;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18) !important;
+        min-width: 270px;
+        font-weight: 500;
+    }
+
+    /* ── DataTables search & length tweaks ── */
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 8px;
+        border: 1.5px solid #dee2e6;
+        padding: 5px 10px;
+        margin-left: 6px;
+        transition: border-color 0.2s ease;
+    }
+
+        .dataTables_wrapper .dataTables_filter input:focus {
+            outline: none;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.12);
+        }
+
+    .dataTables_wrapper .dataTables_length select {
+        border-radius: 8px;
+        border: 1.5px solid #dee2e6;
+        padding: 4px 8px;
+        margin: 0 6px;
+    }
+
+    .dataTables_paginate .paginate_button.current,
+    .dataTables_paginate .paginate_button.current:hover {
+        background: linear-gradient(135deg, #0d6efd, #6610f2) !important;
+        border-color: transparent !important;
+        color: #fff !important;
+        border-radius: 6px;
+    }
+
+    .dataTables_paginate .paginate_button:hover {
+        background: #eef3ff !important;
+        border-color: transparent !important;
+        color: #0d6efd !important;
+        border-radius: 6px;
+    }
+</style>
+
+@* ═══════════════════════════════════════════════════
+   ORIGINAL CODE — NOT MODIFIED
+   ═══════════════════════════════════════════════════ *@
+
 <h1>Roles</h1>
 
 <div class="mb-3">
