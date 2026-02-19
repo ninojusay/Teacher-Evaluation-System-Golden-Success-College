@@ -5,220 +5,468 @@
     Layout = "_Layoutadmin";
 }
 
-<h1>Students</h1>
+<style>
+    :root {
+        --primary: #1e3a5f;
+        --accent: #2e86de;
+        --accent-light: #e8f1fb;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --info: #2980b9;
+        --surface: #ffffff;
+        --surface-2: #f4f7fb;
+        --border: #dce3ee;
+        --text: #1a2535;
+        --text-muted: #6b7c99;
+        --shadow: 0 2px 12px rgba(30,58,95,0.08);
+        --radius: 10px;
+    }
 
+    body { background: var(--surface-2); }
+
+    /* ── Page Header ── */
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff;
+        border-radius: var(--radius);
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        box-shadow: 0 4px 20px rgba(30,58,95,0.2);
+    }
+    .page-header h1 { font-size: 1.7rem; font-weight: 700; margin: 0; letter-spacing: -.3px; }
+    .page-header .subtitle { font-size: .88rem; opacity: .75; margin-top: 3px; }
+
+    /* ── Filter Panel ── */
+    .filter-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 22px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+    }
+    .filter-panel .filter-title {
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--text-muted);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .filter-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; flex: 1 1 180px; }
+    .filter-group label { font-size: .8rem; font-weight: 600; color: var(--text); }
+    .filter-group select,
+    .filter-group input {
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 8px 12px;
+        font-size: .88rem;
+        color: var(--text);
+        background: var(--surface-2);
+        transition: border-color .2s;
+        outline: none;
+    }
+    .filter-group select:focus,
+    .filter-group input:focus { border-color: var(--accent); background: #fff; }
+    .filter-actions { display: flex; gap: 8px; padding-bottom: 1px; }
+    .btn-filter-reset {
+        padding: 8px 16px;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text-muted);
+        font-size: .85rem;
+        cursor: pointer;
+        transition: all .2s;
+        white-space: nowrap;
+    }
+    .btn-filter-reset:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px 20px;
+        flex: 1 1 130px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .stat-card .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); line-height: 1; }
+    .stat-card .stat-label { font-size: .75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .stat-card.active .stat-value { color: var(--success); }
+    .stat-card.inactive .stat-value { color: var(--danger); }
+    .stat-card.pending .stat-value { color: var(--warning); }
+
+    /* ── View Switcher ── */
+    .view-switcher {
+        display: flex;
+        gap: 4px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 3px;
+    }
+    .view-btn {
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: .82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .view-btn.active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+    /* ── Results Bar ── */
+    .results-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .results-count { font-size: .88rem; color: var(--text-muted); }
+    .results-count strong { color: var(--primary); }
+
+    /* ── Group Header ── */
+    .group-header {
+        background: linear-gradient(90deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 8px 8px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 22px;
+        cursor: pointer;
+        user-select: none;
+        transition: opacity .15s;
+    }
+    .group-header:hover { opacity: .92; }
+    .group-header:first-of-type { margin-top: 0; }
+    .group-header .group-name { font-weight: 700; font-size: .95rem; display: flex; align-items: center; gap: 8px; }
+    .group-header .group-meta { display: flex; align-items: center; gap: 10px; font-size: .8rem; opacity: .85; }
+    .group-badge { background: rgba(255,255,255,.2); border-radius: 20px; padding: 2px 10px; font-weight: 700; font-size: .82rem; }
+    .group-chevron { transition: transform .25s; font-size: .9rem; }
+    .group-chevron.collapsed { transform: rotate(-90deg); }
+
+    /* ── Sub-group (Section) ── */
+    .subgroup-header {
+        background: var(--accent-light);
+        border-left: 3px solid var(--accent);
+        padding: 7px 16px 7px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        font-size: .85rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+    .subgroup-header:hover { background: #d9eaf9; }
+
+    /* ── Table ── */
+    .group-table-wrapper {
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+    .student-table { width: 100%; border-collapse: collapse; background: var(--surface); }
+    .student-table thead tr { background: var(--surface-2); }
+    .student-table th {
+        padding: 9px 14px;
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .07em;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+    .student-table td { padding: 10px 14px; font-size: .87rem; border-bottom: 1px solid #f0f3f8; color: var(--text); vertical-align: middle; }
+    .student-table tbody tr:last-child td { border-bottom: none; }
+    .student-table tbody tr:hover { background: #f7faff; }
+    .student-table tbody tr.inactive-row { background: #fafafa; opacity: .75; }
+    .student-table tbody tr.inactive-row:hover { background: #f3f3f3; }
+
+    /* ── Card View ── */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 14px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; }
+    .student-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; padding: 16px; transition: box-shadow .2s, transform .2s; position: relative; }
+    .student-card:hover { box-shadow: 0 6px 20px rgba(30,58,95,.12); transform: translateY(-2px); }
+    .student-card.inactive { opacity: .65; }
+    .student-card .sc-name { font-weight: 700; font-size: .95rem; color: var(--primary); margin-bottom: 4px; }
+    .student-card .sc-email { font-size: .8rem; color: var(--text-muted); margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .student-card .sc-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .sc-tag { background: var(--accent-light); color: var(--accent); border-radius: 5px; padding: 2px 8px; font-size: .73rem; font-weight: 600; }
+    .student-card .sc-actions { display: flex; gap: 6px; }
+
+    /* ── Badges ── */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: .74rem; font-weight: 700; }
+    .badge-success { background: #d4edda; color: #155724; }
+    .badge-warning { background: #fff3cd; color: #856404; }
+    .badge-danger { background: #f8d7da; color: #721c24; }
+    .badge-secondary { background: #e2e3e5; color: #383d41; }
+    .badge-active { background: #d4edda; color: #155724; }
+    .badge-inactive { background: #f8d7da; color: #721c24; }
+
+    /* ── Action Buttons ── */
+    .btn-act { border: none; border-radius: 6px; padding: 5px 10px; font-size: .8rem; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+    .btn-act:hover { filter: brightness(.88); transform: translateY(-1px); }
+    .btn-act.edit { background: #fff3cd; color: #856404; }
+    .btn-act.deactivate { background: #d1ecf1; color: #0c5460; }
+    .btn-act.reactivate { background: #d4edda; color: #155724; }
+    .btn-act.delete { background: #f8d7da; color: #721c24; }
+
+    /* ── No results ── */
+    .no-results { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .no-results i { font-size: 3rem; margin-bottom: 12px; display: block; opacity: .35; }
+
+    /* ── Toast ── */
+    #toast { min-width: 280px; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.15); }
+
+    /* ── Loading ── */
+    #loadingOverlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,.82); z-index: 9999; display: none; place-items: center; }
+    #loadingOverlay.show { display: grid; }
+
+    /* Collapse animation */
+    .collapsible-content { overflow: hidden; transition: max-height .3s ease; }
+
+    @@media (max-width: 768px) {
+        .filter-row { flex-direction: column; }
+        .stats-bar .stat-card { flex: 1 1 100%; }
+        .page-header { flex-direction: column; align-items: flex-start; }
+    }
+</style>
+
+<!-- Alerts -->
 @if (TempData["SuccessMessage"] != null)
 {
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
-
 @if (TempData["ErrorMessage"] != null)
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle-fill"></i> @TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
-
-@if (TempData["WarningMessage"] != null)
-{
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-circle-fill"></i> @TempData["WarningMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-<div class="mb-3">
-    <button class="btn btn-primary" id="btnCreateStudent">
-        <i class="bi bi-plus-circle"></i> Create Student
-    </button>
-</div>
 
 <!-- Loading Overlay -->
-<div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; text-align:center;">
-    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
-        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-            <span class="visually-hidden">Loading...</span>
-        </div>
+<div id="loadingOverlay">
+    <div class="text-center">
+        <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
         <div class="mt-3 fw-bold text-primary">Loading...</div>
     </div>
 </div>
 
-<!-- Toast Notification -->
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 11000">
+<!-- Toast -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index:11000">
     <div id="toast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
             <div class="toast-body" id="toastMessage"></div>
-            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     </div>
 </div>
 
-<!-- Students Table -->
-<div class="table-responsive">
-    <table class="table table-bordered table-striped table-hover table-sm align-middle w-100" id="studentsTable">
-        <thead class="table-dark">
-            <tr>
-                <th>Full Name</th>
-                <th>Email</th>
-                <th>Level</th>
-                <th>Section</th>
-                <th>College Year</th>
-                <th>Status</th>
-                <th style="width: 180px;">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <!-- FIX 1: Added row shading for inactive students -->
-                <tr data-id="@item.StudentId" class="@(item.IsActive ? "" : "table-secondary")">
-                    <td>@item.FullName</td>
-                    <td>@item.Email</td>
-                    <td>@item.Level?.LevelName</td>
-                    <td>@(item.Section?.SectionName ?? "N/A")</td>
-                    <td>@(item.CollegeYearLevel > 0 ? item.CollegeYearLevel.ToString() : "N/A")</td>
-                    <td>
-                        @if (item.EmailConfirmed)
-                        {
-                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Confirmed</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pending</span>
-                        }
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-warning btn-edit" data-id="@item.StudentId" title="Edit">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-
-                        <!-- FIX 2: Check IsActive to render the correct Deactivate/Reactivate button -->
-                        @if (item.IsActive)
-                        {
-                            <button class="btn btn-sm btn-info btn-deactivate" data-id="@item.StudentId" title="Deactivate">
-                                <i class="bi bi-x-circle"></i>
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-sm btn-success btn-deactivate" data-id="@item.StudentId" title="Reactivate">
-                                <i class="bi bi-arrow-repeat"></i>
-                            </button>
-                        }
-
-                        @* <button class="btn btn-sm btn-danger btn-delete" data-id="@item.StudentId" title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </button>*@
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-mortarboard-fill me-2"></i>Students</h1>
+        <div class="subtitle">Manage and view all enrolled students</div>
+    </div>
+    <button class="btn btn-light fw-bold px-4" id="btnCreateStudent" style="border-radius:8px;">
+        <i class="bi bi-plus-circle me-1"></i> Add Student
+    </button>
 </div>
 
-<!-- Student Modal -->
-<div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
+<!-- Stats Bar -->
+<div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">Total Students</div>
+    </div>
+    <div class="stat-card active">
+        <div class="stat-value" id="statActive">0</div>
+        <div class="stat-label">Active</div>
+    </div>
+    <div class="stat-card inactive">
+        <div class="stat-value" id="statInactive">0</div>
+        <div class="stat-label">Inactive</div>
+    </div>
+    <div class="stat-card pending">
+        <div class="stat-value" id="statPending">0</div>
+        <div class="stat-label">Email Pending</div>
+    </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="filter-panel">
+    <div class="filter-title"><i class="bi bi-funnel-fill"></i> Filter Students</div>
+    <div class="filter-row">
+        <div class="filter-group" style="flex:2 1 240px;">
+            <label for="filterSearch"><i class="bi bi-search"></i> Search</label>
+            <input type="text" id="filterSearch" placeholder="Name or email…" />
+        </div>
+        <div class="filter-group">
+            <label for="filterSection">Section</label>
+            <select id="filterSection">
+                <option value="">All Sections</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="filterStatus">Status</label>
+            <select id="filterStatus">
+                <option value="">All</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="filterEmail">Email</label>
+            <select id="filterEmail">
+                <option value="">All</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="pending">Pending</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="filterGroupBy">Group By</label>
+            <select id="filterGroupBy">
+                <option value="level">Level</option>
+                <option value="section">Level → Section</option>
+                <option value="status">Status</option>
+                <option value="none">No Grouping</option>
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button class="btn-filter-reset" id="btnReset"><i class="bi bi-x-circle me-1"></i>Reset</button>
+        </div>
+    </div>
+</div>
+
+<!-- Results Bar & View Switcher -->
+<div class="results-bar">
+    <div class="results-count" id="resultsCount">Showing <strong>0</strong> students</div>
+    <div class="view-switcher">
+        <button class="view-btn active" id="btnTableView"><i class="bi bi-table"></i> Table</button>
+        <button class="view-btn" id="btnCardView"><i class="bi bi-grid-3x3-gap"></i> Cards</button>
+    </div>
+</div>
+
+<!-- Dynamic student list renders here -->
+<div id="studentListContainer"></div>
+
+<!-- ═══════════════ MODAL ═══════════════ -->
+<div class="modal fade" id="studentModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="studentModalLabel">Create/Edit Student</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content" style="border-radius:12px;overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1e3a5f,#2c5282);color:#fff;">
+                <h5 class="modal-title fw-bold" id="studentModalLabel">Create Student</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="studentForm">
+            <div class="modal-body p-4">
+                <form id="studentForm" novalidate>
                     <input type="hidden" id="StudentId" name="StudentId" />
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="FullName" class="form-label">Full Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="FullName" name="FullName" required />
-                            <div class="invalid-feedback">Full Name is required</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="FullName" required />
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="Email" class="form-label">Email <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="Email" name="Email" required />
-                            <div class="invalid-feedback">Valid email is required</div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="Email" required />
                         </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label for="Password" class="form-label">Password</label>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Password</label>
                             <div class="input-group">
-                                <input type="password" class="form-control" id="Password" name="Password" autocomplete="new-password" />
-                                <button type="button" class="btn btn-outline-secondary" id="togglePasswordBtn" title="Show password" aria-label="Show password" tabindex="-1">
-                                    <i class="bi bi-eye" id="togglePasswordIcon" aria-hidden="true"></i>
+                                <input type="password" class="form-control" id="Password" autocomplete="new-password" />
+                                <button type="button" class="btn btn-outline-secondary" id="togglePasswordBtn">
+                                    <i class="bi bi-eye" id="togglePasswordIcon"></i>
                                 </button>
                             </div>
-                            <small class="form-text text-muted">Leave empty when creating (auto-generated). When editing, leave empty to keep existing password. Passwords are hashed securely on the server.</small>
+                            <small class="text-muted">Leave empty to auto-generate (create) or keep existing (edit).</small>
                         </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="LevelId" class="form-label">Level <span class="text-danger">*</span></label>
-                            <select class="form-select" id="LevelId" name="LevelId" required>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Level <span class="text-danger">*</span></label>
+                            <select class="form-select" id="LevelId" required>
                                 <option value="">-- Select Level --</option>
                                 @if (ViewData["LevelId"] != null)
                                 {
-                                    @foreach (var level in ViewData["LevelId"] as SelectList)
+                                    foreach (var level in ViewData["LevelId"] as Microsoft.AspNetCore.Mvc.Rendering.SelectList)
                                     {
                                         <option value="@level.Value">@level.Text</option>
                                     }
                                 }
                             </select>
-                            <div class="invalid-feedback">Level is required</div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="SectionId" class="form-label">Section/Program <span class="text-danger">*</span></label>
-                            <select class="form-select" id="SectionId" name="SectionId" required>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Section/Program <span class="text-danger">*</span></label>
+                            <select class="form-select" id="SectionId" required>
                                 <option value="">-- Select Section --</option>
                                 @if (ViewData["SectionId"] != null)
                                 {
-                                    var sections = ViewData["SectionId"] as IEnumerable<SelectListItem>;
-                                    var groupedSections = sections.GroupBy(s => s.Group.Name);
-
-                                    foreach (var group in groupedSections)
+                                    var sections = ViewData["SectionId"] as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
+                                    var grouped = sections.GroupBy(s => s.Group?.Name ?? "Other");
+                                    foreach (var grp in grouped)
                                     {
-                                        <optgroup label="@group.Key">
-                                            @foreach (var sec in group)
+                                        <optgroup label="@grp.Key">
+                                            @foreach (var s in grp)
                                             {
-                                                <option value="@sec.Value" data-level="@group.Key">@sec.Text</option>
+                                                <option value="@s.Value" data-level="@grp.Key">@s.Text</option>
                                             }
                                         </optgroup>
                                     }
                                 }
                             </select>
-                            <small class="form-text text-muted" id="sectionHelpText">Select the appropriate section/program for the student.</small>
-                            <div class="invalid-feedback">Section is required</div>
                         </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3" id="collegeYearContainer" style="display:none;">
-                            <label for="CollegeYearLevel" class="form-label">College Year Level <span class="text-danger">*</span></label>
-                            <select class="form-select" id="CollegeYearLevel" name="CollegeYearLevel">
+                        <div class="col-md-6" id="collegeYearContainer" style="display:none;">
+                            <label class="form-label fw-semibold">College Year Level</label>
+                            <select class="form-select" id="CollegeYearLevel">
                                 <option value="0">N/A</option>
                                 <option value="1">1st Year</option>
                                 <option value="2">2nd Year</option>
                                 <option value="3">3rd Year</option>
                                 <option value="4">4th Year</option>
                             </select>
-                            <small class="form-text text-muted">Required for College level students.</small>
                         </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle"></i> Close
-                </button>
-                <button type="button" class="btn btn-primary" id="saveStudentBtn">
-                    <i class="bi bi-check-circle"></i> Save
+            <div class="modal-footer" style="background:#f8fafc;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary fw-bold px-4" id="saveStudentBtn">
+                    <i class="bi bi-check-circle me-1"></i> Save
                 </button>
             </div>
         </div>
@@ -227,418 +475,497 @@
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        $(document).ready(function () {
-            var toastEl = $('#toast');
-            var toastMessage = $('#toastMessage');
-            var loadingOverlay = $('#loadingOverlay');
-            var studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
+    $(function () {
+        /* ── Raw data from server ── */
+        var allStudents = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Select(s => new {
+            studentId    = s.StudentId,
+            fullName     = s.FullName,
+            email        = s.Email,
+            levelId      = s.LevelId,
+            levelName    = s.Level != null ? s.Level.LevelName : "",
+            sectionId    = s.SectionId,
+            sectionName  = s.Section != null ? s.Section.SectionName : "N/A",
+            collegeYearLevel = s.CollegeYearLevel,
+            isActive     = s.IsActive,
+            emailConfirmed = s.EmailConfirmed
+        })));
 
-            // Store all sections with their level information
-            var allSections = [];
-            $('#SectionId optgroup').each(function() {
-                var levelName = $(this).attr('label');
-                $(this).find('option').each(function() {
-                    if ($(this).val()) {
-                        allSections.push({
-                            value: $(this).val(),
-                            text: $(this).text(),
-                            level: levelName
-                        });
-                    }
-                });
-            });
-
-            // Toast notification function
-            function showToast(message, type = 'success') {
-                var bgClass = 'bg-success text-white';
-                var btnClass = 'btn-close-white';
-
-                if (type === 'danger' || type === 'error') {
-                    bgClass = 'bg-danger text-white';
-                    btnClass = 'btn-close-white';
-                } else if (type === 'warning') {
-                    bgClass = 'bg-warning text-dark';
-                    btnClass = '';
-                } else if (type === 'info') {
-                    bgClass = 'bg-info text-white';
-                    btnClass = 'btn-close-white';
-                }
-
-                toastEl.removeClass('bg-success bg-danger bg-warning bg-info text-white text-dark')
-                       .addClass(bgClass);
-
-                $('.btn-close', toastEl).removeClass('btn-close-white').addClass(btnClass);
-
-                toastMessage.text(message);
-                var toast = new bootstrap.Toast(toastEl[0], {
-                    autohide: true,
-                    delay: 5000
-                });
-                toast.show();
-            }
-
-            function showLoading(show = true) {
-                show ? loadingOverlay.show() : loadingOverlay.hide();
-            }
-
-            // FIX 3: Helper function to generate action buttons (used after create/edit)
-            function actionButtons(student) {
-                var deactivateBtn = student.isActive
-                    ? `<button class="btn btn-sm btn-info btn-deactivate" data-id="${student.studentId}" title="Deactivate"><i class="bi bi-x-circle"></i></button>`
-                    : `<button class="btn btn-sm btn-success btn-deactivate" data-id="${student.studentId}" title="Reactivate"><i class="bi bi-arrow-repeat"></i></button>`;
-
-                return `<button class="btn btn-sm btn-warning btn-edit" data-id="${student.studentId}" title="Edit"><i class="bi bi-pencil-square"></i></button> ` +
-                       deactivateBtn + ` ` +
-                       `<button class="btn btn-sm btn-danger btn-delete" data-id="${student.studentId}" title="Delete"><i class="bi bi-trash"></i></button>`;
-            }
-
-            function filterSections(levelName) {
-                var $sectionSelect = $('#SectionId');
-                var currentValue = $sectionSelect.val();
-
-                $sectionSelect.empty();
-                $sectionSelect.append('<option value="">-- Select Section --</option>');
-
-                if (!levelName) {
-                    rebuildAllSections();
-                    return;
-                }
-
-                var levelLower = levelName.toLowerCase();
-                var filteredSections = [];
-
-                if (levelLower.includes('college')) {
-                    filteredSections = allSections.filter(s => s.level.toLowerCase().includes('college'));
-                } else if (levelLower.includes('junior')) {
-                    filteredSections = allSections.filter(s => s.level.toLowerCase().includes('junior'));
-                } else if (levelLower.includes('senior')) {
-                    filteredSections = allSections.filter(s => s.level.toLowerCase().includes('senior'));
-                } else {
-                    filteredSections = allSections;
-                }
-
-                var grouped = {};
-                filteredSections.forEach(function(sec) {
-                    if (!grouped[sec.level]) {
-                        grouped[sec.level] = [];
-                    }
-                    grouped[sec.level].push(sec);
-                });
-
-                Object.keys(grouped).forEach(function(levelName) {
-                    var $optgroup = $('<optgroup>').attr('label', levelName);
-                    grouped[levelName].forEach(function(sec) {
-                        $optgroup.append(
-                            $('<option>')
-                                .attr('value', sec.value)
-                                .attr('data-level', sec.level)
-                                .text(sec.text)
-                        );
-                    });
-                    $sectionSelect.append($optgroup);
-                });
-
-                if (currentValue && $sectionSelect.find(`option[value="${currentValue}"]`).length > 0) {
-                    $sectionSelect.val(currentValue);
-                } else {
-                    $sectionSelect.val('');
-                }
-            }
-
-            function rebuildAllSections() {
-                var $sectionSelect = $('#SectionId');
-                var grouped = {};
-
-                allSections.forEach(function(sec) {
-                    if (!grouped[sec.level]) {
-                        grouped[sec.level] = [];
-                    }
-                    grouped[sec.level].push(sec);
-                });
-
-                Object.keys(grouped).forEach(function(levelName) {
-                    var $optgroup = $('<optgroup>').attr('label', levelName);
-                    grouped[levelName].forEach(function(sec) {
-                        $optgroup.append(
-                            $('<option>')
-                                .attr('value', sec.value)
-                                .attr('data-level', sec.level)
-                                .text(sec.text)
-                        );
-                    });
-                    $sectionSelect.append($optgroup);
-                });
-            }
-
-            // Initialize DataTable
-            var table = $('#studentsTable').DataTable({
-                "columnDefs": [{ "orderable": false, "targets": 6 }],
-                "order": [[0, 'asc']],
-                "pageLength": 25,
-                "language": {
-                    "search": "Search students:",
-                    "lengthMenu": "Show _MENU_ students per page",
-                    "info": "Showing _START_ to _END_ of _TOTAL_ students",
-                    "infoEmpty": "No students found",
-                    "infoFiltered": "(filtered from _MAX_ total students)"
-                }
-            });
-
-            // Password show/hide toggle
-            $('#togglePasswordBtn').on('click', function () {
-                var $input = $('#Password');
-                var $icon = $('#togglePasswordIcon');
-                if ($input.attr('type') === 'password') {
-                    $input.attr('type', 'text');
-                    $icon.removeClass('bi-eye').addClass('bi-eye-slash');
-                    $('#togglePasswordBtn').attr('title', 'Hide password').attr('aria-label', 'Hide password');
-                } else {
-                    $input.attr('type', 'password');
-                    $icon.removeClass('bi-eye-slash').addClass('bi-eye');
-                    $('#togglePasswordBtn').attr('title', 'Show password').attr('aria-label', 'Show password');
-                }
-            });
-
-            // Level Change Handler
-            $('#LevelId').change(function () {
-                var selectedText = $(this).find('option:selected').text();
-                filterSections(selectedText);
-
-                var isCollege = selectedText.toLowerCase().includes('college');
-                $('#collegeYearContainer').toggle(isCollege);
-                $('#CollegeYearLevel').prop('required', isCollege);
-
-                if (isCollege && ($('#CollegeYearLevel').val() == '0' || !$('#CollegeYearLevel').val())) {
-                    $('#CollegeYearLevel').val('1');
-                } else if (!isCollege) {
-                    $('#CollegeYearLevel').val('0');
-                }
-
-                $('#sectionHelpText').text(isCollege ? 'Select the program (e.g., BSHM, BSIT).' : 'Select the section for the student.');
-            });
-
-            // Reset password visibility when modal opens
-            function resetPasswordToggle() {
-                $('#Password').attr('type', 'password');
-                $('#togglePasswordIcon').removeClass('bi-eye-slash').addClass('bi-eye');
-                $('#togglePasswordBtn').attr('title', 'Show password').attr('aria-label', 'Show password');
-            }
-
-            // Open modal for create
-            $('#btnCreateStudent').click(function () {
-                $('#studentModalLabel').text('Create Student');
-                $('#studentForm')[0].reset();
-                $('#studentForm').removeClass('was-validated');
-                $('#StudentId').val('');
-                $('#Password').prop('required', false);
-                resetPasswordToggle();
-                $('#collegeYearContainer').hide();
-                filterSections('');
-                studentModal.show();
-            });
-
-            // Open modal for edit
-            $(document).on('click', '.btn-edit', function () {
-                var id = $(this).data('id');
-                showLoading(true);
-
-                $.get(`/api/StudentsApi/${id}`, function (res) {
-                    showLoading(false);
-                    if (res.success) {
-                        $('#studentModalLabel').text('Edit Student');
-                        $('#studentForm')[0].reset();
-                        $('#studentForm').removeClass('was-validated');
-                        $('#StudentId').val(res.data.studentId);
-                        $('#FullName').val(res.data.fullName);
-                        $('#Email').val(res.data.email);
-                        $('#Password').val('');
-                        $('#Password').prop('required', false);
-                        resetPasswordToggle();
-                        $('#LevelId').val(res.data.levelId || '');
-
-                        var levelText = $('#LevelId option:selected').text();
-                        filterSections(levelText);
-                        $('#SectionId').val(res.data.sectionId || '');
-                        $('#CollegeYearLevel').val(res.data.collegeYearLevel || '0');
-                        $('#LevelId').trigger('change');
-
-                        studentModal.show();
-                    } else {
-                        showToast(res.message, 'danger');
-                    }
-                }).fail(function (xhr) {
-                    showLoading(false);
-                    showToast('Failed to load student.', 'danger');
-                });
-            });
-
-            // Save student (create or edit)
-            $('#saveStudentBtn').click(function () {
-                var form = $('#studentForm')[0];
-
-                var studentId = $('#StudentId').val();
-                var isEdit = studentId && studentId != '';
-                var levelText = $('#LevelId option:selected').text().toLowerCase();
-                var sectionId = $('#SectionId').val();
-                var collegeYearLevel = $('#CollegeYearLevel').val();
-                var password = $('#Password').val();
-
-                if (!sectionId) {
-                    showToast('Section/Program is required', 'danger');
-                    return;
-                }
-
-                if (levelText.includes('college') && (!collegeYearLevel || collegeYearLevel == '0')) {
-                    showToast('College Year Level is required for College students', 'danger');
-                    return;
-                }
-
-                var studentData = {
-                    studentId: isEdit ? parseInt(studentId) : 0,
-                    fullName: $('#FullName').val(),
-                    email: $('#Email').val(),
-                    password: password || null,
-                    levelId: parseInt($('#LevelId').val()),
-                    sectionId: sectionId ? parseInt(sectionId) : null,
-                    collegeYearLevel: collegeYearLevel ? parseInt(collegeYearLevel) : 0
-                };
-
-                showLoading(true);
-
-                var api_url = isEdit ? `/api/StudentsApi/${studentId}` : '/api/StudentsApi';
-                var api_type = isEdit ? 'PUT' : 'POST';
-
-                $.ajax({
-                    url: api_url,
-                    type: api_type,
-                    contentType: 'application/json',
-                    data: JSON.stringify(studentData),
-                    success: function (res) {
-                        showLoading(false);
-                        if (res.success) {
-                            var sectionDisplay = res.data.sectionName || 'N/A';
-                            var collegeYear = res.data.collegeYearLevel > 0 ? res.data.collegeYearLevel : 'N/A';
-
-                            var confirmedBadge = res.data.emailConfirmed
-                                ? '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Confirmed</span>'
-                                : '<span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pending</span>';
-
-                            // FIX 4: Use actionButtons helper so new/edited rows include the deactivate button
-                            var newRowData = [
-                                res.data.fullName,
-                                res.data.email,
-                                res.data.levelName || '',
-                                sectionDisplay,
-                                collegeYear,
-                                confirmedBadge,
-                                actionButtons(res.data)
-                            ];
-
-                            if (isEdit) {
-                                var $row = $(`tr[data-id="${studentId}"]`);
-                                table.row($row).data(newRowData).draw(false);
-                                $row.attr('data-id', res.data.studentId);
-                            } else {
-                                var newRow = table.row.add(newRowData).draw(false).node();
-                                $(newRow).attr('data-id', res.data.studentId);
-                            }
-
-                            showToast(res.message, 'success');
-                            studentModal.hide();
-                        } else {
-                            showToast(res.message, 'danger');
-                        }
-                    },
-                    error: function (xhr) {
-                        showLoading(false);
-                        var errorMessage = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Failed to save student!';
-                        showToast(errorMessage, 'danger');
-                    }
-                });
-            });
-
-            // FIX 5: Deactivate/Reactivate student handler
-            $(document).on('click', '.btn-deactivate', function () {
-                var button = $(this);
-                var id = button.data('id');
-                var row = button.closest('tr');
-                var studentName = row.find('td:first').text();
-
-                var action = button.hasClass('btn-info') ? 'deactivate' : 'reactivate';
-                if (!confirm(`Are you sure you want to ${action} ${studentName}?`)) return;
-
-                showLoading(true);
-                $.post(`/api/StudentsApi/ToggleActive/${id}`, function (res) {
-                    showLoading(false);
-                    if (res.success) {
-                        if (res.isActive) {
-                            row.removeClass('table-secondary');
-                            button.removeClass('btn-success').addClass('btn-info');
-                            button.attr('title', 'Deactivate');
-                            button.html('<i class="bi bi-x-circle"></i>');
-                        } else {
-                            row.addClass('table-secondary');
-                            button.removeClass('btn-info').addClass('btn-success');
-                            button.attr('title', 'Reactivate');
-                            button.html('<i class="bi bi-arrow-repeat"></i>');
-                        }
-                        showToast(res.message, 'success');
-                    } else {
-                        showToast(res.message, 'danger');
-                    }
-                }).fail(function () {
-                    showLoading(false);
-                    showToast('Failed to update student status!', 'danger');
-                });
-            });
-
-            // Delete student
-            $(document).on('click', '.btn-delete', function () {
-                var id = $(this).data('id');
-                var $row = $(this).closest('tr');
-                var studentName = $row.find('td:first').text();
-
-                if (!confirm(`Are you sure you want to delete ${studentName}? This action cannot be undone.`)) {
-                    return;
-                }
-
-                showLoading(true);
-
-                $.ajax({
-                    url: `/api/StudentsApi/${id}`,
-                    type: 'DELETE',
-                    success: function (res) {
-                        showLoading(false);
-                        if (res.success) {
-                            table.row($row).remove().draw();
-                            showToast(res.message, 'success');
-                        } else {
-                            showToast(res.message, 'danger');
-                        }
-                    },
-                    error: function (xhr) {
-                        showLoading(false);
-                        var errorMessage = 'Failed to delete student!';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
-                        } else if (xhr.status === 400) {
-                            errorMessage = 'Cannot delete student. This student may have related records (enrollments, evaluations). Please remove related records first.';
-                        }
-                        showToast(errorMessage, 'danger');
-                    }
-                });
-            });
-
-            // Auto-dismiss alerts after 5 seconds
-            setTimeout(function() {
-                $('.alert').fadeOut('slow');
-            }, 5000);
+        /* ── All sections for filter dropdown (populated from student data) ── */
+        var allSectionNames = {};
+        allStudents.forEach(function(s) {
+            if (s.sectionName && s.sectionName !== 'N/A') allSectionNames[s.sectionName] = true;
         });
+        Object.keys(allSectionNames).sort().forEach(function(sec) {
+            $('#filterSection').append(`<option value="${sec}">${sec}</option>`);
+        });
+
+        /* Section dropdown for modal */
+        var allModalSections = [];
+        $('#SectionId optgroup').each(function() {
+            var lvl = $(this).attr('label');
+            $(this).find('option').each(function() {
+                if ($(this).val()) allModalSections.push({ value: $(this).val(), text: $(this).text(), level: lvl });
+            });
+        });
+
+        /* ── State ── */
+        var filterState = { search: '', section: '', status: '', email: '', groupBy: 'level' };
+        var viewMode = 'table';
+        var studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
+
+        
+
+        /* ════════════════════════════════
+           APPLY FILTERS
+        ════════════════════════════════ */
+        function applyFilters() {
+            var search  = filterState.search.toLowerCase();
+            var section = filterState.section;
+            var status  = filterState.status;
+            var email   = filterState.email;
+
+            return allStudents.filter(function(s) {
+                if (search  && !s.fullName.toLowerCase().includes(search) && !s.email.toLowerCase().includes(search)) return false;
+                if (section && s.sectionName !== section) return false;
+                if (status === 'active'   && !s.isActive)  return false;
+                if (status === 'inactive' && s.isActive)   return false;
+                if (email === 'confirmed' && !s.emailConfirmed)  return false;
+                if (email === 'pending'   && s.emailConfirmed)   return false;
+                return true;
+            });
+        }
+
+        /* ════════════════════════════════
+           STATS
+        ════════════════════════════════ */
+        function updateStats(filtered) {
+            $('#statTotal').text(filtered.length);
+            $('#statActive').text(filtered.filter(s => s.isActive).length);
+            $('#statInactive').text(filtered.filter(s => !s.isActive).length);
+            $('#statPending').text(filtered.filter(s => !s.emailConfirmed).length);
+            $('#resultsCount').html(`Showing <strong>${filtered.length}</strong> student${filtered.length !== 1 ? 's' : ''}`);
+        }
+
+        /* ════════════════════════════════
+           GROUPING
+        ════════════════════════════════ */
+        function groupStudents(students, by) {
+            var groups = {};
+            students.forEach(function(s) {
+                var key;
+                if (by === 'level') key = s.levelName || 'Unknown';
+                else if (by === 'section') key = (s.levelName || 'Unknown') + '||' + (s.sectionName || 'No Section');
+                else if (by === 'status') key = s.isActive ? 'Active' : 'Inactive';
+                else key = '__all__';
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(s);
+            });
+            return groups;
+        }
+
+        /* ════════════════════════════════
+           RENDER
+        ════════════════════════════════ */
+        function render() {
+            var filtered = applyFilters();
+            updateStats(filtered);
+
+            var $container = $('#studentListContainer');
+            $container.empty();
+
+            if (filtered.length === 0) {
+                $container.html(`<div class="no-results"><i class="bi bi-people"></i><div class="fw-bold">No students found</div><div class="small mt-1">Try adjusting your filters</div></div>`);
+                return;
+            }
+
+            var groupBy = filterState.groupBy;
+            var groups  = groupStudents(filtered, groupBy);
+
+            if (groupBy === 'section') {
+                /* Two-level grouping: Level → Section */
+                var levels = {};
+                Object.keys(groups).forEach(function(key) {
+                    var parts = key.split('||');
+                    var lvl = parts[0], sec = parts[1];
+                    if (!levels[lvl]) levels[lvl] = {};
+                    if (!levels[lvl][sec]) levels[lvl][sec] = [];
+                    levels[lvl][sec] = levels[lvl][sec].concat(groups[key]);
+                });
+
+                Object.keys(levels).sort().forEach(function(lvl) {
+                    var lvlStudents = Object.values(levels[lvl]).flat();
+                    var $lvlWrap = $('<div class="mb-3"></div>');
+                    var lvlId = 'lvl_' + lvl.replace(/\s+/g,'_');
+                    $lvlWrap.append(`
+                        <div class="group-header" data-target="${lvlId}">
+                            <span class="group-name"><i class="bi bi-diagram-3-fill"></i>${lvl}</span>
+                            <div class="group-meta">
+                                <span>${lvlStudents.length} student${lvlStudents.length!==1?'s':''}</span>
+                                <span class="group-badge">${Object.keys(levels[lvl]).length} section${Object.keys(levels[lvl]).length!==1?'s':''}</span>
+                                <i class="bi bi-chevron-down group-chevron"></i>
+                            </div>
+                        </div>
+                    `);
+                    var $lvlContent = $(`<div class="collapsible-content" id="${lvlId}" style="border:1px solid #dce3ee;border-top:none;border-radius:0 0 8px 8px;"></div>`);
+
+                    Object.keys(levels[lvl]).sort().forEach(function(sec) {
+                        var secStudents = levels[lvl][sec];
+                        var secId = 'sec_' + (lvl + sec).replace(/\s+/g,'_');
+                        $lvlContent.append(`
+                            <div class="subgroup-header" data-target="${secId}">
+                                <span><i class="bi bi-people-fill me-2"></i>${sec} <span style="font-weight:400;color:#6b7c99">(${secStudents.length})</span></span>
+                                <i class="bi bi-chevron-down group-chevron" style="font-size:.75rem;"></i>
+                            </div>
+                            <div class="collapsible-content" id="${secId}">${viewMode==='table'?renderTable(secStudents):renderCards(secStudents)}</div>
+                        `);
+                    });
+
+                    $lvlWrap.append($lvlContent);
+                    $container.append($lvlWrap);
+                });
+
+            } else if (groupBy === 'none') {
+                $container.append(viewMode === 'table' ? renderTable(filtered) : renderCards(filtered));
+            } else {
+                Object.keys(groups).sort().forEach(function(key) {
+                    var students = groups[key];
+                    var groupId = 'grp_' + key.replace(/\s+/g,'_');
+                    var iconClass = groupBy === 'status' ? (key === 'Active' ? 'bi-check-circle-fill' : 'bi-x-circle-fill') : 'bi-mortarboard-fill';
+                    var $wrap = $('<div class="mb-3"></div>');
+                    $wrap.append(`
+                        <div class="group-header" data-target="${groupId}">
+                            <span class="group-name"><i class="bi ${iconClass}"></i>${key}</span>
+                            <div class="group-meta">
+                                <span>${students.length} student${students.length!==1?'s':''}</span>
+                                <i class="bi bi-chevron-down group-chevron"></i>
+                            </div>
+                        </div>
+                        <div class="collapsible-content group-table-wrapper" id="${groupId}">
+                            ${viewMode === 'table' ? renderTable(students) : renderCards(students)}
+                        </div>
+                    `);
+                    $container.append($wrap);
+                });
+            }
+        }
+
+        function renderTable(students) {
+            var rows = students.map(function(s) {
+                var confirmedBadge = s.emailConfirmed
+                    ? '<span class="badge badge-success"><i class="bi bi-check-circle"></i> Confirmed</span>'
+                    : '<span class="badge badge-warning"><i class="bi bi-clock"></i> Pending</span>';
+                var statusBadge = s.isActive
+                    ? '<span class="badge badge-active"><i class="bi bi-circle-fill" style="font-size:.5rem;"></i> Active</span>'
+                    : '<span class="badge badge-inactive"><i class="bi bi-circle-fill" style="font-size:.5rem;"></i> Inactive</span>';
+                var yearDisplay = s.collegeYearLevel > 0 ? s.collegeYearLevel : 'N/A';
+                var deactivateBtn = s.isActive
+                    ? `<button class="btn-act deactivate btn-deactivate" data-id="${s.studentId}" title="Deactivate"><i class="bi bi-x-circle"></i></button>`
+                    : `<button class="btn-act reactivate btn-deactivate" data-id="${s.studentId}" title="Reactivate"><i class="bi bi-arrow-repeat"></i></button>`;
+                return `<tr class="${s.isActive?'':'inactive-row'}" data-id="${s.studentId}" data-student='${JSON.stringify(s).replace(/'/g,"&#39;")}'>
+                    <td><strong>${s.fullName}</strong></td>
+                    <td>${s.email}</td>
+                    <td>${s.sectionName}</td>
+                    <td>${yearDisplay}</td>
+                    <td>${statusBadge}</td>
+                    <td>${confirmedBadge}</td>
+                    <td>
+                        <button class="btn-act edit btn-edit" data-id="${s.studentId}" title="Edit"><i class="bi bi-pencil-square"></i></button>
+                        ${deactivateBtn}
+                    </td>
+                </tr>`;
+            }).join('');
+            return `<table class="student-table">
+                <thead><tr>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Section</th>
+                    <th>Year</th>
+                    <th>Status</th>
+                    <th>Email</th>
+                    <th style="width:110px;">Actions</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+        }
+
+        function renderCards(students) {
+            var cards = students.map(function(s) {
+                var statusBadge = s.isActive
+                    ? '<span class="badge badge-active" style="font-size:.7rem;">Active</span>'
+                    : '<span class="badge badge-inactive" style="font-size:.7rem;">Inactive</span>';
+                var emailBadge = s.emailConfirmed
+                    ? '<span class="badge badge-success" style="font-size:.7rem;">Confirmed</span>'
+                    : '<span class="badge badge-warning" style="font-size:.7rem;">Pending</span>';
+                var deactivateBtn = s.isActive
+                    ? `<button class="btn-act deactivate btn-deactivate" data-id="${s.studentId}" title="Deactivate"><i class="bi bi-x-circle"></i></button>`
+                    : `<button class="btn-act reactivate btn-deactivate" data-id="${s.studentId}" title="Reactivate"><i class="bi bi-arrow-repeat"></i></button>`;
+                return `<div class="student-card ${s.isActive?'':'inactive'}" data-id="${s.studentId}">
+                    <div class="sc-name">${s.fullName}</div>
+                    <div class="sc-email" title="${s.email}">${s.email}</div>
+                    <div class="sc-meta">
+                        ${s.sectionName !== 'N/A' ? `<span class="sc-tag">${s.sectionName}</span>` : ''}
+                        ${s.collegeYearLevel > 0 ? `<span class="sc-tag">Year ${s.collegeYearLevel}</span>` : ''}
+                        ${statusBadge}
+                        ${emailBadge}
+                    </div>
+                    <div class="sc-actions">
+                        <button class="btn-act edit btn-edit" data-id="${s.studentId}" title="Edit"><i class="bi bi-pencil-square"></i> Edit</button>
+                        ${deactivateBtn}
+                    </div>
+                </div>`;
+            }).join('');
+            return `<div class="card-grid">${cards}</div>`;
+        }
+
+        /* ════════════════════════════════
+           FILTER EVENTS
+        ════════════════════════════════ */
+        var searchTimer;
+        $('#filterSearch').on('input', function() {
+            clearTimeout(searchTimer);
+            var val = $(this).val();
+            searchTimer = setTimeout(function() { filterState.search = val; render(); }, 220);
+        });
+
+        $('#filterSection').on('change', function() { filterState.section = $(this).val(); render(); });
+        $('#filterStatus').on('change', function() { filterState.status = $(this).val(); render(); });
+        $('#filterEmail').on('change', function() { filterState.email = $(this).val(); render(); });
+        $('#filterGroupBy').on('change', function() { filterState.groupBy = $(this).val(); render(); });
+
+        $('#btnReset').on('click', function() {
+            filterState = { search: '', section: '', status: '', email: '', groupBy: 'level' };
+            $('#filterSearch').val('');
+            $('#filterSection,#filterStatus,#filterEmail').val('');
+            $('#filterGroupBy').val('level');
+            render();
+        });
+
+        /* View switcher */
+        $('#btnTableView').on('click', function() {
+            viewMode = 'table';
+            $(this).addClass('active'); $('#btnCardView').removeClass('active');
+            render();
+        });
+        $('#btnCardView').on('click', function() {
+            viewMode = 'card';
+            $(this).addClass('active'); $('#btnTableView').removeClass('active');
+            render();
+        });
+
+        /* ── Collapse toggle ── */
+        $(document).on('click', '.group-header, .subgroup-header', function() {
+            var targetId = $(this).data('target');
+            var $content = $('#' + targetId);
+            var $chevron = $(this).find('.group-chevron');
+            if ($content.css('max-height') === '0px' || $content.css('max-height') === '') {
+                $content.css('max-height', $content[0].scrollHeight + 'px');
+                $chevron.removeClass('collapsed');
+            } else {
+                $content.css('max-height', '0');
+                $chevron.addClass('collapsed');
+            }
+        });
+
+        // Open all groups initially
+        function openAllGroups() {
+            setTimeout(function() {
+                $('.collapsible-content').each(function() {
+                    $(this).css('max-height', $(this)[0].scrollHeight + 50000 + 'px');
+                });
+            }, 50);
+        }
+
+        /* ════════════════════════════════
+           TOAST
+        ════════════════════════════════ */
+        function showToast(msg, type) {
+            var cls = { success:'bg-success text-white', danger:'bg-danger text-white', warning:'bg-warning text-dark', info:'bg-info text-white' };
+            var $t = $('#toast');
+            $t.removeClass('bg-success bg-danger bg-warning bg-info text-white text-dark').addClass(cls[type]||cls.success);
+            $('#toastMessage').text(msg);
+            new bootstrap.Toast($t[0], { autohide:true, delay:4500 }).show();
+        }
+        function showLoading(v) { v ? $('#loadingOverlay').addClass('show') : $('#loadingOverlay').removeClass('show'); }
+
+        /* ════════════════════════════════
+           MODAL - Create
+        ════════════════════════════════ */
+        function filterModalSections(levelName) {
+            var $s = $('#SectionId');
+            var cur = $s.val();
+            $s.empty().append('<option value="">-- Select Section --</option>');
+            var levelLow = levelName.toLowerCase();
+            var filtered = !levelName ? allModalSections : allModalSections.filter(function(sec) {
+                return levelLow.includes('college') ? sec.level.toLowerCase().includes('college')
+                     : levelLow.includes('junior')  ? sec.level.toLowerCase().includes('junior')
+                     : levelLow.includes('senior')  ? sec.level.toLowerCase().includes('senior')
+                     : true;
+            });
+            var grouped = {};
+            filtered.forEach(function(sec) {
+                if (!grouped[sec.level]) grouped[sec.level] = [];
+                grouped[sec.level].push(sec);
+            });
+            Object.keys(grouped).forEach(function(g) {
+                var $og = $('<optgroup>').attr('label', g);
+                grouped[g].forEach(function(sec) { $og.append($('<option>').val(sec.value).text(sec.text)); });
+                $s.append($og);
+            });
+            if (cur && $s.find(`option[value="${cur}"]`).length) $s.val(cur);
+        }
+
+        $('#LevelId').on('change', function() {
+            var txt = $(this).find('option:selected').text();
+            filterModalSections(txt);
+            var isCollege = txt.toLowerCase().includes('college');
+            $('#collegeYearContainer').toggle(isCollege);
+            if (!isCollege) $('#CollegeYearLevel').val('0');
+            else if (!$('#CollegeYearLevel').val() || $('#CollegeYearLevel').val()==='0') $('#CollegeYearLevel').val('1');
+        });
+
+        $('#togglePasswordBtn').on('click', function() {
+            var $i = $('#Password'), $ic = $('#togglePasswordIcon');
+            if ($i.attr('type')==='password') { $i.attr('type','text'); $ic.removeClass('bi-eye').addClass('bi-eye-slash'); }
+            else { $i.attr('type','password'); $ic.removeClass('bi-eye-slash').addClass('bi-eye'); }
+        });
+
+        $('#btnCreateStudent').on('click', function() {
+            $('#studentModalLabel').text('Create Student');
+            $('#studentForm')[0].reset();
+            $('#StudentId').val('');
+            $('#Password').attr('type','password').prop('required',false);
+            $('#togglePasswordIcon').removeClass('bi-eye-slash').addClass('bi-eye');
+            $('#collegeYearContainer').hide();
+            filterModalSections('');
+            studentModal.show();
+        });
+
+        /* ── Edit ── */
+        $(document).on('click', '.btn-edit', function() {
+            var id = $(this).data('id');
+            showLoading(true);
+            $.get(`/api/StudentsApi/${id}`, function(res) {
+                showLoading(false);
+                if (!res.success) { showToast(res.message, 'danger'); return; }
+                var d = res.data;
+                $('#studentModalLabel').text('Edit Student');
+                $('#studentForm')[0].reset();
+                $('#StudentId').val(d.studentId);
+                $('#FullName').val(d.fullName);
+                $('#Email').val(d.email);
+                $('#Password').val('').attr('type','password').prop('required',false);
+                $('#togglePasswordIcon').removeClass('bi-eye-slash').addClass('bi-eye');
+                $('#LevelId').val(d.levelId || '');
+                filterModalSections($('#LevelId option:selected').text());
+                $('#SectionId').val(d.sectionId || '');
+                $('#CollegeYearLevel').val(d.collegeYearLevel || '0');
+                $('#LevelId').trigger('change');
+                studentModal.show();
+            }).fail(function() { showLoading(false); showToast('Failed to load student.', 'danger'); });
+        });
+
+        /* ── Save ── */
+        $('#saveStudentBtn').on('click', function() {
+            var studentId = $('#StudentId').val();
+            var isEdit    = !!studentId;
+            var levelText = $('#LevelId option:selected').text().toLowerCase();
+            var sectionId = $('#SectionId').val();
+            var yearLevel = $('#CollegeYearLevel').val();
+
+            if (!$('#FullName').val().trim()) { showToast('Full Name is required', 'danger'); return; }
+            if (!$('#Email').val().trim())    { showToast('Email is required', 'danger'); return; }
+            if (!$('#LevelId').val())         { showToast('Level is required', 'danger'); return; }
+            if (!sectionId)                   { showToast('Section/Program is required', 'danger'); return; }
+            if (levelText.includes('college') && (!yearLevel || yearLevel==='0')) { showToast('College Year Level is required', 'danger'); return; }
+
+            var payload = {
+                studentId: isEdit ? parseInt(studentId) : 0,
+                fullName:  $('#FullName').val().trim(),
+                email:     $('#Email').val().trim(),
+                password:  $('#Password').val() || null,
+                levelId:   parseInt($('#LevelId').val()),
+                sectionId: parseInt(sectionId),
+                collegeYearLevel: parseInt(yearLevel)||0
+            };
+
+            showLoading(true);
+            $.ajax({
+                url: isEdit ? `/api/StudentsApi/${studentId}` : '/api/StudentsApi',
+                type: isEdit ? 'PUT' : 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(res) {
+                    showLoading(false);
+                    if (!res.success) { showToast(res.message, 'danger'); return; }
+                    /* Update local data array */
+                    var d = res.data;
+                    if (isEdit) {
+                        var idx = allStudents.findIndex(s => s.studentId === d.studentId);
+                        if (idx > -1) allStudents[idx] = Object.assign(allStudents[idx], {
+                            fullName: d.fullName, email: d.email,
+                            levelId: d.levelId, levelName: d.levelName||'',
+                            sectionId: d.sectionId, sectionName: d.sectionName||'N/A',
+                            collegeYearLevel: d.collegeYearLevel, isActive: d.isActive,
+                            emailConfirmed: d.emailConfirmed
+                        });
+                    } else {
+                        allStudents.push({
+                            studentId: d.studentId, fullName: d.fullName, email: d.email,
+                            levelId: d.levelId, levelName: d.levelName||'',
+                            sectionId: d.sectionId, sectionName: d.sectionName||'N/A',
+                            collegeYearLevel: d.collegeYearLevel, isActive: d.isActive,
+                            emailConfirmed: d.emailConfirmed
+                        });
+                        /* Rebuild section filter */
+                        if (d.levelName && d.sectionName && d.sectionName !== 'N/A') {
+                            if (!sectionsByLevel[d.levelName]) sectionsByLevel[d.levelName] = {};
+                            sectionsByLevel[d.levelName][d.sectionName] = true;
+                        }
+                    }
+                    render();
+                    openAllGroups();
+                    showToast(res.message, 'success');
+                    studentModal.hide();
+                },
+                error: function(xhr) {
+                    showLoading(false);
+                    showToast((xhr.responseJSON&&xhr.responseJSON.message)||'Failed to save student!', 'danger');
+                }
+            });
+        });
+
+        /* ── Deactivate / Reactivate ── */
+        $(document).on('click', '.btn-deactivate', function() {
+            var id   = $(this).data('id');
+            var s    = allStudents.find(x => x.studentId === parseInt(id));
+            var name = s ? s.fullName : 'this student';
+            var action = (s && s.isActive) ? 'deactivate' : 'reactivate';
+            if (!confirm(`Are you sure you want to ${action} ${name}?`)) return;
+
+            showLoading(true);
+            $.post(`/api/StudentsApi/ToggleActive/${id}`, function(res) {
+                showLoading(false);
+                if (res.success) {
+                    var idx = allStudents.findIndex(x => x.studentId === parseInt(id));
+                    if (idx > -1) allStudents[idx].isActive = res.isActive;
+                    render();
+                    openAllGroups();
+                    showToast(res.message, 'success');
+                } else {
+                    showToast(res.message, 'danger');
+                }
+            }).fail(function() { showLoading(false); showToast('Failed to update student status!', 'danger'); });
+        });
+
+        /* ─ Initial render ─ */
+        render();
+        openAllGroups();
+
+        /* Auto-dismiss alerts */
+        setTimeout(function() { $('.alert').fadeOut('slow'); }, 5000);
+    });
     </script>
 }

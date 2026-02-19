@@ -4,239 +4,809 @@
     ViewData["Title"] = "Dashboard";
 }
 
+<style>
+    :root {
+        --primary: #1e3a5f;
+        --accent: #2e86de;
+        --accent-light: #e8f1fb;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --info: #2980b9;
+        --surface: #ffffff;
+        --surface-2: #f4f7fb;
+        --border: #dce3ee;
+        --text: #1a2535;
+        --text-muted: #6b7c99;
+        --shadow: 0 2px 12px rgba(30,58,95,0.08);
+        --radius: 12px;
+    }
+
+    body {
+        background: var(--surface-2);
+    }
+
+    /* ── Logo ── */
+    .school-logo-img {
+        width: 200px;
+        height: auto;
+        mix-blend-mode: multiply;
+        filter: drop-shadow(0 2px 8px rgba(30,58,95,0.15));
+    }
+
+    /* ── Toast ── */
+    .toast {
+        min-width: 300px;
+        border-radius: 10px;
+        box-shadow: 0 6px 24px rgba(0,0,0,.15);
+    }
+
+    /* ── Current Period Banner ── */
+    .period-banner {
+        border-radius: var(--radius);
+        padding: 18px 24px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        box-shadow: var(--shadow);
+    }
+
+        .period-banner.active {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border-left: 5px solid var(--success);
+        }
+
+        .period-banner.upcoming {
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+            border-left: 5px solid var(--info);
+        }
+
+        .period-banner.other {
+            background: linear-gradient(135deg, #e2e3e5, #d6d8db);
+            border-left: 5px solid var(--text-muted);
+        }
+
+        .period-banner.warning {
+            background: linear-gradient(135deg, #fff3cd, #ffeeba);
+            border-left: 5px solid var(--warning);
+        }
+
+        .period-banner .pb-icon {
+            font-size: 1.8rem;
+            opacity: .7;
+        }
+
+        .period-banner .pb-body h5 {
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0 0 4px;
+            font-size: 1rem;
+        }
+
+        .period-banner .pb-body p {
+            margin: 0;
+            font-size: .88rem;
+            color: var(--text-muted);
+        }
+
+        .period-banner .pb-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: .82rem;
+            white-space: nowrap;
+        }
+
+    .pb-badge.active {
+        background: var(--success);
+        color: #fff;
+    }
+
+    .pb-badge.upcoming {
+        background: var(--info);
+        color: #fff;
+    }
+
+    .pb-badge.other {
+        background: var(--text-muted);
+        color: #fff;
+    }
+
+    .pb-badge.warning {
+        background: var(--warning);
+        color: #fff;
+    }
+
+    /* ── Page Section Header ── */
+    .section-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff;
+        border-radius: var(--radius);
+        padding: 20px 28px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(30,58,95,0.2);
+    }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -.3px;
+        }
+
+        .section-header .sh-icon {
+            font-size: 1.8rem;
+            opacity: .85;
+        }
+
+    /* ── Stat Cards ── */
+    .stats-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 22px 24px;
+        flex: 1 1 180px;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: transform .2s, box-shadow .2s;
+    }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(30,58,95,.12);
+        }
+
+        .stat-card .sc-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+            .stat-card .sc-icon.blue {
+                background: #e8f1fb;
+                color: var(--accent);
+            }
+
+            .stat-card .sc-icon.green {
+                background: #d4edda;
+                color: var(--success);
+            }
+
+            .stat-card .sc-icon.teal {
+                background: #d1ecf1;
+                color: var(--info);
+            }
+
+            .stat-card .sc-icon.purple {
+                background: #f3e8ff;
+                color: #7c3aed;
+            }
+
+            .stat-card .sc-icon.orange {
+                background: #fef3c7;
+                color: var(--warning);
+            }
+
+        .stat-card .sc-value {
+            font-size: 1.9rem;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .stat-card .sc-label {
+            font-size: .78rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-top: 3px;
+        }
+
+    /* ── Info Panel (current period stats) ── */
+    .info-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+        .info-panel .ip-header {
+            background: linear-gradient(135deg, var(--primary), #2c5282);
+            color: #fff;
+            padding: 14px 22px;
+            font-weight: 700;
+            font-size: .95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-panel .ip-body {
+            padding: 20px 22px;
+        }
+
+    .ip-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+    }
+
+    .ip-stat {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        text-align: center;
+        background: var(--surface-2);
+    }
+
+        .ip-stat .ip-val {
+            font-size: 1.7rem;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .ip-stat .ip-sub {
+            font-size: .75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .ip-stat .ip-label {
+            font-size: .78rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-bottom: 6px;
+        }
+
+        .ip-stat.success .ip-val {
+            color: var(--success);
+        }
+
+        .ip-stat.info .ip-val {
+            color: var(--info);
+        }
+
+        .ip-stat.warning .ip-val {
+            color: var(--warning);
+        }
+
+    /* Progress Bar */
+    .prog-track {
+        background: #e9ecef;
+        border-radius: 99px;
+        height: 10px;
+        margin-top: 10px;
+        overflow: hidden;
+    }
+
+    .prog-fill {
+        background: linear-gradient(90deg, var(--success), #2ecc71);
+        height: 100%;
+        border-radius: 99px;
+        transition: width 1s ease;
+    }
+
+    /* ── Quick Actions ── */
+    .quick-actions {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+        .quick-actions .qa-header {
+            background: #4a5568;
+            color: #fff;
+            padding: 14px 22px;
+            font-weight: 700;
+            font-size: .95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-actions .qa-body {
+            padding: 18px 22px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+    .qa-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: .88rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all .2s;
+    }
+
+        .qa-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,.15);
+        }
+
+        .qa-btn.blue {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .qa-btn.teal {
+            background: var(--info);
+            color: #fff;
+        }
+
+        .qa-btn.green {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .qa-btn.yellow {
+            background: var(--warning);
+            color: #fff;
+        }
+
+    /* ── Student Progress Card ── */
+    .progress-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+        .progress-card .pc-header {
+            background: linear-gradient(135deg, var(--primary), #2c5282);
+            color: #fff;
+            padding: 14px 22px;
+            font-weight: 700;
+            font-size: .95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-card .pc-body {
+            padding: 22px;
+        }
+
+    .prog-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px,1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .prog-stat {
+        text-align: center;
+    }
+
+        .prog-stat .ps-val {
+            font-size: 1.7rem;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .prog-stat .ps-label {
+            font-size: .75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-top: 4px;
+        }
+
+        .prog-stat.success .ps-val {
+            color: var(--success);
+        }
+
+        .prog-stat.warning .ps-val {
+            color: var(--warning);
+        }
+
+        .prog-stat.info .ps-val {
+            color: var(--info);
+        }
+
+    .big-progress {
+        height: 26px;
+        background: #e9ecef;
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    .big-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--success), #2ecc71);
+        border-radius: 99px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: .8rem;
+        font-weight: 800;
+        transition: width 1.2s ease;
+    }
+
+    /* ── Teacher Cards (Student view) ── */
+    .teacher-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 18px;
+    }
+
+    .t-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px 18px;
+        text-align: center;
+        box-shadow: var(--shadow);
+        transition: transform .25s, box-shadow .25s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+        .t-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 28px rgba(30,58,95,.15);
+        }
+
+        .t-card .t-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--accent-light);
+            margin-bottom: 12px;
+        }
+
+        .t-card .t-placeholder {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .t-card .t-name {
+            font-weight: 800;
+            font-size: .98rem;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .t-card .t-dept {
+            font-size: .8rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .t-card .t-level {
+            font-size: .78rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .t-card .t-btn {
+            width: 100%;
+            padding: 9px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #fff;
+            border: none;
+            font-weight: 700;
+            font-size: .88rem;
+            cursor: pointer;
+            transition: all .2s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: auto;
+        }
+
+            .t-card .t-btn:hover {
+                filter: brightness(1.1);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(30,58,95,.25);
+            }
+
+    /* ── Empty State ── */
+    .empty-state {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 60px 32px;
+        text-align: center;
+        box-shadow: var(--shadow);
+    }
+
+        .empty-state .es-icon {
+            font-size: 5rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .empty-state h3 {
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .empty-state p {
+            color: var(--text-muted);
+            max-width: 360px;
+            margin: 0 auto 20px;
+        }
+
+    @@media (max-width: 768px) {
+        .stats-row {
+            flex-direction: column;
+        }
+
+        .ip-stat-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .teacher-grid {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        }
+    }
+</style>
+
 <!-- Toast Notifications -->
-<div aria-live="polite" aria-atomic="true" class="position-relative">
-    <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer">
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="toast align-items-center text-bg-success border-0 show" role="alert">
-                <div class="d-flex">
-                    <div class="toast-body">@TempData["SuccessMessage"]</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:11000">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="toast align-items-center text-white bg-success border-0 show" role="alert">
+            <div class="d-flex">
+                <div class="toast-body"><i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
-        }
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="toast align-items-center text-bg-danger border-0 show" role="alert">
-                <div class="d-flex">
-                    <div class="toast-body">@TempData["ErrorMessage"]</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="toast align-items-center text-white bg-danger border-0 show" role="alert">
+            <div class="d-flex">
+                <div class="toast-body"><i class="bi bi-exclamation-circle me-2"></i>@TempData["ErrorMessage"]</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
-        }
-        @if (TempData["InfoMessage"] != null)
-        {
-            <div class="toast align-items-center text-bg-info border-0 show" role="alert">
-                <div class="d-flex">
-                    <div class="toast-body">@TempData["InfoMessage"]</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
+        </div>
+    }
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="toast align-items-center text-white bg-info border-0 show" role="alert">
+            <div class="d-flex">
+                <div class="toast-body"><i class="bi bi-info-circle me-2"></i>@TempData["InfoMessage"]</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
-        }
-    </div>
+        </div>
+    }
 </div>
 
 <!-- School Logo -->
 <div class="text-center mb-4">
-    <img src="~/images/logo/logo.png" alt="School Logo" class="school-logo-img">
+    <img src="~/images/logo/logo.png" alt="School Logo" class="school-logo-img" />
 </div>
 
-<!-- Current Period Banner (for all users) -->
+<!-- Current Period Banner -->
 @if (ViewBag.CurrentPeriod != null)
 {
     var period = ViewBag.CurrentPeriod;
-    var statusClass = period.Status == "Active" ? "alert-success" :
-                      period.Status == "Upcoming" ? "alert-info" :
-                      "alert-secondary";
-    var statusIcon = period.Status == "Active" ? "bi-calendar-check" :
-                     period.Status == "Upcoming" ? "bi-calendar-event" :
-                     "bi-calendar-x";
-
-    <div class="alert @statusClass border-start border-5 mb-4 shadow-sm">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="mb-1">
-                    <i class="bi @statusIcon"></i> @period.PeriodName
-                </h5>
-                <p class="mb-0">
-                    <strong>@period.Semester</strong> | @period.AcademicYear |
-                    <small>@period.StartDate.ToString("MMM dd") - @period.EndDate.ToString("MMM dd, yyyy")</small>
-                </p>
-            </div>
-            <div class="text-end">
-                <span class="badge bg-@(period.Status == "Active" ? "success" : period.Status == "Upcoming" ? "info" : "secondary") fs-6">
-                    @period.Status
-                </span>
+    string bannerClass = period.Status == "Active" ? "active" : period.Status == "Upcoming" ? "upcoming" : "other";
+    string iconClass = period.Status == "Active" ? "bi-calendar-check-fill" : period.Status == "Upcoming" ? "bi-calendar-event-fill" : "bi-calendar-x-fill";
+    <div class="period-banner @bannerClass">
+        <div class="d-flex align-items-center gap-3">
+            <i class="bi @iconClass pb-icon"></i>
+            <div class="pb-body">
+                <h5>@period.PeriodName</h5>
+                <p><strong>@period.Semester</strong> &bull; @period.AcademicYear &bull; @period.StartDate.ToString("MMM dd") – @period.EndDate.ToString("MMM dd, yyyy")</p>
             </div>
         </div>
+        <span class="pb-badge @bannerClass">@period.Status</span>
     </div>
 }
 else
 {
-    <div class="alert alert-warning border-start border-warning border-5 mb-4">
-        <i class="bi bi-exclamation-triangle"></i>
-        <strong>No Evaluation Period Set</strong> - Please contact the administrator to set up an evaluation period.
+    <div class="period-banner warning">
+        <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-exclamation-triangle-fill pb-icon"></i>
+            <div class="pb-body">
+                <h5>No Evaluation Period Set</h5>
+                <p>Please contact the administrator to set up an evaluation period.</p>
+            </div>
+        </div>
+        <span class="pb-badge warning">Not Set</span>
     </div>
 }
 
-<!-- ADMIN & SUPER ADMIN DASHBOARD -->
+<!-- ════════════════════════════════
+     ADMIN / SUPER ADMIN DASHBOARD
+════════════════════════════════ -->
 @if (User.IsInRole("Super Admin") || User.IsInRole("Admin"))
 {
     var role = User.IsInRole("Super Admin") ? "Super Admin" : "Admin";
-    <h2 class="mb-4 text-center">
-        <i class="bi bi-speedometer2"></i> @role Dashboard
-    </h2>
 
-    <!-- Overall Statistics -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-people-fill text-primary" style="font-size: 3rem;"></i>
-                    <h5 class="mt-3">Total Teachers</h5>
-                    <h2 class="mb-0 text-primary">@ViewBag.TotalTeachers</h2>
-                </div>
+    <div class="section-header">
+        <i class="bi bi-speedometer2 sh-icon"></i>
+        <div>
+            <h2>@role Dashboard</h2>
+            <div style="font-size:.85rem;opacity:.75;">System overview and management</div>
+        </div>
+    </div>
+
+    <!-- Overall Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="sc-icon blue"><i class="bi bi-person-badge-fill"></i></div>
+            <div>
+                <div class="sc-value">@ViewBag.TotalTeachers</div>
+                <div class="sc-label">Total Teachers</div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-person-badge-fill text-success" style="font-size: 3rem;"></i>
-                    <h5 class="mt-3">Total Students</h5>
-                    <h2 class="mb-0 text-success">@ViewBag.TotalStudents</h2>
-                </div>
+        <div class="stat-card">
+            <div class="sc-icon green"><i class="bi bi-mortarboard-fill"></i></div>
+            <div>
+                <div class="sc-value">@ViewBag.TotalStudents</div>
+                <div class="sc-label">Total Students</div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-clipboard-check-fill text-info" style="font-size: 3rem;"></i>
-                    <h5 class="mt-3">Total Evaluations</h5>
-                    <h2 class="mb-0 text-info">@ViewBag.TotalEvaluations</h2>
-                </div>
+        <div class="stat-card">
+            <div class="sc-icon teal"><i class="bi bi-clipboard-check-fill"></i></div>
+            <div>
+                <div class="sc-value">@ViewBag.TotalEvaluations</div>
+                <div class="sc-label">Total Evaluations</div>
             </div>
         </div>
     </div>
 
-    <!-- Current Period Statistics -->
+    <!-- Current Period Stats -->
     @if (ViewBag.CurrentPeriod != null && ViewBag.CurrentPeriodEvaluations != null)
     {
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-graph-up"></i> Current Period Statistics
-                </h5>
+        <div class="info-panel">
+            <div class="ip-header">
+                <i class="bi bi-graph-up"></i> Current Period Statistics
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <h6 class="text-muted mb-2">Period Evaluations</h6>
-                            <h3 class="mb-0 text-primary">@ViewBag.CurrentPeriodEvaluations</h3>
-                            <small class="text-muted">of @ViewBag.TotalPossibleEvaluations possible</small>
+            <div class="ip-body">
+                <div class="ip-stat-grid">
+                    <div class="ip-stat">
+                        <div class="ip-label">Period Evaluations</div>
+                        <div class="ip-val">@ViewBag.CurrentPeriodEvaluations</div>
+                        <div class="ip-sub">of @ViewBag.TotalPossibleEvaluations possible</div>
+                    </div>
+                    <div class="ip-stat success">
+                        <div class="ip-label">Completion Rate</div>
+                        <div class="ip-val">@ViewBag.CompletionPercentage%</div>
+                        <div class="prog-track">
+                            <div class="prog-fill" id="completionBar" style="width:0"></div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <h6 class="text-muted mb-2">Completion Rate</h6>
-                            <h3 class="mb-0 text-success">@ViewBag.CompletionPercentage%</h3>
-                            <div class="progress mt-2" style="height: 8px;">
-                                <div class="progress-bar bg-success" style="width: @ViewBag.CompletionPercentage%"></div>
-                            </div>
-                        </div>
+                    <div class="ip-stat info">
+                        <div class="ip-label">Participants</div>
+                        <div class="ip-val">@ViewBag.CurrentPeriodParticipants</div>
+                        <div class="ip-sub">students</div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <h6 class="text-muted mb-2">Participants</h6>
-                            <h3 class="mb-0 text-info">@ViewBag.CurrentPeriodParticipants</h3>
-                            <small class="text-muted">students</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <h6 class="text-muted mb-2">Average Score</h6>
-                            <h3 class="mb-0 text-warning">@ViewBag.CurrentPeriodAverage.ToString("F2")</h3>
-                            <small class="text-muted">out of 5.00</small>
-                        </div>
+                    <div class="ip-stat warning">
+                        <div class="ip-label">Average Score</div>
+                        <div class="ip-val">@ViewBag.CurrentPeriodAverage.ToString("F2")</div>
+                        <div class="ip-sub">out of 5.00</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Quick Actions -->
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-secondary text-white">
-                        <h5 class="mb-0">
-                            <i class="bi bi-lightning-fill"></i> Quick Actions
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex flex-wrap gap-2">
-                            <a asp-controller="EvaluationPeriods" asp-action="Index" class="btn btn-primary">
-                                <i class="bi bi-calendar-range"></i> Manage Periods
-                            </a>
-                            <a asp-controller="TeacherEvaluations" asp-action="Index" class="btn btn-info text-white">
-                                <i class="bi bi-clipboard-data"></i> View All Evaluations
-                            </a>
-                            <a asp-controller="Teachers" asp-action="Index" class="btn btn-success">
-                                <i class="bi bi-people"></i> Manage Teachers
-                            </a>
-                            <a asp-controller="Students" asp-action="Index" class="btn btn-warning">
-                                <i class="bi bi-person-badge"></i> Manage Students
-                            </a>
-                        </div>
-                    </div>
-                </div>
+        <div class="quick-actions">
+            <div class="qa-header"><i class="bi bi-lightning-fill"></i> Quick Actions</div>
+            <div class="qa-body">
+                <a asp-controller="EvaluationPeriods" asp-action="Index" class="qa-btn blue">
+                    <i class="bi bi-calendar-range"></i> Manage Periods
+                </a>
+                <a asp-controller="TeacherEvaluations" asp-action="Index" class="qa-btn teal">
+                    <i class="bi bi-clipboard-data"></i> View Evaluations
+                </a>
+                <a asp-controller="Teachers" asp-action="Index" class="qa-btn green">
+                    <i class="bi bi-person-badge"></i> Manage Teachers
+                </a>
+                <a asp-controller="Students" asp-action="Index" class="qa-btn yellow">
+                    <i class="bi bi-mortarboard"></i> Manage Students
+                </a>
             </div>
         </div>
     }
 }
 
-<!-- STUDENT DASHBOARD -->
+<!-- ════════════════════════════════
+     STUDENT DASHBOARD
+════════════════════════════════ -->
 @if (User.IsInRole("Student"))
 {
-    <h2 class="mb-4 text-center">
-        <i class="bi bi-clipboard-check"></i> Teacher Evaluation
-    </h2>
+    <div class="section-header">
+        <i class="bi bi-clipboard-check sh-icon"></i>
+        <div>
+            <h2>Teacher Evaluation</h2>
+            <div style="font-size:.85rem;opacity:.75;">Rate your teachers for this evaluation period</div>
+        </div>
+    </div>
 
-    <!-- Student Progress Card -->
+    <!-- Student Progress -->
     @if (ViewBag.TotalEnrolled != null && ViewBag.TotalEnrolled > 0)
     {
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-graph-up-arrow"></i> Your Progress
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-3">
-                        <h6 class="text-muted">Total Teachers</h6>
-                        <h3 class="text-primary">@ViewBag.TotalEnrolled</h3>
+        <div class="progress-card">
+            <div class="pc-header"><i class="bi bi-graph-up-arrow"></i> Your Progress</div>
+            <div class="pc-body">
+                <div class="prog-stats">
+                    <div class="prog-stat">
+                        <div class="ps-val">@ViewBag.TotalEnrolled</div>
+                        <div class="ps-label">Total Teachers</div>
                     </div>
-                    <div class="col-md-3">
-                        <h6 class="text-muted">Completed</h6>
-                        <h3 class="text-success">@ViewBag.TotalEvaluated</h3>
+                    <div class="prog-stat success">
+                        <div class="ps-val">@ViewBag.TotalEvaluated</div>
+                        <div class="ps-label">Completed</div>
                     </div>
-                    <div class="col-md-3">
-                        <h6 class="text-muted">Remaining</h6>
-                        <h3 class="text-warning">@ViewBag.TotalRemaining</h3>
+                    <div class="prog-stat warning">
+                        <div class="ps-val">@ViewBag.TotalRemaining</div>
+                        <div class="ps-label">Remaining</div>
                     </div>
-                    <div class="col-md-3">
-                        <h6 class="text-muted">Progress</h6>
-                        <h3 class="text-info">@ViewBag.ProgressPercentage%</h3>
+                    <div class="prog-stat info">
+                        <div class="ps-val">@ViewBag.ProgressPercentage%</div>
+                        <div class="ps-label">Progress</div>
                     </div>
                 </div>
-                <div class="progress mt-3" style="height: 25px;">
-                    <div class="progress-bar bg-success"
-                         role="progressbar"
-                         style="width: @ViewBag.ProgressPercentage%"
-                         aria-valuenow="@ViewBag.ProgressPercentage"
-                         aria-valuemin="0"
-                         aria-valuemax="100">
+                <div class="big-progress">
+                    <div class="big-progress-fill" id="studentProgressBar" style="width:0">
                         @ViewBag.ProgressPercentage%
                     </div>
                 </div>
@@ -245,190 +815,85 @@ else
     }
 
     <!-- Teachers to Evaluate -->
-    <div class="row">
-        @if (Model == null || !Model.Any())
-        {
-            <div class="col-12 text-center mt-5">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-5">
-                        @if (ViewBag.TotalEvaluated != null && ViewBag.TotalEvaluated > 0)
-                        {
-                            <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
-                            <h3 class="mt-4 text-success">All Evaluations Complete! 🎉</h3>
-                            <p class="text-muted mb-4">
-                                You have successfully evaluated all @ViewBag.TotalEvaluated teacher(s).
-                                Thank you for your valuable feedback!
-                            </p>
-                        }
-                        else
-                        {
-                            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 5rem;"></i>
-                            <h3 class="mt-4">No Teachers Available</h3>
-                            <p class="text-muted mb-4">
-                                There are currently no teachers available for evaluation.
-                            </p>
-                        }
-                        <a asp-controller="TeacherEvaluations" asp-action="MyEvaluations" class="btn btn-primary">
-                            <i class="bi bi-list-ul"></i> View My Evaluations
-                        </a>
-                    </div>
-                </div>
-            </div>
-        }
-        else
-        {
+    @if (Model == null || !Model.Any())
+    {
+        <div class="empty-state">
+            @if (ViewBag.TotalEvaluated != null && ViewBag.TotalEvaluated > 0)
+            {
+                <i class="bi bi-check-circle-fill text-success es-icon"></i>
+                <h3>All Evaluations Complete! 🎉</h3>
+                <p>You have successfully evaluated all @ViewBag.TotalEvaluated teacher(s). Thank you for your valuable feedback!</p>
+            }
+            else
+            {
+                <i class="bi bi-exclamation-triangle text-warning es-icon"></i>
+                <h3>No Teachers Available</h3>
+                <p>There are currently no teachers available for evaluation.</p>
+            }
+            <a asp-controller="TeacherEvaluations" asp-action="MyEvaluations" class="qa-btn blue" style="display:inline-flex;">
+                <i class="bi bi-list-ul"></i> View My Evaluations
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="teacher-grid">
             @foreach (var item in Model)
             {
-                <div class="col-md-4 col-lg-3 mb-4">
-                    <div class="card shadow-sm border-0 h-100 teacher-card">
-                        <div class="card-body text-center p-4">
-                            <div class="mb-3">
-                                @if (!string.IsNullOrEmpty(item.Teacher.PicturePath))
-                                {
-                                    <img src="@item.Teacher.PicturePath"
-                                         class="teacher-img rounded-circle shadow-sm"
-                                         alt="@item.Teacher.FullName"
-                                         onerror="this.src='/images/default-teacher.png'" />
-                                }
-                                else
-                                {
-                                    <div class="teacher-img-placeholder rounded-circle shadow-sm mx-auto d-flex align-items-center justify-content-center bg-light">
-                                        <i class="bi bi-person-fill text-secondary" style="font-size: 4rem;"></i>
-                                    </div>
-                                }
-                            </div>
-                            <h5 class="card-title mb-2">@item.Teacher.FullName</h5>
-                            <p class="text-muted small mb-2">
-                                <i class="bi bi-building"></i> @item.Teacher.Department
-                            </p>
-                            @if (item.Teacher.Level != null)
-                            {
-                                <p class="text-muted small mb-3">
-                                    <i class="bi bi-mortarboard"></i> @item.Teacher.Level.LevelName
-                                </p>
-                            }
-                            <a asp-controller="TeacherEvaluations"
-                               asp-action="Create"
-                               asp-route-teacherId="@item.Teacher.TeacherId"
-                               asp-route-subjectId="@item.FirstSubjectId"
-                               class="btn btn-primary w-100 mt-auto">
-                                <i class="bi bi-clipboard-check"></i> Evaluate
-                            </a>
+                <div class="t-card">
+                    @if (!string.IsNullOrEmpty(item.Teacher.PicturePath))
+                    {
+                        <img src="@item.Teacher.PicturePath" class="t-avatar"
+                             alt="@item.Teacher.FullName"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                        <div class="t-placeholder" style="display:none;">
+                            @(string.Join("", item.Teacher.FullName.Split(' ').Select(w => w.Length > 0 ? w[0].ToString() : "")).Substring(0, Math.Min(2, item.Teacher.FullName.Split(' ').Length)))
                         </div>
-                    </div>
+                    }
+                    else
+                    {
+                        <div class="t-placeholder">
+                            @(string.Join("", item.Teacher.FullName.Split(' ').Take(2).Select(w => w[0].ToString().ToUpper())))
+                        </div>
+                    }
+                    <div class="t-name">@item.Teacher.FullName</div>
+                    <div class="t-dept"><i class="bi bi-building"></i> @item.Teacher.Department</div>
+                    @if (item.Teacher.Level != null)
+                    {
+                        <div class="t-level"><i class="bi bi-mortarboard"></i> @item.Teacher.Level.LevelName</div>
+                    }
+                    <a asp-controller="TeacherEvaluations"
+                       asp-action="Create"
+                       asp-route-teacherId="@item.Teacher.TeacherId"
+                       asp-route-subjectId="@item.FirstSubjectId"
+                       class="t-btn">
+                        <i class="bi bi-clipboard-check"></i> Evaluate
+                    </a>
                 </div>
             }
-        }
-    </div>
+        </div>
+    }
 }
 
-<!-- Styles -->
-<style>
-    /* Toast Styling */
-    .toast.text-bg-success {
-        background-color: #28a745 !important;
-        color: #fff !important;
-    }
-
-    .toast.text-bg-danger {
-        background-color: #dc3545 !important;
-        color: #fff !important;
-    }
-
-    .toast.text-bg-info {
-        background-color: #17a2b8 !important;
-        color: #fff !important;
-    }
-
-    .toast .btn-close-white {
-        filter: invert(1) !important;
-    }
-
-    .toast {
-        min-width: 300px;
-        max-width: 400px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        font-size: 14px;
-    }
-
-    /* School Logo */
-    .school-logo-img {
-        width: 220px;
-        height: auto;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        mix-blend-mode: multiply;
-    }
-
-    /* Teacher Card Styling */
-    .teacher-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-        .teacher-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
-        }
-
-    .teacher-img {
-        width: 120px;
-        height: 120px;
-        object-fit: cover;
-        display: block;
-        margin: 0 auto;
-        border: 3px solid #f8f9fa;
-    }
-
-    .teacher-img-placeholder {
-        width: 120px;
-        height: 120px;
-    }
-
-    /* Progress Bar Animation */
-    .progress-bar {
-        transition: width 1s ease-in-out;
-    }
-
-    /* Card Enhancements */
-    .card {
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    .card-header {
-        border-bottom: none;
-        font-weight: 600;
-    }
-
-    /* Button Hover Effects */
-    .btn {
-        transition: all 0.3s ease;
-    }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-</style>
-
-<!-- Scripts -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Auto-hide toasts
-        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
-        toastElList.map(function (toastEl) {
-            new bootstrap.Toast(toastEl, { delay: 5000 }).show();
+    document.addEventListener('DOMContentLoaded', function () {
+        /* Auto-hide toasts */
+        document.querySelectorAll('.toast').forEach(function(el) {
+            new bootstrap.Toast(el, { delay: 5000 }).show();
         });
 
-        // Animate progress bars
-        const progressBars = document.querySelectorAll('.progress-bar');
-        progressBars.forEach(bar => {
-            const width = bar.style.width;
-            bar.style.width = '0';
-            setTimeout(() => {
-                bar.style.width = width;
-            }, 100);
-        });
+        /* Animate admin completion bar */
+        var bar = document.getElementById('completionBar');
+        if (bar) {
+            var target = bar.closest('.ip-stat').querySelector('.ip-val').textContent.replace('%','').trim();
+            setTimeout(function() { bar.style.width = target + '%'; }, 200);
+        }
+
+        /* Animate student progress bar */
+        var sbar = document.getElementById('studentProgressBar');
+        if (sbar) {
+            var pct = sbar.textContent.replace('%','').trim();
+            setTimeout(function() { sbar.style.width = pct + '%'; }, 200);
+        }
     });
 </script>

@@ -5,242 +5,543 @@
     Layout = "_Layoutadmin";
 }
 
-<h1>Sections</h1>
+<style>
+    :root {
+        --primary: #1e3a5f;
+        --accent: #2e86de;
+        --accent-light: #e8f1fb;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --surface: #ffffff;
+        --surface-2: #f4f7fb;
+        --border: #dce3ee;
+        --text: #1a2535;
+        --text-muted: #6b7c99;
+        --shadow: 0 2px 12px rgba(30,58,95,0.08);
+        --radius: 10px;
+    }
 
-<div class="mb-3">
-    <button class="btn btn-primary" id="btnCreateSection">
-        <i class="bi bi-plus-circle"></i> Create Section
-    </button>
-</div>
+    body { background: var(--surface-2); }
 
-<!-- Loading overlay -->
-<div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:1050; text-align:center;">
-    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <div class="mt-2">Loading...</div>
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff; border-radius: var(--radius); padding: 24px 28px;
+        margin-bottom: 24px; display: flex; align-items: center;
+        justify-content: space-between; flex-wrap: wrap; gap: 16px;
+        box-shadow: 0 4px 20px rgba(30,58,95,0.2);
+    }
+    .page-header h1 { font-size: 1.7rem; font-weight: 700; margin: 0; letter-spacing: -.3px; }
+    .page-header .subtitle { font-size: .88rem; opacity: .75; margin-top: 3px; }
+
+    /* Stats */
+    .stats-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    .stat-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 14px 20px;
+        flex: 1 1 130px; box-shadow: var(--shadow);
+        display: flex; flex-direction: column; gap: 4px;
+    }
+    .stat-card .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); line-height: 1; }
+    .stat-card .stat-label { font-size: .75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .stat-card.levels .stat-value { color: #8e44ad; }
+
+    /* Filter Panel */
+    .filter-panel {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 18px 22px;
+        margin-bottom: 20px; box-shadow: var(--shadow);
+    }
+    .filter-title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+    .filter-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; flex: 1 1 180px; }
+    .filter-group label { font-size: .8rem; font-weight: 600; color: var(--text); }
+    .filter-group select, .filter-group input {
+        border: 1px solid var(--border); border-radius: 7px; padding: 8px 12px;
+        font-size: .88rem; color: var(--text); background: var(--surface-2);
+        transition: border-color .2s; outline: none;
+    }
+    .filter-group select:focus, .filter-group input:focus { border-color: var(--accent); background: #fff; }
+    .btn-filter-reset {
+        padding: 8px 16px; border-radius: 7px; border: 1px solid var(--border);
+        background: #fff; color: var(--text-muted); font-size: .85rem;
+        cursor: pointer; transition: all .2s; white-space: nowrap;
+    }
+    .btn-filter-reset:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* Results + View switcher */
+    .results-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+    .results-count { font-size: .88rem; color: var(--text-muted); }
+    .results-count strong { color: var(--primary); }
+    .view-switcher { display: flex; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+    .view-btn { padding: 6px 14px; border-radius: 6px; border: none; background: transparent; color: var(--text-muted); font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 5px; }
+    .view-btn.active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+    /* Group header */
+    .group-header {
+        background: linear-gradient(90deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff; padding: 10px 18px; border-radius: 8px 8px 0 0;
+        display: flex; align-items: center; justify-content: space-between;
+        margin-top: 22px; cursor: pointer; user-select: none; transition: opacity .15s;
+    }
+    .group-header:hover { opacity: .92; }
+    .group-header .group-name { font-weight: 700; font-size: .95rem; display: flex; align-items: center; gap: 8px; }
+    .group-header .group-meta { display: flex; align-items: center; gap: 10px; font-size: .8rem; opacity: .85; }
+    .group-chevron { transition: transform .25s; }
+    .group-chevron.collapsed { transform: rotate(-90deg); }
+    .group-table-wrapper { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; }
+
+    /* Section table */
+    .section-table { width: 100%; border-collapse: collapse; background: var(--surface); }
+    .section-table thead tr { background: var(--surface-2); }
+    .section-table th { padding: 9px 14px; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .section-table td { padding: 11px 14px; font-size: .88rem; border-bottom: 1px solid #f0f3f8; color: var(--text); vertical-align: middle; }
+    .section-table tbody tr:last-child td { border-bottom: none; }
+    .section-table tbody tr:hover { background: #f7faff; }
+
+    /* Section name cell */
+    .section-name-cell { display: flex; align-items: center; gap: 10px; }
+    .section-icon { width: 32px; height: 32px; border-radius: 7px; flex-shrink: 0; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 800; }
+
+    /* Card grid */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; }
+    .section-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; padding: 16px; transition: box-shadow .2s, transform .2s; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+    .section-card:hover { box-shadow: 0 6px 20px rgba(30,58,95,.12); transform: translateY(-2px); }
+    .section-card .sc-icon { width: 46px; height: 46px; border-radius: 10px; background: var(--accent-light); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 4px; }
+    .section-card .sc-name  { font-weight: 800; font-size: .95rem; color: var(--primary); }
+    .section-card .sc-level { font-size: .78rem; color: var(--text-muted); font-weight: 600; }
+    .section-card .sc-actions { margin-top: 8px; display: flex; gap: 6px; }
+
+    /* Badge */
+    .level-badge { background: var(--accent-light); color: var(--accent); border-radius: 6px; padding: 2px 9px; font-size: .75rem; font-weight: 700; }
+
+    /* Action buttons */
+    .btn-act { border: none; border-radius: 6px; padding: 5px 10px; font-size: .8rem; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+    .btn-act:hover { filter: brightness(.88); transform: translateY(-1px); }
+    .btn-act.edit { background: #fff3cd; color: #856404; }
+    .btn-act.del  { background: #f8d7da; color: #721c24; }
+
+    .no-results { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .no-results i { font-size: 3rem; margin-bottom: 12px; display: block; opacity: .35; }
+
+    #toast { min-width: 280px; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.15); }
+    #loadingOverlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,.82); z-index: 9999; place-items: center; }
+    #loadingOverlay.show { display: grid; }
+    .collapsible-content { overflow: hidden; transition: max-height .3s ease; }
+
+    @@media (max-width: 768px) {
+        .filter-row { flex-direction: column; }
+        .page-header { flex-direction: column; align-items: flex-start; }
+    }
+</style>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay">
+    <div class="text-center">
+        <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+        <div class="mt-3 fw-bold text-primary">Loading...</div>
     </div>
 </div>
 
-<table class="table table-bordered table-striped table-sm align-middle w-100" id="sectionsTable">
-    <thead>
-        <tr>
-            <th>Section Name</th>
-            <th>Level</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr data-id="@item.SectionId">
-                <td>@item.SectionName</td>
-                <td>@item.Level?.LevelName</td>
-                <td>
-                    <button class="btn btn-sm btn-warning btn-edit" data-id="@item.SectionId">
-                        <i class="bi bi-pencil-square"></i>
-                    </button>
-                    @*<button class="btn btn-sm btn-danger btn-delete" data-id="@item.SectionId">
-                        <i class="bi bi-trash"></i>
-                    </button>*@
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<!-- Toast -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index:11000">
+    <div id="toast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage"></div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
 
-<!-- Modal for Create/Edit -->
-<div class="modal fade" id="sectionModal" tabindex="-1" aria-labelledby="sectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="sectionModalLabel">Create/Edit Section</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-diagram-3-fill me-2"></i>Sections</h1>
+        <div class="subtitle">Manage sections and programs grouped by level</div>
+    </div>
+    <button class="btn btn-light fw-bold px-4" id="btnCreateSection" style="border-radius:8px;">
+        <i class="bi bi-plus-circle me-1"></i> Add Section
+    </button>
+</div>
+
+<!-- Stats Bar -->
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">Total Sections</div>
+    </div>
+    <div class="stat-card levels">
+        <div class="stat-value" id="statLevels">0</div>
+        <div class="stat-label">Levels</div>
+    </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="filter-panel">
+    <div class="filter-title"><i class="bi bi-funnel-fill"></i> Filter Sections</div>
+    <div class="filter-row">
+        <div class="filter-group" style="flex:2 1 220px;">
+            <label><i class="bi bi-search"></i> Search</label>
+            <input type="text" id="filterSearch" placeholder="Section name…" />
+        </div>
+        <div class="filter-group">
+            <label>Level</label>
+            <select id="filterLevel">
+                <option value="">All Levels</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Group By</label>
+            <select id="filterGroupBy">
+                <option value="level">Level</option>
+                <option value="none">No Grouping</option>
+            </select>
+        </div>
+        <div style="display:flex;gap:8px;padding-bottom:1px;">
+            <button class="btn-filter-reset" id="btnReset"><i class="bi bi-x-circle me-1"></i>Reset</button>
+        </div>
+    </div>
+</div>
+
+<!-- Results Bar & View Switcher -->
+<div class="results-bar">
+    <div class="results-count" id="resultsCount">Showing <strong>0</strong> sections</div>
+    <div class="view-switcher">
+        <button class="view-btn active" id="btnTableView"><i class="bi bi-table"></i> Table</button>
+        <button class="view-btn" id="btnCardView"><i class="bi bi-grid-3x3-gap"></i> Cards</button>
+    </div>
+</div>
+
+<!-- Dynamic list -->
+<div id="sectionListContainer"></div>
+
+<!-- ═══════════════ MODAL ═══════════════ -->
+<div class="modal fade" id="sectionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content" style="border-radius:12px;overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1e3a5f,#2c5282);color:#fff;">
+                <h5 class="modal-title fw-bold" id="sectionModalLabel">Create Section</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="sectionForm">
-                    <input type="hidden" id="SectionId" name="SectionId" />
-                    <div class="mb-3">
-                        <label for="SectionName" class="form-label">Section Name</label>
-                        <input type="text" class="form-control" id="SectionName" name="SectionName" required />
-                    </div>
-                    <div class="mb-3">
-                        <label for="LevelId" class="form-label">Level</label>
-                        <select class="form-select" id="LevelId" name="LevelId" required>
-                            <option value="">-- Select Level --</option>
-                            @foreach (var level in ViewBag.LevelId as SelectList)
-                            {
-                                <option value="@level.Value">@level.Text</option>
-                            }
-                        </select>
+            <div class="modal-body p-4">
+                <form id="sectionForm" novalidate>
+                    <input type="hidden" id="SectionId" />
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Section Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="SectionName" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Level <span class="text-danger">*</span></label>
+                            <select class="form-select" id="LevelId" required>
+                                <option value="">-- Select Level --</option>
+                                @foreach (var level in ViewBag.LevelId as Microsoft.AspNetCore.Mvc.Rendering.SelectList)
+                                {
+                                    <option value="@level.Value">@level.Text</option>
+                                }
+                            </select>
+                        </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveSectionBtn">
-                    <i class="bi bi-check-circle"></i> Save
+            <div class="modal-footer" style="background:#f8fafc;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary fw-bold px-4" id="saveSectionBtn">
+                    <i class="bi bi-check-circle me-1"></i> Save
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Toast Notification -->
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
-    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body" id="toastMessage"></div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />>
 
     <script>
-        $(document).ready(function () {
-            var toastEl = $('#toast');
-            var toastMessage = $('#toastMessage');
-            var loadingOverlay = $('#loadingOverlay');
+    $(function () {
 
-            function showToast(message, bgClass = 'bg-success') {
-                toastEl.removeClass('bg-success bg-danger bg-warning').addClass(bgClass);
-                toastMessage.text(message);
-                var toast = new bootstrap.Toast(toastEl[0]);
-                toast.show();
-            }
+        /* ── Raw data from server ── */
+        var allSections = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Select(s => new {
+            sectionId   = s.SectionId,
+            sectionName = s.SectionName,
+            levelId     = s.LevelId,
+            levelName   = s.Level != null ? s.Level.LevelName : "No Level"
+        })));
 
-            function showLoading(show = true) {
-                show ? loadingOverlay.show() : loadingOverlay.hide();
-            }
+        /* ── Build level filter from data ── */
+        var allLevelNames = {};
+        allSections.forEach(function(s) {
+            if (s.levelName) allLevelNames[s.levelName] = true;
+        });
+        Object.keys(allLevelNames).sort().forEach(function(l) {
+            $('#filterLevel').append(`<option value="${l}">${l}</option>`);
+        });
 
-            // Bootstrap 5 modal instance
-            var sectionModalEl = document.getElementById('sectionModal');
-            var sectionModal = new bootstrap.Modal(sectionModalEl);
+        /* ── State ── */
+        var filterState = { search: '', level: '', groupBy: 'level' };
+        var viewMode = 'table';
+        var sectionModal = new bootstrap.Modal(document.getElementById('sectionModal'));
 
-            // Initialize DataTables
-            var table = $('#sectionsTable').DataTable({
-                "columnDefs": [{ "orderable": false, "targets": 2 }]
+        /* ════════════ FILTERS ════════════ */
+        function applyFilters() {
+            var search = filterState.search.toLowerCase();
+            var level  = filterState.level;
+            return allSections.filter(function(s) {
+                if (search && !s.sectionName.toLowerCase().includes(search)) return false;
+                if (level  && s.levelName !== level) return false;
+                return true;
             });
+        }
 
-            // Open modal for create
-            $('#btnCreateSection').click(function () {
-                $('#sectionModalLabel').text('Create Section');
-                $('#SectionId').val('');
-                $('#SectionName').val('');
-                $('#LevelId').val('');
+        /* ════════════ STATS ════════════ */
+        function updateStats(filtered) {
+            $('#statTotal').text(filtered.length);
+            $('#statLevels').text(new Set(filtered.map(s => s.levelName)).size);
+            $('#resultsCount').html(`Showing <strong>${filtered.length}</strong> section${filtered.length !== 1 ? 's' : ''}`);
+        }
+
+        /* ════════════ RENDER ════════════ */
+        function render() {
+            var filtered = applyFilters();
+            updateStats(filtered);
+            var $c = $('#sectionListContainer').empty();
+
+            if (filtered.length === 0) {
+                $c.html(`<div class="no-results"><i class="bi bi-diagram-3"></i><div class="fw-bold">No sections found</div><div class="small mt-1">Try adjusting your filters</div></div>`);
+                return;
+            }
+
+            if (filterState.groupBy === 'none') {
+                $c.append(viewMode === 'table' ? renderTable(filtered) : renderCards(filtered));
+            } else {
+                /* Group by level */
+                var groups = {};
+                filtered.forEach(function(s) {
+                    var key = s.levelName || 'No Level';
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(s);
+                });
+
+                Object.keys(groups).sort().forEach(function(key) {
+                    var items   = groups[key];
+                    var groupId = 'grp_' + key.replace(/[^a-zA-Z0-9]/g,'_');
+                    var $wrap   = $('<div class="mb-3"></div>');
+                    $wrap.append(`
+                        <div class="group-header" data-target="${groupId}">
+                            <span class="group-name"><i class="bi bi-diagram-3-fill"></i>${key}</span>
+                            <div class="group-meta">
+                                <span>${items.length} section${items.length!==1?'s':''}</span>
+                                <i class="bi bi-chevron-down group-chevron"></i>
+                            </div>
+                        </div>
+                        <div class="collapsible-content group-table-wrapper" id="${groupId}">
+                            ${viewMode === 'table' ? renderTable(items) : renderCards(items)}
+                        </div>
+                    `);
+                    $c.append($wrap);
+                });
+            }
+
+            openAllGroups();
+        }
+
+        function renderTable(sections) {
+            var rows = sections.map(function(s) {
+                /* Use first 2 chars of section name as icon label */
+                var initials = s.sectionName.substring(0, 2).toUpperCase();
+                return `<tr data-id="${s.sectionId}">
+                    <td>
+                        <div class="section-name-cell">
+                            <div class="section-icon">${initials}</div>
+                            <strong>${s.sectionName}</strong>
+                        </div>
+                    </td>
+                    <td><span class="level-badge">${s.levelName}</span></td>
+                    <td>
+                        <button class="btn-act edit btn-edit" data-id="${s.sectionId}" title="Edit"><i class="bi bi-pencil-square"></i></button>
+                    </td>
+                </tr>`;
+            }).join('');
+            return `<table class="section-table">
+                <thead><tr>
+                    <th>Section Name</th>
+                    <th>Level</th>
+                    <th style="width:80px;">Actions</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+        }
+
+        function renderCards(sections) {
+            var cards = sections.map(function(s) {
+                var initials = s.sectionName.substring(0, 2).toUpperCase();
+                return `<div class="section-card" data-id="${s.sectionId}">
+                    <div class="sc-icon">${initials}</div>
+                    <div class="sc-name">${s.sectionName}</div>
+                    <div class="sc-level">${s.levelName}</div>
+                    <div class="sc-actions">
+                        <button class="btn-act edit btn-edit" data-id="${s.sectionId}" title="Edit"><i class="bi bi-pencil-square"></i> Edit</button>
+                    </div>
+                </div>`;
+            }).join('');
+            return `<div class="card-grid">${cards}</div>`;
+        }
+
+        /* ════════════ COLLAPSE ════════════ */
+        $(document).on('click', '.group-header', function() {
+            var $content = $('#' + $(this).data('target'));
+            var $chevron = $(this).find('.group-chevron');
+            if (!$content.css('max-height') || $content.css('max-height') === '0px') {
+                $content.css('max-height', $content[0].scrollHeight + 'px');
+                $chevron.removeClass('collapsed');
+            } else {
+                $content.css('max-height', '0');
+                $chevron.addClass('collapsed');
+            }
+        });
+
+        function openAllGroups() {
+            setTimeout(function() {
+                $('.collapsible-content').each(function() {
+                    $(this).css('max-height', $(this)[0].scrollHeight + 50000 + 'px');
+                });
+            }, 50);
+        }
+
+        /* ════════════ FILTER EVENTS ════════════ */
+        var searchTimer;
+        $('#filterSearch').on('input', function() {
+            clearTimeout(searchTimer);
+            var v = $(this).val();
+            searchTimer = setTimeout(function() { filterState.search = v; render(); }, 200);
+        });
+        $('#filterLevel').on('change',   function() { filterState.level   = $(this).val(); render(); });
+        $('#filterGroupBy').on('change', function() { filterState.groupBy = $(this).val(); render(); });
+
+        $('#btnReset').on('click', function() {
+            filterState = { search: '', level: '', groupBy: 'level' };
+            $('#filterSearch').val('');
+            $('#filterLevel').val('');
+            $('#filterGroupBy').val('level');
+            render();
+        });
+
+        $('#btnTableView').on('click', function() {
+            viewMode = 'table'; $(this).addClass('active'); $('#btnCardView').removeClass('active'); render();
+        });
+        $('#btnCardView').on('click', function() {
+            viewMode = 'card'; $(this).addClass('active'); $('#btnTableView').removeClass('active'); render();
+        });
+
+        /* ════════════ TOAST / LOADING ════════════ */
+        function showToast(msg, type) {
+            var cls = { success:'bg-success text-white', danger:'bg-danger text-white', warning:'bg-warning text-dark' };
+            $('#toast').removeClass('bg-success bg-danger bg-warning text-white text-dark').addClass(cls[type||'success']);
+            $('#toastMessage').text(msg);
+            new bootstrap.Toast($('#toast')[0], { autohide:true, delay:4000 }).show();
+        }
+        function showLoading(v) { v ? $('#loadingOverlay').addClass('show') : $('#loadingOverlay').removeClass('show'); }
+
+        /* ════════════ CREATE ════════════ */
+        $('#btnCreateSection').on('click', function() {
+            $('#sectionModalLabel').text('Create Section');
+            $('#sectionForm')[0].reset();
+            $('#SectionId').val('');
+            sectionModal.show();
+        });
+
+        /* ════════════ EDIT ════════════ */
+        $(document).on('click', '.btn-edit', function() {
+            var id = $(this).data('id');
+            showLoading(true);
+            $.get(`/api/SectionsApi/${id}`, function(res) {
+                showLoading(false);
+                if (!res.success) { showToast(res.message, 'danger'); return; }
+                var d = res.data;
+                $('#sectionModalLabel').text('Edit Section');
+                $('#sectionForm')[0].reset();
+                $('#SectionId').val(d.sectionId);
+                $('#SectionName').val(d.sectionName);
+                $('#LevelId').val(d.levelId || '');
                 sectionModal.show();
-            });
+            }).fail(function() { showLoading(false); showToast('Failed to load section.', 'danger'); });
+        });
 
-            // Open modal for edit
-            $(document).on('click', '.btn-edit', function () {
-                var id = $(this).data('id');
-                showLoading(true);
+        /* ════════════ SAVE ════════════ */
+        $('#saveSectionBtn').on('click', function() {
+            var sectionId = $('#SectionId').val();
+            var isEdit    = !!sectionId;
 
-                $.get(`/api/SectionsApi/${id}`, function (res) {
+            if (!$('#SectionName').val().trim()) { showToast('Section Name is required', 'danger'); return; }
+            if (!$('#LevelId').val())            { showToast('Level is required', 'danger'); return; }
+
+            var payload = {
+                sectionId:   isEdit ? parseInt(sectionId) : 0,
+                sectionName: $('#SectionName').val().trim(),
+                levelId:     parseInt($('#LevelId').val())
+            };
+
+            showLoading(true);
+            $.ajax({
+                url:  isEdit ? `/api/SectionsApi/${sectionId}` : '/api/SectionsApi',
+                type: isEdit ? 'PUT' : 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(res) {
                     showLoading(false);
-                    if (res.success) {
-                        $('#sectionModalLabel').text('Edit Section');
-                        $('#SectionId').val(res.data.sectionId);
-                        $('#SectionName').val(res.data.sectionName);
-                        $('#LevelId').val(res.data.levelId || '');
-                        sectionModal.show();
+                    if (!res.success) { showToast(res.message, 'danger'); return; }
+                    var d = res.data;
+                    var levelName = d.level ? d.level.name : (d.levelName || 'No Level');
+
+                    if (isEdit) {
+                        var idx = allSections.findIndex(s => s.sectionId === d.sectionId);
+                        if (idx > -1) allSections[idx] = { sectionId: d.sectionId, sectionName: d.sectionName, levelId: d.levelId, levelName: levelName };
                     } else {
-                        showToast(res.message, 'bg-danger');
+                        allSections.push({ sectionId: d.sectionId, sectionName: d.sectionName, levelId: d.levelId, levelName: levelName });
+                        /* Add level to filter if new */
+                        if (!allLevelNames[levelName]) {
+                            allLevelNames[levelName] = true;
+                            $('#filterLevel').append(`<option value="${levelName}">${levelName}</option>`);
+                        }
                     }
-                }).fail(function () {
+                    render();
+                    showToast(res.message, 'success');
+                    sectionModal.hide();
+                },
+                error: function(xhr) {
                     showLoading(false);
-                    showToast('Failed to load section', 'bg-danger');
-                });
-            });
-
-            // Save section (create or edit)
-            $('#saveSectionBtn').click(function () {
-                var sectionId = $('#SectionId').val();
-                var isEdit = sectionId && sectionId != '';
-                var sectionData = {
-                    sectionId: isEdit ? parseInt(sectionId) : 0,
-                    sectionName: $('#SectionName').val(),
-                    levelId: parseInt($('#LevelId').val())
-                };
-
-                var url = isEdit ? `/api/SectionsApi/${sectionId}` : '/api/SectionsApi';
-                var type = isEdit ? 'PUT' : 'POST';
-
-                showLoading(true);
-                $.ajax({
-                    url: url,
-                    type: type,
-                    contentType: 'application/json',
-                    data: JSON.stringify(sectionData),
-                    success: function (res) {
-                        showLoading(false);
-                        if (res.success) {
-                            var levelName = res.data.level ? res.data.level.name : '';
-                            if (isEdit) {
-                                // Update existing row
-                                var row = table.row($(`tr[data-id="${sectionId}"]`));
-                                row.data([
-                                    res.data.sectionName,
-                                    levelName,
-                                    `<button class="btn btn-sm btn-warning btn-edit" data-id="${res.data.sectionId}"><i class="bi bi-pencil-square"></i></button>
-                                     <button class="btn btn-sm btn-danger btn-delete" data-id="${res.data.sectionId}"><i class="bi bi-trash"></i></button>`
-                                ]).draw(false);
-                            } else {
-                                // Add new row
-                                var newRow = table.row.add([
-                                    res.data.sectionName,
-                                    levelName,
-                                    `<button class="btn btn-sm btn-warning btn-edit" data-id="${res.data.sectionId}"><i class="bi bi-pencil-square"></i></button>
-                                     <button class="btn btn-sm btn-danger btn-delete" data-id="${res.data.sectionId}"><i class="bi bi-trash"></i></button>`
-                                ]).draw(false).node();
-                                $(newRow).attr('data-id', res.data.sectionId);
-                            }
-                            showToast(res.message);
-                            sectionModal.hide();
-                        } else {
-                            showToast(res.message, 'bg-danger');
-                        }
-                    },
-                    error: function () {
-                        showLoading(false);
-                        showToast('Failed to save section!', 'bg-danger');
-                    }
-                });
-            });
-
-            // Delete section
-            $(document).on('click', '.btn-delete', function () {
-                if (!confirm('Are you sure you want to delete this section?')) return;
-                var id = $(this).data('id');
-
-                showLoading(true);
-                $.ajax({
-                    url: `/api/SectionsApi/${id}`,
-                    type: 'DELETE',
-                    success: function (res) {
-                        showLoading(false);
-                        if (res.success) {
-                            table.row($(`tr[data-id="${id}"]`)).remove().draw();
-                            showToast(res.message);
-                        } else {
-                            showToast(res.message, 'bg-danger');
-                        }
-                    },
-                    error: function () {
-                        showLoading(false);
-                        showToast('Failed to delete!', 'bg-danger');
-                    }
-                });
+                    showToast((xhr.responseJSON && xhr.responseJSON.message) || 'Failed to save section!', 'danger');
+                }
             });
         });
+
+        /* ════════════ DELETE ════════════ */
+        $(document).on('click', '.btn-delete', function() {
+            var id   = $(this).data('id');
+            var s    = allSections.find(x => x.sectionId === parseInt(id));
+            var name = s ? s.sectionName : 'this section';
+            if (!confirm(`Are you sure you want to delete "${name}"?`)) return;
+
+            showLoading(true);
+            $.ajax({
+                url: `/api/SectionsApi/${id}`, type: 'DELETE',
+                success: function(res) {
+                    showLoading(false);
+                    if (res.success) {
+                        allSections = allSections.filter(x => x.sectionId !== parseInt(id));
+                        render();
+                        showToast(res.message, 'success');
+                    } else {
+                        showToast(res.message, 'danger');
+                    }
+                },
+                error: function() { showLoading(false); showToast('Failed to delete section!', 'danger'); }
+            });
+        });
+
+        /* ─ Initial render ─ */
+        render();
+    });
     </script>
 }

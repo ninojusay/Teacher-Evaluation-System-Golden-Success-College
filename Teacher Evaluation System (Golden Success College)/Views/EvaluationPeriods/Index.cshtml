@@ -5,163 +5,345 @@
     Layout = "_Layoutadmin";
 }
 
-<h1>Evaluation Periods</h1>
+<style>
+    :root {
+        --primary: #1e3a5f;
+        --accent: #2e86de;
+        --accent-light: #e8f1fb;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --info: #2980b9;
+        --surface: #ffffff;
+        --surface-2: #f4f7fb;
+        --border: #dce3ee;
+        --text: #1a2535;
+        --text-muted: #6b7c99;
+        --shadow: 0 2px 12px rgba(30,58,95,0.08);
+        --radius: 10px;
+    }
 
-<div class="mb-3">
-    <button class="btn btn-primary" id="btnCreatePeriod">
-        <i class="bi bi-plus-circle"></i> Create Period
+    body { background: var(--surface-2); }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff; border-radius: var(--radius); padding: 24px 28px;
+        margin-bottom: 24px; display: flex; align-items: center;
+        justify-content: space-between; flex-wrap: wrap; gap: 16px;
+        box-shadow: 0 4px 20px rgba(30,58,95,0.2);
+    }
+    .page-header h1 { font-size: 1.7rem; font-weight: 700; margin: 0; letter-spacing: -.3px; }
+    .page-header .subtitle { font-size: .88rem; opacity: .75; margin-top: 3px; }
+
+    /* ── Current Period Banner ── */
+    .current-banner {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        color: #fff; border-radius: var(--radius); padding: 14px 22px;
+        margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+        box-shadow: 0 3px 12px rgba(243,156,18,0.3);
+    }
+    .current-banner i { font-size: 1.4rem; }
+    .current-banner .cb-label { font-size: .78rem; opacity: .85; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; }
+    .current-banner .cb-name  { font-size: 1rem; font-weight: 800; }
+
+    /* ── Stats Bar ── */
+    .stats-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    .stat-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 14px 20px;
+        flex: 1 1 120px; box-shadow: var(--shadow);
+        display: flex; flex-direction: column; gap: 4px;
+    }
+    .stat-card .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); line-height: 1; }
+    .stat-card .stat-label { font-size: .75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .stat-card.s-active   .stat-value { color: var(--success); }
+    .stat-card.s-upcoming .stat-value { color: var(--info); }
+    .stat-card.s-completed .stat-value { color: var(--text-muted); }
+
+    /* ── Filter Panel ── */
+    .filter-panel {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 18px 22px;
+        margin-bottom: 20px; box-shadow: var(--shadow);
+    }
+    .filter-title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+    .filter-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; flex: 1 1 160px; }
+    .filter-group label { font-size: .8rem; font-weight: 600; color: var(--text); }
+    .filter-group select, .filter-group input {
+        border: 1px solid var(--border); border-radius: 7px; padding: 8px 12px;
+        font-size: .88rem; color: var(--text); background: var(--surface-2);
+        transition: border-color .2s; outline: none;
+    }
+    .filter-group select:focus, .filter-group input:focus { border-color: var(--accent); background: #fff; }
+    .btn-filter-reset {
+        padding: 8px 16px; border-radius: 7px; border: 1px solid var(--border);
+        background: #fff; color: var(--text-muted); font-size: .85rem;
+        cursor: pointer; transition: all .2s; white-space: nowrap;
+    }
+    .btn-filter-reset:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── Results Bar ── */
+    .results-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+    .results-count { font-size: .88rem; color: var(--text-muted); }
+    .results-count strong { color: var(--primary); }
+
+    /* ── Group Header ── */
+    .group-header {
+        background: linear-gradient(90deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff; padding: 10px 18px; border-radius: 8px 8px 0 0;
+        display: flex; align-items: center; justify-content: space-between;
+        margin-top: 22px; cursor: pointer; user-select: none; transition: opacity .15s;
+    }
+    .group-header:hover { opacity: .92; }
+    .group-header .group-name { font-weight: 700; font-size: .95rem; display: flex; align-items: center; gap: 8px; }
+    .group-header .group-meta { display: flex; align-items: center; gap: 10px; font-size: .8rem; opacity: .85; }
+    .group-chevron { transition: transform .25s; }
+    .group-chevron.collapsed { transform: rotate(-90deg); }
+
+    .group-table-wrapper { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; }
+
+    /* ── Period Table ── */
+    .period-table { width: 100%; border-collapse: collapse; background: var(--surface); }
+    .period-table thead tr { background: var(--surface-2); }
+    .period-table th { padding: 9px 14px; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .period-table td { padding: 10px 14px; font-size: .87rem; border-bottom: 1px solid #f0f3f8; color: var(--text); vertical-align: middle; }
+    .period-table tbody tr:last-child td { border-bottom: none; }
+    .period-table tbody tr:hover { background: #f7faff; }
+    .period-table tbody tr.is-current { background: #fffbeb; border-left: 3px solid var(--warning); }
+    .period-table tbody tr.is-current:hover { background: #fef9e7; }
+
+    /* ── Period Cards ── */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 14px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; }
+    .period-card {
+        background: var(--surface-2); border: 1px solid var(--border);
+        border-radius: 9px; padding: 16px; transition: box-shadow .2s, transform .2s;
+        position: relative;
+    }
+    .period-card:hover { box-shadow: 0 6px 20px rgba(30,58,95,.12); transform: translateY(-2px); }
+    .period-card.is-current { border-color: var(--warning); background: #fffbeb; }
+    .period-card .current-star {
+        position: absolute; top: 12px; right: 12px;
+        color: var(--warning); font-size: 1.1rem;
+    }
+    .pc-name   { font-weight: 700; font-size: .95rem; color: var(--primary); margin-bottom: 4px; }
+    .pc-year   { font-size: .8rem; color: var(--text-muted); margin-bottom: 8px; }
+    .pc-dates  { font-size: .8rem; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+    .pc-meta   { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .pc-tag    { border-radius: 5px; padding: 2px 8px; font-size: .73rem; font-weight: 600; }
+    .pc-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── Badges ── */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: .74rem; font-weight: 700; }
+    .badge-active    { background: #d4edda; color: #155724; }
+    .badge-upcoming  { background: #d1ecf1; color: #0c5460; }
+    .badge-completed { background: #e2e3e5; color: #383d41; }
+    .badge-on  { background: #d4edda; color: #155724; }
+    .badge-off { background: #f8d7da; color: #721c24; }
+
+    /* ── Action Buttons ── */
+    .btn-act { border: none; border-radius: 6px; padding: 5px 10px; font-size: .8rem; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+    .btn-act:hover { filter: brightness(.88); transform: translateY(-1px); }
+    .btn-act.edit       { background: #fff3cd; color: #856404; }
+    .btn-act.set-curr   { background: #fef3c7; color: #92400e; }
+    .btn-act.toggle-on  { background: #d4edda; color: #155724; }
+    .btn-act.toggle-off { background: #e2e3e5; color: #383d41; }
+    .btn-act.del        { background: #f8d7da; color: #721c24; }
+
+    .no-results { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .no-results i { font-size: 3rem; margin-bottom: 12px; display: block; opacity: .35; }
+
+    #toast { min-width: 280px; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.15); }
+    #loadingOverlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,.82); z-index: 9999; place-items: center; }
+    #loadingOverlay.show { display: grid; }
+    .collapsible-content { overflow: hidden; transition: max-height .3s ease; }
+
+    .view-switcher { display: flex; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+    .view-btn { padding: 6px 14px; border-radius: 6px; border: none; background: transparent; color: var(--text-muted); font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 5px; }
+    .view-btn.active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+    @@media (max-width: 768px) {
+        .filter-row { flex-direction: column; }
+        .page-header { flex-direction: column; align-items: flex-start; }
+    }
+</style>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay">
+    <div class="text-center">
+        <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+        <div class="mt-3 fw-bold text-primary">Loading...</div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index:11000">
+    <div id="toast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage"></div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-calendar3 me-2"></i>Evaluation Periods</h1>
+        <div class="subtitle">Manage academic evaluation periods and schedules</div>
+    </div>
+    <button class="btn btn-light fw-bold px-4" id="btnCreatePeriod" style="border-radius:8px;">
+        <i class="bi bi-plus-circle me-1"></i> Add Period
     </button>
 </div>
 
-<!-- Loading overlay -->
-<div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:1050; text-align:center;">
-    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+<!-- Current Period Banner -->
+@{
+    var currentPeriod = Model.FirstOrDefault(p => p.IsCurrent);
+}
+@if (currentPeriod != null)
+{
+    <div class="current-banner">
+        <i class="bi bi-star-fill"></i>
+        <div>
+            <div class="cb-label">Current Active Period</div>
+            <div class="cb-name">@currentPeriod.PeriodName — @currentPeriod.AcademicYear | @currentPeriod.Semester</div>
         </div>
-        <div class="mt-2">Loading...</div>
+        <div style="margin-left:auto;font-size:.82rem;opacity:.85;">
+            @currentPeriod.StartDate.ToString("MMM dd") – @currentPeriod.EndDate.ToString("MMM dd, yyyy")
+        </div>
+    </div>
+}
+
+<!-- Stats Bar -->
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">Total Periods</div>
+    </div>
+    <div class="stat-card s-active">
+        <div class="stat-value" id="statActive">0</div>
+        <div class="stat-label">Active</div>
+    </div>
+    <div class="stat-card s-upcoming">
+        <div class="stat-value" id="statUpcoming">0</div>
+        <div class="stat-label">Upcoming</div>
+    </div>
+    <div class="stat-card s-completed">
+        <div class="stat-value" id="statCompleted">0</div>
+        <div class="stat-label">Completed</div>
     </div>
 </div>
 
-<table class="table table-bordered table-striped table-sm align-middle w-100" id="periodsTable">
-    <thead>
-        <tr>
-            <th>Period Name</th>
-            <th>Academic Year</th>
-            <th>Semester</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Status</th>
-            <th>Active</th>
-            <th>Current</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr data-id="@item.EvaluationPeriodId" class="@(item.IsCurrent ? "table-primary" : "")">
-                <td>@item.PeriodName</td>
-                <td>@item.AcademicYear</td>
-                <td>@item.Semester</td>
-                <td>@item.StartDate.ToString("MMM dd, yyyy")</td>
-                <td>@item.EndDate.ToString("MMM dd, yyyy")</td>
-                <td>
-                    @if (item.Status == "Active")
-                    {
-                        <span class="badge bg-success">@item.Status</span>
-                    }
-                    else if (item.Status == "Upcoming")
-                    {
-                        <span class="badge bg-info">@item.Status</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary">@item.Status</span>
-                    }
-                </td>
-                <td class="text-center">
-                    @if (item.IsActive)
-                    {
-                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                    }
-                    else
-                    {
-                        <i class="bi bi-x-circle-fill text-danger fs-5"></i>
-                    }
-                </td>
-                <td class="text-center">
-                    @if (item.IsCurrent)
-                    {
-                        <i class="bi bi-star-fill text-warning fs-5"></i>
-                    }
-                </td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-warning btn-edit" data-id="@item.EvaluationPeriodId">
-                        <i class="bi bi-pencil-square"></i>
-                    </button>
-
-                    @if (!item.IsCurrent)
-                    {
-                        <button class="btn btn-sm btn-primary btn-set-current" data-id="@item.EvaluationPeriodId">
-                            <i class="bi bi-star"></i>
-                        </button>
-                    }
-
-                    <button class="btn btn-sm @(item.IsActive ? "btn-secondary" : "btn-success") btn-toggle-active"
-                            data-id="@item.EvaluationPeriodId"
-                            data-active="@item.IsActive.ToString().ToLower()">
-                        <i class="bi @(item.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
-                    </button>
-
-                 @*  <button class="btn btn-sm btn-danger btn-delete" data-id="@item.EvaluationPeriodId">
-                        <i class="bi bi-trash"></i>
-                    </button> *@
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-<!-- Toast Notification -->
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
-    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body" id="toastMessage"></div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+<!-- Filter Panel -->
+<div class="filter-panel">
+    <div class="filter-title"><i class="bi bi-funnel-fill"></i> Filter Periods</div>
+    <div class="filter-row">
+        <div class="filter-group" style="flex:2 1 220px;">
+            <label><i class="bi bi-search"></i> Search</label>
+            <input type="text" id="filterSearch" placeholder="Period name or academic year…" />
+        </div>
+        <div class="filter-group">
+            <label>Status</label>
+            <select id="filterStatus">
+                <option value="">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Upcoming">Upcoming</option>
+                <option value="Completed">Completed</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Semester</label>
+            <select id="filterSemester">
+                <option value="">All Semesters</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Active Flag</label>
+            <select id="filterActive">
+                <option value="">All</option>
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Group By</label>
+            <select id="filterGroupBy">
+                <option value="academicYear">Academic Year</option>
+                <option value="status">Status</option>
+                <option value="semester">Semester</option>
+                <option value="none">No Grouping</option>
+            </select>
+        </div>
+        <div style="display:flex;gap:8px;padding-bottom:1px;">
+            <button class="btn-filter-reset" id="btnReset"><i class="bi bi-x-circle me-1"></i>Reset</button>
         </div>
     </div>
 </div>
 
-<!-- Modal for Create/Edit Period -->
-<div class="modal fade" id="periodModal" tabindex="-1" aria-labelledby="periodModalLabel" aria-hidden="true">
+<!-- Results Bar & View Switcher -->
+<div class="results-bar">
+    <div class="results-count" id="resultsCount">Showing <strong>0</strong> periods</div>
+    <div class="view-switcher">
+        <button class="view-btn active" id="btnTableView"><i class="bi bi-table"></i> Table</button>
+        <button class="view-btn" id="btnCardView"><i class="bi bi-grid-3x3-gap"></i> Cards</button>
+    </div>
+</div>
+
+<!-- Dynamic list -->
+<div id="periodListContainer"></div>
+
+<!-- ═══════════════ MODAL ═══════════════ -->
+<div class="modal fade" id="periodModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="periodModalLabel">Create/Edit Evaluation Period</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content" style="border-radius:12px;overflow:hidden;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1e3a5f,#2c5282);color:#fff;">
+                <h5 class="modal-title fw-bold" id="periodModalLabel">Create Evaluation Period</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="periodForm">
-                    <input type="hidden" id="EvaluationPeriodId" name="EvaluationPeriodId" />
-                    <div class="mb-3">
-                        <label for="PeriodName" class="form-label">Period Name</label>
-                        <input type="text" class="form-control" id="PeriodName" name="PeriodName" required />
-                    </div>
-                    <div class="mb-3">
-                        <label for="AcademicYear" class="form-label">Academic Year</label>
-                        <input type="text" class="form-control" id="AcademicYear" name="AcademicYear" required />
-                    </div>
-                    <div class="mb-3">
-                        <label for="Semester" class="form-label">Semester</label>
-                        <input type="text" class="form-control" id="Semester" name="Semester" required />
-                    </div>
-                    <div class="mb-3">
-                        <label for="StartDate" class="form-label">Start Date</label>
-                        <input type="date" class="form-control" id="StartDate" name="StartDate" required />
-                    </div>
-                    <div class="mb-3">
-                        <label for="EndDate" class="form-label">End Date</label>
-                        <input type="date" class="form-control" id="EndDate" name="EndDate" required />
-                    </div>
-                    <div class="mb-3">
-                        <label for="Description" class="form-label">Description</label>
-                        <textarea class="form-control" id="Description" name="Description" rows="2"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="Status" class="form-label">Status</label>
-                        <select class="form-select" id="Status" name="Status" required>
-                            <option value="Upcoming">Upcoming</option>
-                            <option value="Active">Active</option>
-                            <option value="Completed">Completed</option>
-                        </select>
+            <div class="modal-body p-4">
+                <form id="periodForm" novalidate>
+                    <input type="hidden" id="EvaluationPeriodId" />
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Period Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="PeriodName" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Academic Year <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="AcademicYear" placeholder="e.g. 2024-2025" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Semester <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="Semester" placeholder="e.g. 1st Semester" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Start Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="StartDate" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">End Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="EndDate" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Description</label>
+                            <textarea class="form-control" id="Description" rows="2"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+                            <select class="form-select" id="Status" required>
+                                <option value="Upcoming">Upcoming</option>
+                                <option value="Active">Active</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="savePeriodBtn">
-                    <i class="bi bi-check-circle"></i> Save
+            <div class="modal-footer" style="background:#f8fafc;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary fw-bold px-4" id="savePeriodBtn">
+                    <i class="bi bi-check-circle me-1"></i> Save
                 </button>
             </div>
         </div>
@@ -170,154 +352,372 @@
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
 
     <script>
-        $(document).ready(function () {
-            var toastEl = $('#toast');
-            var toastMessage = $('#toastMessage');
-            var loadingOverlay = $('#loadingOverlay');
+    $(function () {
 
-            function showToast(message, bgClass = 'bg-success') {
-                toastEl.removeClass('bg-success bg-danger bg-warning').addClass(bgClass);
-                toastMessage.text(message);
-                new bootstrap.Toast(toastEl[0], { delay: 4000 }).show();
-            }
+        /* ── Raw data from server ── */
+        var allPeriods = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Select(p => new {
+            evaluationPeriodId = p.EvaluationPeriodId,
+            periodName    = p.PeriodName,
+            academicYear  = p.AcademicYear,
+            semester      = p.Semester,
+            startDate     = p.StartDate.ToString("yyyy-MM-dd"),
+            endDate       = p.EndDate.ToString("yyyy-MM-dd"),
+            startDisplay  = p.StartDate.ToString("MMM dd, yyyy"),
+            endDisplay    = p.EndDate.ToString("MMM dd, yyyy"),
+            description   = p.Description ?? "",
+            status        = p.Status,
+            isActive      = p.IsActive,
+            isCurrent     = p.IsCurrent
+        })));
 
-            function showLoading(show = true) {
-                show ? loadingOverlay.show() : loadingOverlay.hide();
-            }
+        /* ── Build semester filter from data ── */
+        var allSemesters = {};
+        allPeriods.forEach(function(p) {
+            if (p.semester) allSemesters[p.semester] = true;
+        });
+        Object.keys(allSemesters).sort().forEach(function(s) {
+            $('#filterSemester').append(`<option value="${s}">${s}</option>`);
+        });
 
-            var table = $('#periodsTable').DataTable({
-                "columnDefs": [{ "orderable": false, "targets": [6,7,8] }]
+        /* ── State ── */
+        var filterState = { search: '', status: '', semester: '', active: '', groupBy: 'academicYear' };
+        var viewMode = 'table';
+        var periodModal = new bootstrap.Modal(document.getElementById('periodModal'));
+
+        /* ════════════ FILTERS ════════════ */
+        function applyFilters() {
+            var search   = filterState.search.toLowerCase();
+            var status   = filterState.status;
+            var semester = filterState.semester;
+            var active   = filterState.active;
+            return allPeriods.filter(function(p) {
+                if (search   && !p.periodName.toLowerCase().includes(search) && !p.academicYear.toLowerCase().includes(search)) return false;
+                if (status   && p.status   !== status)   return false;
+                if (semester && p.semester !== semester) return false;
+                if (active === 'true'  && !p.isActive) return false;
+                if (active === 'false' &&  p.isActive) return false;
+                return true;
             });
+        }
 
-            var periodModal = new bootstrap.Modal(document.getElementById('periodModal'));
+        /* ════════════ STATS ════════════ */
+        function updateStats(filtered) {
+            $('#statTotal').text(filtered.length);
+            $('#statActive').text(filtered.filter(p => p.status === 'Active').length);
+            $('#statUpcoming').text(filtered.filter(p => p.status === 'Upcoming').length);
+            $('#statCompleted').text(filtered.filter(p => p.status === 'Completed').length);
+            $('#resultsCount').html(`Showing <strong>${filtered.length}</strong> period${filtered.length !== 1 ? 's' : ''}`);
+        }
 
-            // Open modal for create
-            $('#btnCreatePeriod').click(function () {
-                $('#periodModalLabel').text('Create Evaluation Period');
+        /* ════════════ GROUPING ════════════ */
+        function groupPeriods(periods, by) {
+            var groups = {};
+            periods.forEach(function(p) {
+                var key = by === 'academicYear' ? (p.academicYear || 'Unknown')
+                        : by === 'status'       ? (p.status       || 'Unknown')
+                        : by === 'semester'     ? (p.semester     || 'Unknown')
+                        : '__all__';
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(p);
+            });
+            return groups;
+        }
+
+        /* ════════════ RENDER ════════════ */
+        function render() {
+            var filtered = applyFilters();
+            updateStats(filtered);
+            var $c = $('#periodListContainer').empty();
+
+            if (filtered.length === 0) {
+                $c.html(`<div class="no-results"><i class="bi bi-calendar-x"></i><div class="fw-bold">No periods found</div><div class="small mt-1">Try adjusting your filters</div></div>`);
+                return;
+            }
+
+            var groupBy = filterState.groupBy;
+            var groups  = groupPeriods(filtered, groupBy);
+            var icons   = { academicYear:'bi-calendar3', status:'bi-circle-fill', semester:'bi-bookmark-fill' };
+
+            if (groupBy === 'none') {
+                $c.append(viewMode === 'table' ? renderTable(filtered) : renderCards(filtered));
+            } else {
+                Object.keys(groups).sort().reverse().forEach(function(key) {
+                    var items   = groups[key];
+                    var groupId = 'grp_' + key.replace(/[^a-zA-Z0-9]/g,'_');
+                    var icon    = icons[groupBy] || 'bi-folder-fill';
+                    var $wrap   = $('<div class="mb-3"></div>');
+                    $wrap.append(`
+                        <div class="group-header" data-target="${groupId}">
+                            <span class="group-name"><i class="bi ${icon}"></i>${key}</span>
+                            <div class="group-meta">
+                                <span>${items.length} period${items.length!==1?'s':''}</span>
+                                <i class="bi bi-chevron-down group-chevron"></i>
+                            </div>
+                        </div>
+                        <div class="collapsible-content group-table-wrapper" id="${groupId}">
+                            ${viewMode === 'table' ? renderTable(items) : renderCards(items)}
+                        </div>
+                    `);
+                    $c.append($wrap);
+                });
+            }
+
+            openAllGroups();
+        }
+
+        function statusBadge(status) {
+            if (status === 'Active')    return `<span class="badge badge-active">Active</span>`;
+            if (status === 'Upcoming')  return `<span class="badge badge-upcoming">Upcoming</span>`;
+            return `<span class="badge badge-completed">Completed</span>`;
+        }
+
+        function renderTable(periods) {
+            var rows = periods.map(function(p) {
+                var activeBadge  = p.isActive
+                    ? '<span class="badge badge-on"><i class="bi bi-check-circle-fill"></i> On</span>'
+                    : '<span class="badge badge-off"><i class="bi bi-x-circle-fill"></i> Off</span>';
+                var currentStar  = p.isCurrent ? '<i class="bi bi-star-fill text-warning ms-1"></i>' : '';
+                var setCurrBtn   = !p.isCurrent
+                    ? `<button class="btn-act set-curr btn-set-current" data-id="${p.evaluationPeriodId}" title="Set as Current"><i class="bi bi-star"></i></button>`
+                    : '';
+                var toggleClass  = p.isActive ? 'toggle-off' : 'toggle-on';
+                var toggleIcon   = p.isActive ? 'bi-toggle-on' : 'bi-toggle-off';
+                var toggleTitle  = p.isActive ? 'Disable' : 'Enable';
+                return `<tr class="${p.isCurrent?'is-current':''}" data-id="${p.evaluationPeriodId}">
+                    <td><strong>${p.periodName}</strong>${currentStar}</td>
+                    <td>${p.academicYear}</td>
+                    <td>${p.semester}</td>
+                    <td style="white-space:nowrap;">${p.startDisplay}</td>
+                    <td style="white-space:nowrap;">${p.endDisplay}</td>
+                    <td>${statusBadge(p.status)}</td>
+                    <td>${activeBadge}</td>
+                    <td>
+                        <button class="btn-act edit btn-edit" data-id="${p.evaluationPeriodId}" title="Edit"><i class="bi bi-pencil-square"></i></button>
+                        ${setCurrBtn}
+                        <button class="btn-act ${toggleClass} btn-toggle-active" data-id="${p.evaluationPeriodId}" title="${toggleTitle}">
+                            <i class="bi ${toggleIcon}"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+            return `<table class="period-table">
+                <thead><tr>
+                    <th>Period Name</th><th>Academic Year</th><th>Semester</th>
+                    <th>Start</th><th>End</th><th>Status</th><th>Active</th>
+                    <th style="width:120px;">Actions</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+        }
+
+        function renderCards(periods) {
+            var cards = periods.map(function(p) {
+                var tagClass = p.status === 'Active' ? 'pc-tag' : p.status === 'Upcoming' ? 'pc-tag' : 'pc-tag';
+                var tagStyle = p.status === 'Active'
+                    ? 'background:#d4edda;color:#155724;'
+                    : p.status === 'Upcoming'
+                    ? 'background:#d1ecf1;color:#0c5460;'
+                    : 'background:#e2e3e5;color:#383d41;';
+                var activeTag = p.isActive
+                    ? '<span class="pc-tag" style="background:#d4edda;color:#155724;">Enabled</span>'
+                    : '<span class="pc-tag" style="background:#f8d7da;color:#721c24;">Disabled</span>';
+                var setCurrBtn = !p.isCurrent
+                    ? `<button class="btn-act set-curr btn-set-current" data-id="${p.evaluationPeriodId}" title="Set Current"><i class="bi bi-star"></i></button>`
+                    : '';
+                var toggleClass = p.isActive ? 'toggle-off' : 'toggle-on';
+                var toggleIcon  = p.isActive ? 'bi-toggle-on' : 'bi-toggle-off';
+                return `<div class="period-card ${p.isCurrent?'is-current':''}" data-id="${p.evaluationPeriodId}">
+                    ${p.isCurrent ? '<div class="current-star"><i class="bi bi-star-fill"></i></div>' : ''}
+                    <div class="pc-name">${p.periodName}</div>
+                    <div class="pc-year">${p.academicYear} &bull; ${p.semester}</div>
+                    <div class="pc-dates"><i class="bi bi-calendar-range" style="color:var(--accent);"></i> ${p.startDisplay} – ${p.endDisplay}</div>
+                    <div class="pc-meta">
+                        <span class="pc-tag" style="${tagStyle}">${p.status}</span>
+                        ${activeTag}
+                    </div>
+                    <div class="pc-actions">
+                        <button class="btn-act edit btn-edit" data-id="${p.evaluationPeriodId}"><i class="bi bi-pencil-square"></i> Edit</button>
+                        ${setCurrBtn}
+                        <button class="btn-act ${toggleClass} btn-toggle-active" data-id="${p.evaluationPeriodId}">
+                            <i class="bi ${toggleIcon}"></i>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            return `<div class="card-grid">${cards}</div>`;
+        }
+
+        /* ════════════ COLLAPSE ════════════ */
+        $(document).on('click', '.group-header', function() {
+            var $content = $('#' + $(this).data('target'));
+            var $chevron = $(this).find('.group-chevron');
+            if (!$content.css('max-height') || $content.css('max-height') === '0px') {
+                $content.css('max-height', $content[0].scrollHeight + 'px');
+                $chevron.removeClass('collapsed');
+            } else {
+                $content.css('max-height', '0');
+                $chevron.addClass('collapsed');
+            }
+        });
+
+        function openAllGroups() {
+            setTimeout(function() {
+                $('.collapsible-content').each(function() {
+                    $(this).css('max-height', $(this)[0].scrollHeight + 50000 + 'px');
+                });
+            }, 50);
+        }
+
+        /* ════════════ FILTER EVENTS ════════════ */
+        var searchTimer;
+        $('#filterSearch').on('input', function() {
+            clearTimeout(searchTimer);
+            var v = $(this).val();
+            searchTimer = setTimeout(function() { filterState.search = v; render(); }, 220);
+        });
+        $('#filterStatus').on('change',   function() { filterState.status   = $(this).val(); render(); });
+        $('#filterSemester').on('change', function() { filterState.semester = $(this).val(); render(); });
+        $('#filterActive').on('change',   function() { filterState.active   = $(this).val(); render(); });
+        $('#filterGroupBy').on('change',  function() { filterState.groupBy  = $(this).val(); render(); });
+
+        $('#btnReset').on('click', function() {
+            filterState = { search: '', status: '', semester: '', active: '', groupBy: 'academicYear' };
+            $('#filterSearch').val('');
+            $('#filterStatus,#filterSemester,#filterActive').val('');
+            $('#filterGroupBy').val('academicYear');
+            render();
+        });
+
+        $('#btnTableView').on('click', function() {
+            viewMode = 'table'; $(this).addClass('active'); $('#btnCardView').removeClass('active'); render();
+        });
+        $('#btnCardView').on('click', function() {
+            viewMode = 'card'; $(this).addClass('active'); $('#btnTableView').removeClass('active'); render();
+        });
+
+        /* ════════════ TOAST / LOADING ════════════ */
+        function showToast(msg, type) {
+            var cls = { success:'bg-success text-white', danger:'bg-danger text-white', warning:'bg-warning text-dark' };
+            $('#toast').removeClass('bg-success bg-danger bg-warning text-white text-dark').addClass(cls[type||'success']);
+            $('#toastMessage').text(msg);
+            new bootstrap.Toast($('#toast')[0], { autohide:true, delay:4500 }).show();
+        }
+        function showLoading(v) { v ? $('#loadingOverlay').addClass('show') : $('#loadingOverlay').removeClass('show'); }
+
+        /* ════════════ CREATE ════════════ */
+        $('#btnCreatePeriod').on('click', function() {
+            $('#periodModalLabel').text('Create Evaluation Period');
+            $('#periodForm')[0].reset();
+            $('#EvaluationPeriodId').val('');
+            periodModal.show();
+        });
+
+        /* ════════════ EDIT ════════════ */
+        $(document).on('click', '.btn-edit', function() {
+            var id = $(this).data('id');
+            showLoading(true);
+            $.get(`/api/EvaluationPeriodsApi/${id}`, function(res) {
+                showLoading(false);
+                if (!res.success) { showToast(res.message, 'danger'); return; }
+                var d = res.data;
+                $('#periodModalLabel').text('Edit Evaluation Period');
                 $('#periodForm')[0].reset();
-                $('#EvaluationPeriodId').val('');
+                $('#EvaluationPeriodId').val(d.evaluationPeriodId);
+                $('#PeriodName').val(d.periodName);
+                $('#AcademicYear').val(d.academicYear);
+                $('#Semester').val(d.semester);
+                $('#StartDate').val(d.startDate.split('T')[0]);
+                $('#EndDate').val(d.endDate.split('T')[0]);
+                $('#Description').val(d.description);
+                $('#Status').val(d.status);
                 periodModal.show();
-            });
+            }).fail(function() { showLoading(false); showToast('Failed to load period.', 'danger'); });
+        });
 
-            // Open modal for edit
-            $(document).on('click', '.btn-edit', function () {
-                var id = $(this).data('id');
-                showLoading(true);
-                $.get(`/api/EvaluationPeriodsApi/${id}`, function (res) {
+        /* ════════════ SAVE ════════════ */
+        $('#savePeriodBtn').on('click', function() {
+            var periodId = $('#EvaluationPeriodId').val();
+            var isEdit   = !!periodId;
+
+            if (!$('#PeriodName').val().trim())  { showToast('Period Name is required', 'danger'); return; }
+            if (!$('#AcademicYear').val().trim()) { showToast('Academic Year is required', 'danger'); return; }
+            if (!$('#Semester').val().trim())     { showToast('Semester is required', 'danger'); return; }
+            if (!$('#StartDate').val())           { showToast('Start Date is required', 'danger'); return; }
+            if (!$('#EndDate').val())             { showToast('End Date is required', 'danger'); return; }
+
+            var payload = {
+                evaluationPeriodId: isEdit ? parseInt(periodId) : 0,
+                periodName:   $('#PeriodName').val().trim(),
+                academicYear: $('#AcademicYear').val().trim(),
+                semester:     $('#Semester').val().trim(),
+                startDate:    $('#StartDate').val(),
+                endDate:      $('#EndDate').val(),
+                description:  $('#Description').val(),
+                status:       $('#Status').val()
+            };
+
+            showLoading(true);
+            $.ajax({
+                url:  isEdit ? `/api/EvaluationPeriodsApi/${periodId}` : '/api/EvaluationPeriodsApi',
+                type: isEdit ? 'PUT' : 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(res) {
                     showLoading(false);
-                    if (res.success) {
-                        $('#periodModalLabel').text('Edit Evaluation Period');
-                        $('#EvaluationPeriodId').val(res.data.evaluationPeriodId);
-                        $('#PeriodName').val(res.data.periodName);
-                        $('#AcademicYear').val(res.data.academicYear);
-                        $('#Semester').val(res.data.semester);
-                        $('#StartDate').val(res.data.startDate.split('T')[0]);
-                        $('#EndDate').val(res.data.endDate.split('T')[0]);
-                        $('#Description').val(res.data.description);
-                        $('#Status').val(res.data.status);
-                        periodModal.show();
-                    } else showToast(res.message, 'bg-danger');
-                }).fail(function () {
-                    showLoading(false);
-                    showToast('Failed to load period', 'bg-danger');
-                });
-            });
-
-            // Save period
-            $('#savePeriodBtn').click(function () {
-                var periodId = $('#EvaluationPeriodId').val();
-                var isEdit = periodId && periodId != '';
-                var data = {
-                    evaluationPeriodId: isEdit ? parseInt(periodId) : 0,
-                    periodName: $('#PeriodName').val(),
-                    academicYear: $('#AcademicYear').val(),
-                    semester: $('#Semester').val(),
-                    startDate: $('#StartDate').val(),
-                    endDate: $('#EndDate').val(),
-                    description: $('#Description').val(),
-                    status: $('#Status').val()
-                };
-                var url = isEdit ? `/api/EvaluationPeriodsApi/${periodId}` : '/api/EvaluationPeriodsApi';
-                var type = isEdit ? 'PUT' : 'POST';
-
-                showLoading(true);
-                $.ajax({
-                    url: url,
-                    type: type,
-                    contentType: 'application/json',
-                    data: JSON.stringify(data),
-                    success: function (res) {
-                        showLoading(false);
-                        if (res.success) {
-                            location.reload();
-                        } else showToast(res.message, 'bg-danger');
-                    },
-                    error: function () {
-                        showLoading(false);
-                        showToast('Failed to save period', 'bg-danger');
-                    }
-                });
-            });
-
-            // Set Current
-            $(document).on('click', '.btn-set-current', function () {
-                var id = $(this).data('id');
-                if (!confirm('Set this period as current?')) return;
-
-                showLoading(true);
-                $.post(`/api/EvaluationPeriodsApi/${id}/SetCurrent`, function (res) {
-                    showLoading(false);
-                    if (res.success) location.reload();
-                    else showToast(res.message, 'bg-danger');
-                }).fail(function() {
-                    showLoading(false);
-                    showToast('Failed to set current period', 'bg-danger');
-                });
-            });
-
-            // Toggle Active
-            $(document).on('click', '.btn-toggle-active', function () {
-                var id = $(this).data('id');
-                showLoading(true);
-                $.post(`/api/EvaluationPeriodsApi/${id}/ToggleActive`, function (res) {
-                    showLoading(false);
-                    if (res.success) location.reload();
-                    else showToast(res.message, 'bg-danger');
-                }).fail(function() {
-                    showLoading(false);
-                    showToast('Failed to toggle active status', 'bg-danger');
-                });
-            });
-
-            // Delete
-            $(document).on('click', '.btn-delete', function () {
-                var id = $(this).data('id');
-                if (!confirm('Are you sure you want to delete this period?')) return;
-
-                showLoading(true);
-                $.ajax({
-                    url: `/api/EvaluationPeriodsApi/${id}`,
-                    type: 'DELETE',
-                    success: function (res) {
-                        showLoading(false);
-                        if (res.success) {
-                            table.row($(`tr[data-id="${id}"]`)).remove().draw();
-                            showToast(res.message);
-                        } else showToast(res.message, 'bg-danger');
-                    },
-                    error: function () {
-                        showLoading(false);
-                        showToast('Failed to delete period', 'bg-danger');
-                    }
-                });
+                    if (!res.success) { showToast(res.message, 'danger'); return; }
+                    /* Reload page after save — periods affect the current-banner and ordering logic */
+                    showToast(res.message, 'success');
+                    periodModal.hide();
+                    setTimeout(function() { location.reload(); }, 900);
+                },
+                error: function() { showLoading(false); showToast('Failed to save period.', 'danger'); }
             });
         });
+
+        /* ════════════ SET CURRENT ════════════ */
+        $(document).on('click', '.btn-set-current', function() {
+            var id = $(this).data('id');
+            var p  = allPeriods.find(x => x.evaluationPeriodId === parseInt(id));
+            if (!confirm(`Set "${p ? p.periodName : 'this period'}" as the current period?`)) return;
+
+            showLoading(true);
+            $.post(`/api/EvaluationPeriodsApi/${id}/SetCurrent`, function(res) {
+                showLoading(false);
+                if (res.success) {
+                    showToast(res.message, 'success');
+                    setTimeout(function() { location.reload(); }, 900);
+                } else {
+                    showToast(res.message, 'danger');
+                }
+            }).fail(function() { showLoading(false); showToast('Failed to set current period.', 'danger'); });
+        });
+
+        /* ════════════ TOGGLE ACTIVE ════════════ */
+        $(document).on('click', '.btn-toggle-active', function() {
+            var id = $(this).data('id');
+            var p  = allPeriods.find(x => x.evaluationPeriodId === parseInt(id));
+            var action = (p && p.isActive) ? 'disable' : 'enable';
+            if (!confirm(`Are you sure you want to ${action} this period?`)) return;
+
+            showLoading(true);
+            $.post(`/api/EvaluationPeriodsApi/${id}/ToggleActive`, function(res) {
+                showLoading(false);
+                if (res.success) {
+                    var idx = allPeriods.findIndex(x => x.evaluationPeriodId === parseInt(id));
+                    if (idx > -1) allPeriods[idx].isActive = res.isActive !== undefined ? res.isActive : !allPeriods[idx].isActive;
+                    render();
+                    showToast(res.message, 'success');
+                } else {
+                    showToast(res.message, 'danger');
+                }
+            }).fail(function() { showLoading(false); showToast('Failed to toggle active status.', 'danger'); });
+        });
+
+        /* ─ Initial render ─ */
+        render();
+    });
     </script>
 }
