@@ -7,9 +7,43 @@
 }
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3><i class="bi bi-person-lines-fill"></i> Evaluations for @ViewBag.TeacherName</h3>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h3 class="mb-0"><i class="bi bi-person-lines-fill"></i> Evaluations for @ViewBag.TeacherName <span id="byTeacherTotalCountBadge" class="badge bg-secondary fs-6">—</span></h3>
         <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-center flex-wrap">
+                <div class="col-auto">
+                    <div class="input-group input-group-sm" style="max-width: 320px;">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" id="byTeacherSearch" class="form-control" placeholder="Search by subject, student, or date..." aria-label="Search evaluations" />
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <span class="small fw-semibold text-muted me-1">Rating:</span>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary by-teacher-rating-btn active" data-rating="all">All</button>
+                        <button type="button" class="btn btn-outline-secondary by-teacher-rating-btn" data-rating="excellent"><i class="bi bi-star-fill text-warning"></i> Excellent</button>
+                        <button type="button" class="btn btn-outline-secondary by-teacher-rating-btn" data-rating="good"><i class="bi bi-star-fill text-info"></i> Good</button>
+                        <button type="button" class="btn btn-outline-secondary by-teacher-rating-btn" data-rating="fair"><i class="bi bi-star-half text-warning"></i> Fair</button>
+                        <button type="button" class="btn btn-outline-secondary by-teacher-rating-btn" data-rating="poor"><i class="bi bi-star text-danger"></i> Poor</button>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <label class="small text-muted me-1">Department:</label>
+                    <select id="byTeacherDepartmentFilter" class="form-select form-select-sm" style="max-width: 180px;">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="button" id="byTeacherClear" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i> Clear</button>
+                </div>
+            </div>
+            <p id="byTeacherSearchInfo" class="small text-muted mb-0 mt-2 d-none">Showing <span id="byTeacherVisibleCount">0</span> of <span id="byTeacherTotalCount">0</span> evaluations</p>
+            <p id="byTeacherNoResults" class="text-muted text-center py-3 small d-none">No evaluations match your search or filters.</p>
+        </div>
     </div>
 
     <div class="row">
@@ -46,6 +80,87 @@
         (function() {
             var teacherId = @parsedTeacherId;
             var container = document.getElementById('evaluationsListContainer');
+            var searchInput = document.getElementById('byTeacherSearch');
+            var searchInfo = document.getElementById('byTeacherSearchInfo');
+            var noResults = document.getElementById('byTeacherNoResults');
+            var visibleSpan = document.getElementById('byTeacherVisibleCount');
+            var totalSpan = document.getElementById('byTeacherTotalCount');
+
+            function applyByTeacherFilters() {
+                var term = (searchInput && searchInput.value ? searchInput.value : '').toLowerCase().trim();
+                var ratingFilter = 'all';
+                var ratingBtns = document.querySelectorAll('.by-teacher-rating-btn.active');
+                if (ratingBtns.length) ratingFilter = (ratingBtns[0].getAttribute('data-rating') || 'all').toLowerCase();
+                var deptSelect = document.getElementById('byTeacherDepartmentFilter');
+                var departmentFilter = (deptSelect && deptSelect.value) ? deptSelect.value.toLowerCase() : '';
+                var items = container.querySelectorAll('.by-teacher-eval-item');
+                var visible = 0;
+                items.forEach(function(el) {
+                    var subject = (el.getAttribute('data-subject') || '').toLowerCase();
+                    var student = (el.getAttribute('data-student') || '').toLowerCase();
+                    var date = (el.getAttribute('data-date') || '').toLowerCase();
+                    var rating = (el.getAttribute('data-rating') || '').toLowerCase();
+                    var dept = (el.getAttribute('data-department') || '').toLowerCase();
+                    var matchSearch = !term || subject.indexOf(term) !== -1 || student.indexOf(term) !== -1 || date.indexOf(term) !== -1;
+                    var matchRating = ratingFilter === 'all' || rating === ratingFilter;
+                    var matchDept = !departmentFilter || dept === departmentFilter;
+                    var show = matchSearch && matchRating && matchDept;
+                    el.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
+                if (totalSpan) totalSpan.textContent = items.length;
+                if (visibleSpan) visibleSpan.textContent = visible;
+                if (searchInfo) searchInfo.classList.toggle('d-none', !term && ratingFilter === 'all' && !departmentFilter);
+                if (noResults) noResults.classList.toggle('d-none', visible > 0);
+                var badgeEl = document.getElementById('byTeacherTotalCountBadge');
+                if (badgeEl) badgeEl.textContent = items.length === 0 ? '—' : items.length + ' evaluation' + (items.length !== 1 ? 's' : '');
+            }
+
+            function populateDepartmentFilter() {
+                var items = container.querySelectorAll('.by-teacher-eval-item');
+                var depts = [];
+                items.forEach(function(el) {
+                    var d = (el.getAttribute('data-department') || '').trim();
+                    if (d && depts.indexOf(d) === -1) depts.push(d);
+                });
+                depts.sort();
+                var sel = document.getElementById('byTeacherDepartmentFilter');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">All</option>';
+                depts.forEach(function(d) {
+                    var opt = document.createElement('option');
+                    opt.value = d;
+                    opt.textContent = d;
+                    sel.appendChild(opt);
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', applyByTeacherFilters);
+                searchInput.addEventListener('keyup', applyByTeacherFilters);
+            }
+            var deptFilterEl = document.getElementById('byTeacherDepartmentFilter');
+            if (deptFilterEl) deptFilterEl.addEventListener('change', applyByTeacherFilters);
+            document.querySelectorAll('.by-teacher-rating-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.by-teacher-rating-btn').forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    applyByTeacherFilters();
+                });
+            });
+            var clearBtn = document.getElementById('byTeacherClear');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    if (searchInput) searchInput.value = '';
+                    document.querySelectorAll('.by-teacher-rating-btn').forEach(function(b) {
+                        b.classList.remove('active');
+                        if ((b.getAttribute('data-rating') || '') === 'all') b.classList.add('active');
+                    });
+                    var sel = document.getElementById('byTeacherDepartmentFilter');
+                    if (sel) sel.value = '';
+                    applyByTeacherFilters();
+                });
+            }
 
             if (!teacherId || teacherId <= 0) {
                 container.innerHTML = '<div class="alert alert-warning">No teacher selected. Please go back and select a teacher.</div>';
@@ -53,11 +168,12 @@
             }
 
             var url = '/TeacherEvaluations/GetEvaluationsByTeacher?teacherId=' + encodeURIComponent(teacherId);
-
             fetch(url)
                 .then(function(res) { return res.text(); })
                 .then(function(html) {
                     container.innerHTML = html;
+                    populateDepartmentFilter();
+                    applyByTeacherFilters();
                 })
                 .catch(function() {
                     container.innerHTML = '<div class="alert alert-danger">Failed to load evaluations.</div>';

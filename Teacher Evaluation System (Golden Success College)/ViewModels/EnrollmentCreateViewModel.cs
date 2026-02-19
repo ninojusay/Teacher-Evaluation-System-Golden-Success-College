@@ -166,6 +166,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.ViewModels
         public string? SubjectName { get; set; }
         public string? TeacherName { get; set; }
         public string? TeacherPicturePath { get; set; }
+        public string? TeacherDepartment { get; set; }
         public string? StudentName { get; set; }
         public bool IsAnonymous { get; set; }
         public DateTime DateEvaluated { get; set; }

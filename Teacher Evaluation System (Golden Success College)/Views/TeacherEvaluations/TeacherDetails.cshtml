@@ -22,10 +22,24 @@
     </div>
 
     <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <strong>Students & Evaluation Status</strong>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <div class="input-group input-group-sm" style="max-width: 280px;">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" id="teacherDetailsSearch" class="form-control" placeholder="Search by student or subject..." aria-label="Search" />
+                </div>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Status filter">
+                    <button type="button" class="btn btn-outline-secondary filter-status-btn active" data-status="all">All</button>
+                    <button type="button" class="btn btn-outline-secondary filter-status-btn" data-status="evaluated">Evaluated</button>
+                    <button type="button" class="btn btn-outline-secondary filter-status-btn" data-status="not-evaluated">Not Evaluated</button>
+                </div>
+                <button type="button" id="teacherDetailsClearFilters" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i> Clear</button>
+            </div>
         </div>
         <div class="card-body">
+            <p id="teacherDetailsSearchInfo" class="small text-muted mb-2 d-none">Showing <span id="teacherDetailsVisibleCount">0</span> of <span id="teacherDetailsTotalCount">0</span> students</p>
+            <p id="teacherDetailsNoResults" class="text-muted text-center py-3 d-none">No students match your search or filters.</p>
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -38,7 +52,10 @@
                 <tbody>
                     @foreach (var s in Model.StudentStatuses)
                     {
-                        <tr>
+                        <tr class="teacher-details-row"
+                            data-student-name="@s.StudentName.ToLower()"
+                            data-subject-name="@s.SubjectName.ToLower()"
+                            data-status="@(s.HasEvaluated ? "evaluated" : "not-evaluated")">
                             <td>@s.StudentName</td>
                             <td>@s.SubjectName</td>
                             <td>
@@ -68,3 +85,68 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var searchInput = document.getElementById('teacherDetailsSearch');
+            var rows = document.querySelectorAll('.teacher-details-row');
+            var statusBtns = document.querySelectorAll('.filter-status-btn');
+            var clearBtn = document.getElementById('teacherDetailsClearFilters');
+            var searchInfo = document.getElementById('teacherDetailsSearchInfo');
+            var noResults = document.getElementById('teacherDetailsNoResults');
+            var visibleSpan = document.getElementById('teacherDetailsVisibleCount');
+            var totalSpan = document.getElementById('teacherDetailsTotalCount');
+
+            var currentStatusFilter = 'all';
+
+            function applyTeacherDetailsFilters() {
+                var term = (searchInput.value || '').toLowerCase().trim();
+                var visible = 0;
+                rows.forEach(function (tr) {
+                    var student = (tr.getAttribute('data-student-name') || '').toLowerCase();
+                    var subject = (tr.getAttribute('data-subject-name') || '').toLowerCase();
+                    var status = tr.getAttribute('data-status') || '';
+                    var matchSearch = !term || student.indexOf(term) !== -1 || subject.indexOf(term) !== -1;
+                    var matchStatus = currentStatusFilter === 'all' ||
+                        (currentStatusFilter === 'evaluated' && status === 'evaluated') ||
+                        (currentStatusFilter === 'not-evaluated' && status === 'not-evaluated');
+                    var show = matchSearch && matchStatus;
+                    tr.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
+                totalSpan.textContent = rows.length;
+                visibleSpan.textContent = visible;
+                if (term || currentStatusFilter !== 'all') {
+                    searchInfo.classList.remove('d-none');
+                    noResults.classList.toggle('d-none', visible > 0);
+                } else {
+                    searchInfo.classList.add('d-none');
+                    noResults.classList.add('d-none');
+                }
+            }
+
+            searchInput.addEventListener('input', function () { applyTeacherDetailsFilters(); });
+            searchInput.addEventListener('keyup', function () { applyTeacherDetailsFilters(); });
+
+            statusBtns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    statusBtns.forEach(function (b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    currentStatusFilter = this.getAttribute('data-status') || 'all';
+                    applyTeacherDetailsFilters();
+                });
+            });
+
+            clearBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                statusBtns.forEach(function (b) {
+                    b.classList.remove('active');
+                    if ((b.getAttribute('data-status') || '') === 'all') b.classList.add('active');
+                });
+                currentStatusFilter = 'all';
+                applyTeacherDetailsFilters();
+            });
+        });
+    </script>
+}

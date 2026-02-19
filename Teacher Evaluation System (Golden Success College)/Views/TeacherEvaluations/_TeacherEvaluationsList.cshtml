@@ -1,19 +1,33 @@
 @model IEnumerable<Teacher_Evaluation_System__Golden_Success_College_.ViewModels.EvaluationListItemViewModel>
-
-<div class="list-group">
+@{
+    string RatingBand(decimal avg) => avg >= 3.2m ? "excellent" : avg >= 2.4m ? "good" : avg >= 1.2m ? "fair" : "poor";
+}
+<div class="list-group" id="byTeacherListGroup">
     @foreach (var eval in Model)
     {
-        <div class="list-group-item d-flex justify-content-between align-items-start">
+        var dateStr = eval.DateEvaluated.ToString("MMM dd, yyyy - hh:mm tt");
+        var rating = RatingBand((decimal)eval.AverageScore);
+        var deptAttr = eval.TeacherDepartment ?? "";
+        <div class="list-group-item by-teacher-eval-item d-flex justify-content-between align-items-start"
+             data-subject="@(eval.SubjectName ?? "")"
+             data-student="@(eval.StudentName ?? "")"
+             data-date="@dateStr"
+             data-score="@eval.AverageScore.ToString("F2")"
+             data-rating="@rating"
+             data-department="@deptAttr">
             <div>
                 <div class="fw-bold">@eval.SubjectName</div>
-                <div class="small text-muted">@eval.StudentName - @eval.DateEvaluated.ToString("MMM dd, yyyy - hh:mm tt")</div>
-            </div>
-            <div class="text-end">
-                <span class="badge bg-primary me-2">@eval.AverageScore.ToString("F2") / 4.00</span>
-                <a asp-action="Details" asp-route-id="@eval.EvaluationId" class="btn btn-sm btn-info text-white me-1">
-                    <i class="bi bi-eye"></i> Details
-                </a>
-            </div>
+                <div class="small text-muted">@eval.StudentName - @dateStr @if (!string.IsNullOrEmpty(deptAttr)) {
+                <span class="badge bg-light text-dark">@deptAttr</span>
+            }
+</div>
         </div>
-    }
+        <div class="text-end">
+            <span class="badge bg-primary me-2">@eval.AverageScore.ToString("F2") / 4.00</span>
+            <a asp-action="Details" asp-route-id="@eval.EvaluationId" class="btn btn-sm btn-info text-white me-1">
+                <i class="bi bi-eye"></i> Details
+            </a>
+        </div>
+    </div>
+        }
 </div>

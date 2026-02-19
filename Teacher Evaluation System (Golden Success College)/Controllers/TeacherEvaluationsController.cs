@@ -108,6 +108,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                     TeacherPicturePath = string.IsNullOrEmpty(e.Teacher.PicturePath)
                         ? "/images/default-teacher.png"
                         : e.Teacher.PicturePath,
+                    TeacherDepartment = e.Teacher.Department,
                     StudentName = e.IsAnonymous && !isAdmin ? "Anonymous" : e.Student.FullName,
                     IsAnonymous = e.IsAnonymous,
                     DateEvaluated = e.DateEvaluated,
@@ -150,6 +151,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                     TeacherId = e.TeacherId,
                     TeacherName = e.Teacher.FullName,
                     TeacherPicturePath = string.IsNullOrEmpty(e.Teacher.PicturePath) ? "/images/default-teacher.png" : e.Teacher.PicturePath,
+                    TeacherDepartment = e.Teacher.Department,
                     StudentName = e.IsAnonymous && !isAdmin ? "Anonymous" : e.Student.FullName,
                     IsAnonymous = e.IsAnonymous,
                     DateEvaluated = e.DateEvaluated,
