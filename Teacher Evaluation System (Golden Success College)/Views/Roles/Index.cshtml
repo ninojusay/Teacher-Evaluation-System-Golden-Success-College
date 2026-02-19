@@ -5,9 +5,116 @@
     Layout = "_Layoutadmin";
 }
 
-@* ═══════════════════════════════════════════════════
- 
-   ═══════════════════════════════════════════════════ *@
+
+<style>
+    :root {
+        --primary: #1e3a5f;
+        --accent: #2e86de;
+        --surface: #ffffff;
+        --surface-2: #f4f7fb;
+        --border: #dce3ee;
+        --text-muted: #6b7c99;
+        --shadow: 0 2px 12px rgba(30,58,95,0.08);
+        --radius: 10px;
+    }
+
+    body {
+        background: var(--surface-2);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff;
+        border-radius: var(--radius);
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(30,58,95,0.2);
+    }
+
+        .page-header h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -.3px;
+            /* Override the original h1 border-bottom for this context */
+            border-bottom: none !important;
+            padding-bottom: 0 !important;
+            color: #fff !important;
+        }
+
+        .page-header .subtitle {
+            font-size: .88rem;
+            opacity: .75;
+            margin-top: 3px;
+        }
+
+    .stats-bar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px 20px;
+        flex: 1 1 130px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+        .stat-card .stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .stat-card .stat-label {
+            font-size: .75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+    @@media (max-width: 768px) {
+        .page-header {
+            padding: 16px 18px;
+        }
+
+            .page-header h1 {
+                font-size: 1.3rem !important;
+            }
+
+        .stats-bar {
+            gap: 8px;
+        }
+
+        .stat-card {
+            flex: 1 1 calc(50% - 8px);
+            padding: 12px 14px;
+        }
+
+            .stat-card .stat-value {
+                font-size: 1.3rem;
+            }
+    }
+
+    @@media (max-width: 480px) {
+        .stat-card {
+            flex: 1 1 100%;
+        }
+    }
+</style>
+
+@* ══════════════════════════════════════════════════════
+   ORIGINAL STYLES — UNTOUCHED
+   ══════════════════════════════════════════════════════ *@
 <style>
     /* ── Page title ── */
     h1 {
@@ -238,17 +345,30 @@
     }
 </style>
 
-@* ═══════════════════════════════════════════════════
-   ORIGINAL CODE — NOT MODIFIED
-   ═══════════════════════════════════════════════════ *@
-
-<h1>Roles</h1>
-
-<div class="mb-3">
-    <button class="btn btn-primary" id="btnCreateRole">
-        <i class="bi bi-plus-circle"></i> Create Role
+@* ══════════════════════════════════
+   ADDED: Page Header
+   ══════════════════════════════════ *@
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+        <h1><i class="bi bi-shield-fill me-2"></i>Roles</h1>
+        <div class="subtitle">Manage system roles and permissions</div>
+    </div>
+    <button class="btn btn-light fw-bold px-4" id="btnCreateRole" style="border-radius:8px;">
+        <i class="bi bi-plus-circle me-1"></i> Create Role
     </button>
 </div>
+
+@* ADDED: Stats Bar *@
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="stat-value">@Model.Count()</div>
+        <div class="stat-label">Total Roles</div>
+    </div>
+</div>
+
+@* ══════════════════════════════════════════════════════
+   ORIGINAL CODE — NOT MODIFIED
+   ══════════════════════════════════════════════════════ *@
 
 <!-- Loading overlay -->
 <div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:1050; text-align:center;">

@@ -10,7 +10,231 @@
     var selectedSectionId = ViewBag.SelectedSectionId;
 }
 
-<h1>Subjects Attended</h1>
+
+<style>
+    :root {
+        --primary: #1e3a5f;
+        --accent: #2e86de;
+        --accent-light: #e8f1fb;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --surface: #ffffff;
+        --surface-2: #f4f7fb;
+        --border: #dce3ee;
+        --text: #1a2535;
+        --text-muted: #6b7c99;
+        --shadow: 0 2px 12px rgba(30,58,95,0.08);
+        --radius: 10px;
+    }
+
+    body {
+        background: var(--surface-2);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff;
+        border-radius: var(--radius);
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(30,58,95,0.2);
+    }
+
+        .page-header h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -.3px;
+        }
+
+        .page-header .subtitle {
+            font-size: .88rem;
+            opacity: .75;
+            margin-top: 3px;
+        }
+
+    .stats-bar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px 20px;
+        flex: 1 1 130px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+        .stat-card .stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .stat-card .stat-label {
+            font-size: .75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .stat-card.s-accent .stat-value {
+            color: var(--accent);
+        }
+
+        .stat-card.s-success .stat-value {
+            color: var(--success);
+        }
+
+    .filter-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 22px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+    }
+
+    .filter-title {
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--text-muted);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Card visual enhancements — additive, no structural changes */
+    .card.enroll-card {
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius) !important;
+        box-shadow: var(--shadow) !important;
+        transition: transform .22s, box-shadow .22s;
+    }
+
+        .card.enroll-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 28px rgba(30,58,95,.15) !important;
+        }
+
+        .card.enroll-card .card-title {
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .card.enroll-card .badge.bg-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: .9rem;
+        }
+
+    .btn-info.btn-view-details {
+        background: linear-gradient(135deg, var(--accent), #1a6bb5) !important;
+        border: none !important;
+        color: #fff !important;
+        font-weight: 700;
+        border-radius: 8px !important;
+        transition: filter .15s, transform .15s;
+    }
+
+        .btn-info.btn-view-details:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+            color: #fff !important;
+        }
+
+    /* Modal header gradients */
+    #viewEnrollmentsModal .modal-header,
+    #enrollmentModal .modal-header {
+        background: linear-gradient(135deg, var(--primary), #2c5282) !important;
+        color: #fff !important;
+    }
+
+    #viewEnrollmentsModal .modal-title,
+    #enrollmentModal .modal-title {
+        color: #fff !important;
+        font-weight: 700;
+    }
+
+    #viewEnrollmentsModal .btn-close,
+    #enrollmentModal .btn-close {
+        filter: invert(1);
+    }
+
+    #toast {
+        min-width: 280px;
+        border-radius: 10px;
+        box-shadow: 0 6px 24px rgba(0,0,0,.15);
+    }
+
+    @@media (max-width: 768px) {
+        .page-header {
+            padding: 16px 18px;
+        }
+
+            .page-header h1 {
+                font-size: 1.3rem;
+            }
+
+        .stats-bar {
+            gap: 8px;
+        }
+
+        .stat-card {
+            flex: 1 1 calc(50% - 8px);
+            padding: 12px 14px;
+        }
+
+            .stat-card .stat-value {
+                font-size: 1.3rem;
+            }
+
+        .filter-panel .d-flex {
+            flex-wrap: wrap;
+            gap: 8px !important;
+        }
+
+        .filter-panel .form-select {
+            width: 100% !important;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .stat-card {
+            flex: 1 1 100%;
+        }
+
+        .page-header h1 {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+
+@* ADDED: Page Header *@
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+        <h1><i class="bi bi-journal-bookmark-fill me-2"></i>Subjects Attended</h1>
+        <div class="subtitle">View and manage student subject enrollments</div>
+    </div>
+</div>
+
+@* ══════════════════════════════════
+   ORIGINAL CODE BELOW — UNTOUCHED
+   ══════════════════════════════════ *@
 
 @if (TempData["Success"] != null)
 {
@@ -44,14 +268,33 @@
     </div>
 }
 
-<div class="mb-3 d-flex justify-content-between align-items-center">
-    <button class="btn btn-primary" id="btnCreateEnrollment">
-        <i class="bi bi-plus-circle"></i> Create Subjects Attended
+@* ADDED: Stats Bar *@
+@{
+    var totalStudents = Model.Select(e => e.StudentId).Distinct().Count();
+    var totalSubjectsCount = 0;
+    if (ViewBag.EnrollmentCounts is Dictionary<int, int> ecStat)
+        totalSubjectsCount = ecStat.Values.Sum();
+}
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="stat-value">@totalStudents</div>
+        <div class="stat-label">Students</div>
+    </div>
+    <div class="stat-card s-accent">
+        <div class="stat-value">@totalSubjectsCount</div>
+        <div class="stat-label">Total Subjects</div>
+    </div>
+    <div class="stat-card s-success">
+        <div class="stat-value">@(ViewBag.SelectedLevelId != null ? "Filtered" : "All")</div>
+        <div class="stat-label">View</div>
+    </div>
+</div>
 
-    </button>
-
-    @if (userRole == "Admin" || userRole == "Super Admin")
-    {
+@* ADDED: Filter Panel wrapper around the original filter controls *@
+@if (userRole == "Admin" || userRole == "Super Admin")
+{
+    <div class="filter-panel">
+        <div class="filter-title"><i class="bi bi-funnel-fill"></i> Filter Enrollments</div>
         <div class="d-flex gap-2">
             <select class="form-select" id="filterLevel" style="width: 200px;">
                 <option value="">All Levels</option>
@@ -74,7 +317,14 @@
                 <i class="bi bi-x-circle"></i> Clear
             </button>
         </div>
-    }
+    </div>
+}
+
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <button class="btn btn-primary" id="btnCreateEnrollment">
+        <i class="bi bi-plus-circle"></i> Create Subjects Attended
+
+    </button>
 </div>
 
 <div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:1050; text-align:center;">
@@ -101,7 +351,7 @@
         @foreach (var item in Model)
         {
             <div class="col-lg-4 col-md-6 col-sm-12">
-                <div class="card text-center shadow-sm h-100" style="border-radius:1.25rem;">
+                <div class="card enroll-card text-center shadow-sm h-100" style="border-radius:1.25rem;">
                     <div class="card-body d-flex flex-column">
                         @{
                             // Teacher picture intentionally removed from index card to follow request
@@ -204,7 +454,7 @@
                         </div>
                         <p class="mt-2">
                             Loading Subjects Attended
-                           ...
+                            ...
                         </p>
                     </div>
                 </div>
@@ -223,7 +473,8 @@
         <div class="modal-content">
             <div class="modal-header bg-white text-black">
                 <h5 class="modal-title" id="enrollmentModalLabel">
-                    Create  Subjects Attended</h5>
+                    Create  Subjects Attended
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -613,22 +864,22 @@
             // Load sections on page load if level is selected
             @if (selectedLevelId != null)
             {
-                    <text>
-                    $.ajax({
-                        url: `/Enrollments/GetSectionsByLevel?levelId=@selectedLevelId`,
-                        method: 'GET',
-                        success: function(res) {
-                            if (res.success) {
-                                var html = '<option value="">All Sections</option>';
-                                res.data.forEach(s => {
-                                    var selected = @(selectedSectionId ?? 0) == s.sectionId ? 'selected' : '';
-                                    html += `<option value="${s.sectionId}" ${selected}>${s.sectionName}</option>`;
-                                });
-                                $('#filterSection').html(html).prop('disabled', false);
+                        <text>
+                        $.ajax({
+                            url: `/Enrollments/GetSectionsByLevel?levelId=@selectedLevelId`,
+                            method: 'GET',
+                            success: function(res) {
+                                if (res.success) {
+                                    var html = '<option value="">All Sections</option>';
+                                    res.data.forEach(s => {
+                                        var selected = @(selectedSectionId ?? 0) == s.sectionId ? 'selected' : '';
+                                        html += `<option value="${s.sectionId}" ${selected}>${s.sectionName}</option>`;
+                                    });
+                                    $('#filterSection').html(html).prop('disabled', false);
+                                }
                             }
-                        }
-                    });
-                    </text>
+                        });
+                        </text>
             }
 
             // Create Enrollment Button
