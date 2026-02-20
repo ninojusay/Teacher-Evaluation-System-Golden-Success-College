@@ -14,15 +14,15 @@
             @* REPLACE WITH THIS *@
             @if (User.IsInRole("Student"))
             {
-                <a asp-action="MyEvaluations" class="btn btn-sm btn-secondary">
+                <button onclick="history.back()" class="btn btn-sm btn-secondary">
                     <i class="bi bi-arrow-left"></i> Back
-                </a>
+                </button>
             }
             else
             {
-                <a asp-action="Index" class="btn btn-sm btn-secondary">
+                <button onclick="history.back()" class="btn btn-sm btn-secondary">
                     <i class="bi bi-arrow-left"></i> Back
-                </a>
+                </button>
             }
         </div>
     </div>

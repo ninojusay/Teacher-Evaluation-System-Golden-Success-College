@@ -47,22 +47,26 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 .ToListAsync();
 
             var evaluated = await _context.Evaluation
+                 .Include(e => e.Scores)
                 .Where(e => e.TeacherId == teacherId && e.EvaluationPeriodId == periodId)
                 .ToListAsync();
 
             var statuses = enrollments
-                .GroupBy(e => e.Student)
-                .SelectMany(g => g.Select(en => new ViewModels.TeacherStudentStatusViewModel
-                {
-                    StudentId = en.StudentId,
-                    StudentName = en.Student.FullName,
-                    SubjectId = en.SubjectId,
-                    SubjectName = en.Subject.SubjectCode + " - " + en.Subject.SubjectName,
-                    HasEvaluated = evaluated.Any(ev => ev.StudentId == en.StudentId && ev.SubjectId == en.SubjectId),
-                    EvaluationId = evaluated.FirstOrDefault(ev => ev.StudentId == en.StudentId && ev.SubjectId == en.SubjectId)?.EvaluationId,
-                    IsAnonymous = evaluated.FirstOrDefault(ev => ev.StudentId == en.StudentId && ev.SubjectId == en.SubjectId)?.IsAnonymous ?? false
-                }))
-                .ToList();
+      .GroupBy(e => e.Student)
+      .SelectMany(g => g.Select(en => new ViewModels.TeacherStudentStatusViewModel
+      {
+          StudentId = en.StudentId,
+          StudentName = en.Student.FullName,
+          SubjectId = en.SubjectId,
+          SubjectName = en.Subject.SubjectCode + " - " + en.Subject.SubjectName,
+          HasEvaluated = evaluated.Any(ev => ev.StudentId == en.StudentId && ev.SubjectId == en.SubjectId),
+          EvaluationId = evaluated.FirstOrDefault(ev => ev.StudentId == en.StudentId && ev.SubjectId == en.SubjectId)?.EvaluationId,
+          IsAnonymous = evaluated.FirstOrDefault(ev => ev.StudentId == en.StudentId && ev.SubjectId == en.SubjectId)?.IsAnonymous ?? false,
+          AverageScore = evaluated.FirstOrDefault(ev => ev.StudentId == en.StudentId && ev.SubjectId == en.SubjectId)?.Scores?.Any() == true
+              ? evaluated.FirstOrDefault(ev => ev.StudentId == en.StudentId && ev.SubjectId == en.SubjectId).Scores.Average(s => s.ScoreValue)
+              : (double?)null,
+      }))
+      .ToList();
 
             var vm = new ViewModels.TeacherDetailsViewModel
             {

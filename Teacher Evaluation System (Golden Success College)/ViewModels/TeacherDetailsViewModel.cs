@@ -11,6 +11,8 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.ViewModels
         public bool HasEvaluated { get; set; }
         public int? EvaluationId { get; set; }
         public bool IsAnonymous { get; set; }
+        public double? AverageScore { get; set; }
+        public DateTime? SubmittedAt { get; set; }
     }
 
     public class TeacherDetailsViewModel

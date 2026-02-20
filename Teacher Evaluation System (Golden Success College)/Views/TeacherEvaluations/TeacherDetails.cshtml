@@ -5,6 +5,210 @@
     Layout = "_Layoutadmin";
 }
 
+@* ══════════════════════════════════
+   ADDED: Design system styles only
+   ══════════════════════════════════ *@
+<style>
+    :root {
+        --primary: #1e3a5f;
+        --accent: #2e86de;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --surface: #ffffff;
+        --surface-2: #f4f7fb;
+        --border: #dce3ee;
+        --text-muted: #6b7c99;
+        --shadow: 0 2px 12px rgba(30,58,95,0.08);
+        --radius: 10px;
+    }
+
+    body {
+        background: var(--surface-2);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+        color: #fff;
+        border-radius: var(--radius);
+        padding: 22px 28px;
+        margin-bottom: 22px;
+        box-shadow: 0 4px 20px rgba(30,58,95,0.2);
+    }
+
+        .page-header .ph-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .page-header .ph-sub {
+            font-size: .85rem;
+            opacity: .75;
+            margin-top: 3px;
+        }
+
+        .page-header .ph-meta {
+            font-size: .78rem;
+            opacity: .65;
+            margin-top: 5px;
+            letter-spacing: .01em;
+        }
+
+    .stats-bar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 13px 18px;
+        flex: 1 1 120px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+        .stat-card .sv {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .stat-card .sl {
+            font-size: .72rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .stat-card.s-success .sv {
+            color: var(--success);
+        }
+
+        .stat-card.s-warning .sv {
+            color: var(--warning);
+        }
+
+        .stat-card.s-accent .sv {
+            color: var(--accent);
+        }
+
+    /* Back button in header */
+    .btn-back {
+        background: rgba(255,255,255,.15) !important;
+        border: 1.5px solid rgba(255,255,255,.4) !important;
+        color: #fff !important;
+        font-weight: 600;
+        border-radius: 8px !important;
+        transition: background .15s;
+    }
+
+        .btn-back:hover {
+            background: rgba(255,255,255,.25) !important;
+            color: #fff !important;
+        }
+
+    /* Table horizontal scroll on mobile */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+        .table-responsive table {
+            min-width: 560px;
+        }
+
+    @@media (max-width: 768px) {
+        .page-header {
+            padding: 16px 18px;
+        }
+
+            .page-header .ph-name {
+                font-size: 1.2rem;
+            }
+
+        .stats-bar {
+            gap: 8px;
+        }
+
+        .stat-card {
+            flex: 1 1 calc(50% - 8px);
+        }
+
+            .stat-card .sv {
+                font-size: 1.3rem;
+            }
+    }
+
+    @@media (max-width: 480px) {
+        .stat-card {
+            flex: 1 1 100%;
+        }
+
+        .page-header .ph-name {
+            font-size: 1.05rem;
+        }
+    }
+</style>
+
+@* ADDED: Page Header + Stats Bar *@
+@{
+    var evaluated = Model.StudentStatuses.Count(s => s.HasEvaluated);
+    var notEvaluated = Model.StudentStatuses.Count(s => !s.HasEvaluated);
+    var subjectCount = Model.StudentStatuses.Select(s => s.SubjectName).Distinct().Count();
+    var avgScore = Model.StudentStatuses
+                            .Where(s => s.HasEvaluated && s.AverageScore.HasValue)
+                            .Select(s => (decimal)s.AverageScore!.Value)
+                            .DefaultIfEmpty(0m).Average();
+}
+
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+        <div class="ph-name"><i class="bi bi-person-lines-fill me-2"></i>@Model.TeacherName</div>
+        <div class="ph-sub">@subjectCount subject@(subjectCount != 1 ? "s" : "") &bull; Teacher Details &amp; Evaluation Status</div>
+        <div class="ph-meta">
+            <i class="bi bi-calendar3"></i> <span id="phDate"></span>
+            &nbsp;&middot;&nbsp;
+            <i class="bi bi-clock"></i> <span id="phTime"></span>
+            @if (ViewBag.Department != null)
+            {
+                <span>&nbsp;&middot;&nbsp;<i class="bi bi-building"></i> @ViewBag.Department</span>
+            }
+        </div>
+    </div>
+    <a asp-action="Index" class="btn btn-back"><i class="bi bi-arrow-left me-1"></i> Back</a>
+</div>
+
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="sv">@Model.StudentStatuses.Count</div>
+        <div class="sl">Total Students</div>
+    </div>
+    <div class="stat-card s-success">
+        <div class="sv">@evaluated</div>
+        <div class="sl">Evaluated</div>
+    </div>
+    <div class="stat-card s-warning">
+        <div class="sv">@notEvaluated</div>
+        <div class="sl">Not Evaluated</div>
+    </div>
+    <div class="stat-card s-accent">
+        <div class="sv">@(evaluated > 0 ? avgScore.ToString("F2") : "—")</div>
+        <div class="sl">Avg Score</div>
+    </div>
+</div>
+
+@* ══════════════════════════════════════════════════════
+   ORIGINAL CODE — NOT MODIFIED
+   ══════════════════════════════════════════════════════ *@
+
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3><i class="bi bi-person-lines-fill"></i> @Model.TeacherName</h3>
@@ -23,7 +227,21 @@
 
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <strong>Students & Evaluation Status</strong>
+            <div>
+                <strong>
+                    Students & Evaluation Status
+                    <span id="totalCountBadge" class="badge bg-secondary ms-1">@Model.StudentStatuses.Count</span>
+                </strong>
+                <div class="text-muted small mt-1" style="font-size:.75rem;">
+                    <i class="bi bi-calendar3"></i> <span id="cardDate"></span>
+                    &nbsp;&middot;&nbsp;
+                    <i class="bi bi-clock"></i> <span id="cardTime"></span>
+                    @if (ViewBag.Department != null)
+                    {
+                        <span>&nbsp;&middot;&nbsp;<i class="bi bi-building"></i> @ViewBag.Department</span>
+                    }
+                </div>
+            </div>
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <div class="input-group input-group-sm" style="max-width: 280px;">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -34,71 +252,154 @@
                     <button type="button" class="btn btn-outline-secondary filter-status-btn" data-status="evaluated">Evaluated</button>
                     <button type="button" class="btn btn-outline-secondary filter-status-btn" data-status="not-evaluated">Not Evaluated</button>
                 </div>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Rating filter">
+                    <button type="button" class="btn btn-outline-secondary filter-rating-btn active" data-rating="all">All Ratings</button>
+                    <button type="button" class="btn btn-outline-success filter-rating-btn" data-rating="excellent">Excellent</button>
+                    <button type="button" class="btn btn-outline-primary filter-rating-btn" data-rating="good">Good</button>
+                    <button type="button" class="btn btn-outline-warning filter-rating-btn" data-rating="fair">Fair</button>
+                    <button type="button" class="btn btn-outline-danger filter-rating-btn" data-rating="poor">Poor</button>
+                </div>
                 <button type="button" id="teacherDetailsClearFilters" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-clockwise"></i> Clear</button>
             </div>
         </div>
         <div class="card-body">
             <p id="teacherDetailsSearchInfo" class="small text-muted mb-2 d-none">Showing <span id="teacherDetailsVisibleCount">0</span> of <span id="teacherDetailsTotalCount">0</span> students</p>
             <p id="teacherDetailsNoResults" class="text-muted text-center py-3 d-none">No students match your search or filters.</p>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Subject</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var s in Model.StudentStatuses)
-                    {
-                        <tr class="teacher-details-row"
-                            data-student-name="@s.StudentName.ToLower()"
-                            data-subject-name="@s.SubjectName.ToLower()"
-                            data-status="@(s.HasEvaluated ? "evaluated" : "not-evaluated")">
-                            <td>@s.StudentName</td>
-                            <td>@s.SubjectName</td>
-                            <td>
-                                @if (s.HasEvaluated)
-                                {
-                                    <span class="badge bg-success">Evaluated</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning text-dark">Not Evaluated</span>
-                                }
-                            </td>
-                            <td>
-                                @if (s.HasEvaluated && s.EvaluationId.HasValue)
-                                {
-                                    <a asp-action="Details" asp-route-id="@s.EvaluationId.Value" class="btn btn-sm btn-info"><i class="bi bi-eye"></i> View</a>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">-</span>
-                                }
-                            </td>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Subject</th>
+                            <th>Status</th>
+                            <th class="text-center">Overall Average</th>
+                            <th>Submitted</th>
+                            <th>Action</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in Model.StudentStatuses)
+                        {
+                            var avgVal = s.AverageScore.HasValue ? (decimal)s.AverageScore.Value : 0m;
+                            var ratingAttr = !s.HasEvaluated ? "none" :
+                            avgVal >= 3.2m ? "excellent" :
+                            avgVal >= 2.4m ? "good" :
+                            avgVal >= 1.2m ? "fair" : "poor";
+                            <tr class="teacher-details-row"
+                                data-student-name="@(s.IsAnonymous ? "anonymous" : s.StudentName.ToLower())"
+                                data-subject-name="@s.SubjectName.ToLower()"
+                                data-status="@(s.HasEvaluated ? "evaluated" : "not-evaluated")"
+                                data-rating="@ratingAttr">
+                                <td>
+                                    @if (s.IsAnonymous)
+                                    {
+                                        <span class="text-muted fst-italic">
+                                            <i class="bi bi-incognito text-warning"></i> Anonymous
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        @s.StudentName
+                                    }
+                                </td>
+                                <td>@s.SubjectName</td>
+                                <td>
+                                    @if (s.HasEvaluated)
+                                    {
+                                        <span class="badge bg-success">Evaluated</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Not Evaluated</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (s.HasEvaluated && s.AverageScore.HasValue)
+                                    {
+                                        var avg = (decimal)s.AverageScore.Value;
+                                        var band = avg >= 3.2m ? "success" : avg >= 2.4m ? "primary" : avg >= 1.2m ? "warning" : "danger";
+                                        var label = avg >= 3.2m ? "Excellent" : avg >= 2.4m ? "Good" : avg >= 1.2m ? "Fair" : "Poor";
+                                        <span class="badge bg-@band">@s.AverageScore.Value.ToString("F2") / 4.00</span>
+                                        <small class="d-block text-muted">@label</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (s.HasEvaluated && s.EvaluationId.HasValue)
+                                    {
+                                        @if (s.SubmittedAt.HasValue)
+                                        {
+                                            <span class="small">
+                                                <i class="bi bi-calendar3 text-muted me-1"></i>@s.SubmittedAt.Value.ToString("MMM dd, yyyy")<br />
+                                                <i class="bi bi-clock text-muted me-1"></i><span class="text-muted">@s.SubmittedAt.Value.ToString("hh:mm tt")</span>
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">—</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (s.HasEvaluated && s.EvaluationId.HasValue)
+                                    {
+                                        <a asp-action="Details" asp-route-id="@s.EvaluationId.Value" class="btn btn-sm btn-info text-white">
+                                            <i class="bi bi-eye"></i> View
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
+        // Live date & time in page header
+        (function () {
+            function pad(n) { return String(n).padStart(2, '0'); }
+            function updateClock() {
+                var now = new Date();
+                var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                var dateStr = months[now.getMonth()] + ' ' + String(now.getDate()).padStart(2,'0') + ', ' + now.getFullYear();
+                var h = now.getHours(), ampm = h >= 12 ? 'PM' : 'AM';
+                h = h % 12 || 12;
+                var timeStr = h + ':' + pad(now.getMinutes()) + ' ' + ampm;
+                ['phDate','cardDate'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent=dateStr; });
+                ['phTime','cardTime'].forEach(function(id){ var el=document.getElementById(id); if(el) el.textContent=timeStr; });
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+        })();
         document.addEventListener('DOMContentLoaded', function () {
             var searchInput = document.getElementById('teacherDetailsSearch');
             var rows = document.querySelectorAll('.teacher-details-row');
             var statusBtns = document.querySelectorAll('.filter-status-btn');
+            var ratingBtns = document.querySelectorAll('.filter-rating-btn');
             var clearBtn = document.getElementById('teacherDetailsClearFilters');
             var searchInfo = document.getElementById('teacherDetailsSearchInfo');
             var noResults = document.getElementById('teacherDetailsNoResults');
             var visibleSpan = document.getElementById('teacherDetailsVisibleCount');
             var totalSpan = document.getElementById('teacherDetailsTotalCount');
+            var totalCountBadge = document.getElementById('totalCountBadge');
 
             var currentStatusFilter = 'all';
+            var currentRatingFilter = 'all';
 
             function applyTeacherDetailsFilters() {
                 var term = (searchInput.value || '').toLowerCase().trim();
@@ -107,17 +408,19 @@
                     var student = (tr.getAttribute('data-student-name') || '').toLowerCase();
                     var subject = (tr.getAttribute('data-subject-name') || '').toLowerCase();
                     var status = tr.getAttribute('data-status') || '';
+                    var rating = tr.getAttribute('data-rating') || '';
                     var matchSearch = !term || student.indexOf(term) !== -1 || subject.indexOf(term) !== -1;
-                    var matchStatus = currentStatusFilter === 'all' ||
-                        (currentStatusFilter === 'evaluated' && status === 'evaluated') ||
-                        (currentStatusFilter === 'not-evaluated' && status === 'not-evaluated');
-                    var show = matchSearch && matchStatus;
+                    var matchStatus = currentStatusFilter === 'all' || status === currentStatusFilter;
+                    var matchRating = currentRatingFilter === 'all' || rating === currentRatingFilter;
+                    var show = matchSearch && matchStatus && matchRating;
                     tr.style.display = show ? '' : 'none';
                     if (show) visible++;
                 });
                 totalSpan.textContent = rows.length;
                 visibleSpan.textContent = visible;
-                if (term || currentStatusFilter !== 'all') {
+                totalCountBadge.textContent = visible;
+                var isFiltered = term || currentStatusFilter !== 'all' || currentRatingFilter !== 'all';
+                if (isFiltered) {
                     searchInfo.classList.remove('d-none');
                     noResults.classList.toggle('d-none', visible > 0);
                 } else {
@@ -126,8 +429,8 @@
                 }
             }
 
-            searchInput.addEventListener('input', function () { applyTeacherDetailsFilters(); });
-            searchInput.addEventListener('keyup', function () { applyTeacherDetailsFilters(); });
+            searchInput.addEventListener('input', applyTeacherDetailsFilters);
+            searchInput.addEventListener('keyup', applyTeacherDetailsFilters);
 
             statusBtns.forEach(function (btn) {
                 btn.addEventListener('click', function () {
@@ -138,13 +441,27 @@
                 });
             });
 
+            ratingBtns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    ratingBtns.forEach(function (b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    currentRatingFilter = this.getAttribute('data-rating') || 'all';
+                    applyTeacherDetailsFilters();
+                });
+            });
+
             clearBtn.addEventListener('click', function () {
                 searchInput.value = '';
                 statusBtns.forEach(function (b) {
                     b.classList.remove('active');
                     if ((b.getAttribute('data-status') || '') === 'all') b.classList.add('active');
                 });
+                ratingBtns.forEach(function (b) {
+                    b.classList.remove('active');
+                    if ((b.getAttribute('data-rating') || '') === 'all') b.classList.add('active');
+                });
                 currentStatusFilter = 'all';
+                currentRatingFilter = 'all';
                 applyTeacherDetailsFilters();
             });
         });

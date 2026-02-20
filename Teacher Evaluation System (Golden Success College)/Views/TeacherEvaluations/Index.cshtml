@@ -600,6 +600,166 @@
             flex-direction: column;
         }
     }
+
+    /* ── Mobile: horizontal scroll for tables ── */
+    @@media (max-width: 768px) {
+        .group-table-wrapper, .table-panel {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .section-table, .level-table, .role-table,
+        .user-table, .student-table, .subject-table,
+        .teacher-table, .period-table {
+            min-width: 520px;
+        }
+
+        .card-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .teacher-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-bar {
+            gap: 8px;
+        }
+
+        .stat-card {
+            flex: 1 1 calc(50% - 8px);
+            padding: 12px 14px;
+        }
+
+            .stat-card .stat-value, .stat-card .sv {
+                font-size: 1.3rem;
+            }
+
+        .filter-panel {
+            padding: 14px 16px;
+        }
+
+        .filter-row {
+            flex-direction: column;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .card-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .page-header {
+            padding: 16px 18px;
+        }
+
+            .page-header h1 {
+                font-size: 1.3rem;
+            }
+
+        .stat-card {
+            flex: 1 1 100%;
+        }
+
+        .filter-groups {
+            flex-direction: column;
+        }
+
+        .fg-btns {
+            flex-wrap: wrap;
+        }
+    }
+
+    /* ═══ Bootstrap Integration Overrides ═══ */
+    /* table-responsive works natively now - just ensure min-width for readability */
+    .table-responsive .student-table,
+    .table-responsive .subject-table,
+    .table-responsive .teacher-table,
+    .table-responsive .user-table,
+    .table-responsive .section-table,
+    .table-responsive .level-table,
+    .table-responsive .role-table,
+    .table-responsive .period-table {
+        min-width: 520px;
+    }
+
+    /* page-header: Bootstrap d-flex handles layout, custom CSS handles design */
+    .page-header {
+        gap: 16px;
+    }
+
+    /* results-bar: Bootstrap d-flex handles layout */
+    .results-bar {
+        margin-bottom: 14px;
+    }
+
+    /* filter-row: Bootstrap d-flex gap-3 handles wrap */
+    .filter-row {
+        margin: 0;
+    }
+
+    /* stats-bar: Bootstrap d-flex flex-wrap handles layout */
+    .stats-bar {
+        margin-bottom: 20px;
+    }
+
+    /* Card grids use Bootstrap-friendly responsive sizing */
+    @@media (max-width: 768px) {
+        .card-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px;
+        }
+
+        .teacher-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .stat-card {
+            flex: 1 1 calc(50% - 8px);
+        }
+
+        .filter-panel {
+            padding: 14px 16px;
+        }
+
+        .page-header h1 {
+            font-size: 1.35rem;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .card-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .stat-card {
+            flex: 1 1 100%;
+        }
+
+        .page-header {
+            padding: 16px 18px;
+        }
+
+            .page-header h1 {
+                font-size: 1.2rem;
+            }
+
+        .filter-group {
+            flex: 1 1 100% !important;
+        }
+
+        .view-switcher .view-btn {
+            padding: 6px 10px;
+            font-size: .75rem;
+        }
+    }
+
 </style>
 
 <!-- Loading Overlay -->
@@ -621,7 +781,7 @@
 </div>
 
 <!-- Page Header -->
-<div class="page-header">
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
     <div>
         <h1>
             <i class="bi bi-clipboard-check-fill me-2"></i>Teacher Evaluations
@@ -653,7 +813,7 @@
     var avgAll = rankedIndex.Any() ? rankedIndex.Average(r => r.Item.Average) : 0m;
     var excCount = rankedIndex.Count(r => RatingLabel(r.Item.Average) == "Excellent");
 }
-<div class="stats-bar">
+<div class="stats-bar d-flex flex-wrap gap-3 mb-4">
     <div class="stat-card">
         <div class="sv">@rankedIndex.Count</div>
         <div class="sl">Teachers</div>
@@ -730,7 +890,7 @@
 </div>
 
 <!-- Results Bar -->
-<div class="results-bar">
+<div class="results-bar d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <div class="results-count" id="resultsCount">Showing <strong>@rankedIndex.Count</strong> teacher@(rankedIndex.Count != 1 ? "s" : "")</div>
 </div>
 
@@ -757,7 +917,7 @@
              data-evaluations="@item.TotalEvaluations"
              data-status="@currentStatus"
              data-department="@item.TeacherDepartment.ToLower()"
-             data-teacher-url="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })">
+             data-teacher-url="">
 
             <!-- Header -->
             <div class="t-card-header">
@@ -837,10 +997,10 @@
             <div class="t-card-footer">
                 <span class="meta-item"><i class="bi bi-people-fill"></i> @item.UniqueStudents student@(item.UniqueStudents != 1 ? "s" : "")</span>
                 <span class="meta-item"><i class="bi bi-card-list"></i> @item.TotalEvaluations evaluation@(item.TotalEvaluations != 1 ? "s" : "")</span>
-                <a href="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })"
+                @*<a href="@Url.Action("ByTeacher", "TeacherEvaluations", new { teacherId = item.TeacherId })"
                    class="meta-item" style="text-decoration:none;color:var(--accent);font-weight:700;" onclick="event.stopPropagation();">
                     <i class="bi bi-arrow-right-circle"></i> View All
-                </a>
+                </a>*@
             </div>
         </div>
     }
@@ -936,6 +1096,20 @@
                 new bootstrap.Toast($('#toast')[0], { delay:4500 }).show();
             }
 
+
+            /* ── Auto-switch: on mobile show cards (already card-only), shrink filters ── */
+            function checkMobileTEView() {
+                if ($(window).width() <= 768) {
+                    // teacher-grid already goes 1-col via CSS, just ensure filters work
+                    $('.fg-btns').css('flex-wrap','wrap');
+                }
+            }
+            checkMobileTEView();
+            var tResizeTimer;
+            $(window).on('resize', function() {
+                clearTimeout(tResizeTimer);
+                tResizeTimer = setTimeout(checkMobileTEView, 250);
+            });
             @if (TempData["SuccessMessage"] != null)
             {
                 <text>showToast('@Html.Raw(TempData["SuccessMessage"])', 'success');</text>
