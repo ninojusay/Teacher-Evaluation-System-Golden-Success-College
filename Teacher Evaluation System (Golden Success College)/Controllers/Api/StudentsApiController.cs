@@ -205,7 +205,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                         "Golden Success College: Account Activation & Temporary Password",
                         emailBody
                     );
-                    responseMessage = $"Student created successfully. Activation email sent to {student.Email}. {enrolledCount} subject(s) auto-enrolled.";
+                    responseMessage = $"Student created successfully. Activation email sent to {student.Email}. {enrolledCount} subject(s) .";
                 }
                 catch (Exception emailEx)
                 {
