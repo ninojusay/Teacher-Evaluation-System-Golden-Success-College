@@ -12,11 +12,11 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
     public class StudentsApiController : ControllerBase
     {
         private readonly Teacher_Evaluation_System__Golden_Success_College_Context _context;
-        private readonly EmailService _emailService; // Changed from IEmailService to EmailService
+        private readonly EmailService _emailService;
 
         public StudentsApiController(
             Teacher_Evaluation_System__Golden_Success_College_Context context,
-            EmailService emailService) // Changed from IEmailService to EmailService
+            EmailService emailService)
         {
             _context = context;
             _emailService = emailService;
@@ -170,7 +170,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                     EmailConfirmationToken = confirmationToken,
                     TokenExpirationDate = DateTime.UtcNow.AddHours(24),
                     IsTemporaryPassword = true,
-                    IsActive = true // New students are active by default
+                    IsActive = true
                 };
 
                 var level = await _context.Level.FindAsync(student.LevelId);
@@ -187,6 +187,12 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                 _context.Student.Add(student);
                 await _context.SaveChangesAsync();
 
+                // ── AUTO-ENROLL ──────────────────────────────────────────────
+                // After student is saved, find all subjects that match
+                // their Level & Section and enroll them automatically
+                int enrolledCount = await AutoEnrollStudentAsync(student);
+                // ────────────────────────────────────────────────────────────
+
                 var request = HttpContext.Request;
                 string activationLink = $"{request.Scheme}://{request.Host.ToUriComponent()}/Auth/ConfirmEmail?token={confirmationToken}&email={student.Email}";
                 string emailBody = GetActivationEmailBody(student.FullName, temporaryPassword, activationLink);
@@ -199,11 +205,11 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                         "Golden Success College: Account Activation & Temporary Password",
                         emailBody
                     );
-                    responseMessage = $"Student created successfully. Activation email sent to {student.Email}.";
+                    responseMessage = $"Student created successfully. Activation email sent to {student.Email}. {enrolledCount} subject(s) auto-enrolled.";
                 }
                 catch (Exception emailEx)
                 {
-                    responseMessage = $"Student created successfully, but email notification failed. Temporary password: {temporaryPassword}";
+                    responseMessage = $"Student created successfully, but email notification failed. Temporary password: {temporaryPassword}. {enrolledCount} subject(s) auto-enrolled.";
                 }
 
                 await _context.Entry(student).Reference(s => s.Level).LoadAsync();
@@ -305,7 +311,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                     EmailConfirmationToken = existingStudent.EmailConfirmationToken,
                     TokenExpirationDate = existingStudent.TokenExpirationDate,
                     IsTemporaryPassword = existingStudent.IsTemporaryPassword,
-                    IsActive = existingStudent.IsActive // Preserve the existing IsActive status
+                    IsActive = existingStudent.IsActive
                 };
 
                 var level = await _context.Level.FindAsync(student.LevelId);
@@ -332,6 +338,11 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                 _context.Entry(student).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
 
+                // ── AUTO-ENROLL ──────────────────────────────────────────────
+                // Enroll into any new subjects if Level/Section changed
+                int enrolledCount = await AutoEnrollStudentAsync(student);
+                // ────────────────────────────────────────────────────────────
+
                 await _context.Entry(student).Reference(s => s.Level).LoadAsync();
                 await _context.Entry(student).Reference(s => s.Section).LoadAsync();
                 await _context.Entry(student).Reference(s => s.Role).LoadAsync();
@@ -356,7 +367,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
                 return Ok(new ApiResponse<object>
                 {
                     Success = true,
-                    Message = "Student updated successfully",
+                    Message = $"Student updated successfully. {(enrolledCount > 0 ? $"{enrolledCount} new subject(s) auto-enrolled." : "")}",
                     Data = data
                 });
             }
@@ -384,7 +395,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
             }
         }
 
-        // DELETE: api/StudentsApi/5 - FIXED VERSION
+        // DELETE: api/StudentsApi/5
         [HttpDelete("{id}")]
         public async Task<ActionResult<ApiResponse<string>>> DeleteStudent(int id)
         {
@@ -414,9 +425,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
             }
             catch (DbUpdateException ex)
             {
-                // Log the detailed error
-                var innerMessage = ex.InnerException?.Message ?? ex.Message;
-
                 return BadRequest(new ApiResponse<string>
                 {
                     Success = false,
@@ -435,7 +443,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
             }
         }
 
-        // POST: api/StudentsApi/ToggleActive/5 - Deactivate/Reactivate student
+        // POST: api/StudentsApi/ToggleActive/5
         [HttpPost("ToggleActive/{id}")]
         public async Task<ActionResult> ToggleActiveStudent(int id)
         {
@@ -443,13 +451,61 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
             if (student == null)
                 return NotFound(new { success = false, message = "Student not found" });
 
-            student.IsActive = !student.IsActive; // toggle status
+            student.IsActive = !student.IsActive;
             _context.Student.Update(student);
             await _context.SaveChangesAsync();
 
             string action = student.IsActive ? "reactivated" : "deactivated";
             return Ok(new { success = true, message = $"Student {action} successfully", isActive = student.IsActive });
         }
+
+        // ── AUTO-ENROLL HELPER ─────────────────────────────────────────────────
+        // Finds all subjects that match the student's Level & Section
+        // and automatically enrolls them. Skips already enrolled subjects.
+        // Returns the number of new enrollments created.
+        private async Task<int> AutoEnrollStudentAsync(Student student)
+        {
+            if (!student.SectionId.HasValue || student.LevelId <= 0)
+                return 0;
+
+            // Get all subjects matching student's Level + Section with a teacher assigned
+            var subjects = await _context.Subject
+                .Where(s => s.LevelId == student.LevelId
+                         && s.SectionId == student.SectionId
+                         && s.TeacherId != null
+                         && s.TeacherId > 0)
+                .ToListAsync();
+
+            if (!subjects.Any())
+                return 0;
+
+            // Get already enrolled subject IDs to avoid duplicates
+            var alreadyEnrolledSubjectIds = await _context.Enrollment
+                .Where(e => e.StudentId == student.StudentId)
+                .Select(e => e.SubjectId)
+                .ToListAsync();
+
+            int count = 0;
+            foreach (var subject in subjects)
+            {
+                if (!alreadyEnrolledSubjectIds.Contains(subject.SubjectId))
+                {
+                    _context.Enrollment.Add(new Enrollment
+                    {
+                        StudentId = student.StudentId,
+                        SubjectId = subject.SubjectId,
+                        TeacherId = subject.TeacherId
+                    });
+                    count++;
+                }
+            }
+
+            if (count > 0)
+                await _context.SaveChangesAsync();
+
+            return count;
+        }
+        // ──────────────────────────────────────────────────────────────────────
 
         private bool StudentExists(int id)
         {

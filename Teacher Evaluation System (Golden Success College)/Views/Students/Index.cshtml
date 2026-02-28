@@ -867,75 +867,75 @@
             }).fail(function() { showLoading(false); showToast('Failed to load student.', 'danger'); });
         });
 
-        /* ── Save ── */
-        $('#saveStudentBtn').on('click', function() {
-            var studentId = $('#StudentId').val();
-            var isEdit    = !!studentId;
-            var levelText = $('#LevelId option:selected').text().toLowerCase();
-            var sectionId = $('#SectionId').val();
-            var yearLevel = $('#CollegeYearLevel').val();
+      /* ── Save ── */
+$('#saveStudentBtn').on('click', function() {
+    var studentId = $('#StudentId').val();
+    var isEdit    = !!studentId;
+    var levelText = $('#LevelId option:selected').text().toLowerCase();
+    var sectionId = $('#SectionId').val();
+    var yearLevel = $('#CollegeYearLevel').val();
 
-            if (!$('#FullName').val().trim()) { showToast('Full Name is required', 'danger'); return; }
-            if (!$('#Email').val().trim())    { showToast('Email is required', 'danger'); return; }
-            if (!$('#LevelId').val())         { showToast('Level is required', 'danger'); return; }
-            if (!sectionId)                   { showToast('Section/Program is required', 'danger'); return; }
-            if (levelText.includes('college') && (!yearLevel || yearLevel==='0')) { showToast('College Year Level is required', 'danger'); return; }
+    // Validations
+    if (!$('#FullName').val().trim()) { showToast('Full Name is required', 'danger'); return; }
+    if (!$('#Email').val().trim())    { showToast('Email is required', 'danger'); return; }
+    if (!$('#LevelId').val())         { showToast('Level is required', 'danger'); return; }
+    if (!sectionId)                   { showToast('Section/Program is required', 'danger'); return; }
+    if (levelText.includes('college') && (!yearLevel || yearLevel==='0')) { 
+        showToast('College Year Level is required', 'danger'); 
+        return; 
+    }
 
-            var payload = {
-                studentId: isEdit ? parseInt(studentId) : 0,
-                fullName:  $('#FullName').val().trim(),
-                email:     $('#Email').val().trim(),
-                password:  $('#Password').val() || null,
-                levelId:   parseInt($('#LevelId').val()),
-                sectionId: parseInt(sectionId),
-                collegeYearLevel: parseInt(yearLevel)||0
-            };
+    var payload = {
+        studentId: isEdit ? parseInt(studentId) : 0,
+        fullName:  $('#FullName').val().trim(),
+        email:     $('#Email').val().trim(),
+        password:  $('#Password').val() || null,
+        levelId:   parseInt($('#LevelId').val()),
+        sectionId: parseInt(sectionId),
+        collegeYearLevel: parseInt(yearLevel) || 0
+    };
 
-            showLoading(true);
-            $.ajax({
-                url: isEdit ? `/api/StudentsApi/${studentId}` : '/api/StudentsApi',
-                type: isEdit ? 'PUT' : 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(payload),
-                success: function(res) {
-                    showLoading(false);
-                    if (!res.success) { showToast(res.message, 'danger'); return; }
-                    /* Update local data array */
-                    var d = res.data;
-                    if (isEdit) {
-                        var idx = allStudents.findIndex(s => s.studentId === d.studentId);
-                        if (idx > -1) allStudents[idx] = Object.assign(allStudents[idx], {
-                            fullName: d.fullName, email: d.email,
-                            levelId: d.levelId, levelName: d.levelName||'',
-                            sectionId: d.sectionId, sectionName: d.sectionName||'N/A',
-                            collegeYearLevel: d.collegeYearLevel, isActive: d.isActive,
-                            emailConfirmed: d.emailConfirmed
-                        });
-                    } else {
-                        allStudents.push({
-                            studentId: d.studentId, fullName: d.fullName, email: d.email,
-                            levelId: d.levelId, levelName: d.levelName||'',
-                            sectionId: d.sectionId, sectionName: d.sectionName||'N/A',
-                            collegeYearLevel: d.collegeYearLevel, isActive: d.isActive,
-                            emailConfirmed: d.emailConfirmed
-                        });
-                        /* Rebuild section filter */
-                        if (d.levelName && d.sectionName && d.sectionName !== 'N/A') {
-                            if (!sectionsByLevel[d.levelName]) sectionsByLevel[d.levelName] = {};
-                            sectionsByLevel[d.levelName][d.sectionName] = true;
-                        }
-                    }
-                    render();
-                    openAllGroups();
-                    showToast(res.message, 'success');
-                    studentModal.hide();
-                },
-                error: function(xhr) {
-                    showLoading(false);
-                    showToast((xhr.responseJSON&&xhr.responseJSON.message)||'Failed to save student!', 'danger');
-                }
-            });
-        });
+    showLoading(true);
+
+    $.ajax({
+        url: isEdit ? `/api/StudentsApi/${studentId}` : '/api/StudentsApi',
+        type: isEdit ? 'PUT' : 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function(res) {
+            showLoading(false);
+            
+            if (!res.success) { 
+                showToast(res.message || 'An error occurred', 'danger'); 
+                return; 
+            }
+
+            // 1. Show the success message immediately
+            showToast(res.message || 'Student saved successfully!', 'success');
+            
+            // 2. Hide the modal
+            if (typeof studentModal !== 'undefined' && studentModal.hide) {
+                studentModal.hide();
+            }
+
+            // 3. DECISION POINT:
+            // If you want to see the message and THEN refresh:
+            setTimeout(function() {
+                location.reload(); 
+            }, 2000); 
+
+            /* NOTE: If you prefer NOT to reload the page, 
+               keep your original allStudents.push/findIndex logic 
+               and call render(), but remove location.reload().
+            */
+        },
+        error: function(xhr) {
+            showLoading(false);
+            var errorMsg = (xhr.responseJSON && xhr.responseJSON.message) || 'Failed to save student!';
+            showToast(errorMsg, 'danger');
+        }
+    });
+});
 
         /* ── Deactivate / Reactivate ── */
         $(document).on('click', '.btn-deactivate', function() {

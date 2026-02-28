@@ -200,17 +200,15 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                     // 4. Auto-set CollegeYearLevel based on Level
                     if (level.LevelName.ToLower().Contains("college"))
                     {
-                        // For college students, ensure a valid year level is set
                         if (!student.CollegeYearLevel.HasValue ||
                             student.CollegeYearLevel < 1 ||
                             student.CollegeYearLevel > 4)
                         {
-                            student.CollegeYearLevel = 1; // Default to 1st year
+                            student.CollegeYearLevel = 1;
                         }
                     }
                     else
                     {
-                        // For non-college students, set to 0
                         student.CollegeYearLevel = 0;
                     }
 
@@ -218,7 +216,10 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                     _context.Add(student);
                     await _context.SaveChangesAsync();
 
-                    // 6. Prepare and send activation email
+                    // 6. AUTO-ENROLL: Enroll student into all subjects matching their Level & Section
+                    int enrolledCount = await AutoEnrollStudentAsync(student);
+
+                    // 7. Prepare and send activation email
                     try
                     {
                         string subject = "Account Activation and Temporary Password";
@@ -236,16 +237,17 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                         );
 
                         // Uncomment when email service is ready
-                        // await _emailService.SendEmailAsync(student.Email, subject, emailBody);
+                        //await _emailService.SendEmailAsync(student.Email, subject, emailBody);
 
                         TempData["SuccessMessage"] = $"Student '{student.FullName}' created successfully! " +
-                            $"Temporary password: {temporaryPassword} (Email notification will be sent when email service is configured)";
+                            $"Temporary password: {temporaryPassword}. " +
+                            $"{enrolledCount} subject(s) auto-enrolled based on Level & Section.";
                     }
                     catch (Exception emailEx)
                     {
-                        // Log email error but don't fail the creation
                         TempData["WarningMessage"] = $"Student created but email notification failed: {emailEx.Message}. " +
-                            $"Temporary password: {temporaryPassword}";
+                            $"Temporary password: {temporaryPassword}. " +
+                            $"{enrolledCount} subject(s) auto-enrolled.";
                     }
 
                     return RedirectToAction(nameof(Index));
@@ -264,7 +266,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 }
             }
 
-            // If we got this far, something failed, redisplay form
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = "Validation failed: " + string.Join(", ", errors);
             await LoadDropdownsAsync(student);
@@ -323,7 +324,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             {
                 try
                 {
-                    // Get existing student
                     var existingStudent = await _context.Student
                         .AsNoTracking()
                         .FirstOrDefaultAsync(s => s.StudentId == id);
@@ -334,7 +334,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                         return RedirectToAction(nameof(Index));
                     }
 
-                    // Validate required fields
                     if (string.IsNullOrWhiteSpace(student.FullName))
                     {
                         ModelState.AddModelError("FullName", "Full Name is required");
@@ -349,7 +348,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                         return View(student);
                     }
 
-                    // Check for duplicate email (excluding current student)
                     var duplicateEmail = await _context.Student
                         .AnyAsync(s => s.Email.ToLower() == student.Email.ToLower() && s.StudentId != id);
 
@@ -360,7 +358,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                         return View(student);
                     }
 
-                    // Validate Level
                     var level = await _context.Level.FindAsync(student.LevelId);
                     if (level == null)
                     {
@@ -369,7 +366,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                         return View(student);
                     }
 
-                    // Validate Section if provided
                     if (student.SectionId.HasValue)
                     {
                         var section = await _context.Section.FindAsync(student.SectionId.Value);
@@ -386,37 +382,29 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                     student.EmailConfirmationToken = existingStudent.EmailConfirmationToken;
                     student.TokenExpirationDate = existingStudent.TokenExpirationDate;
                     student.IsTemporaryPassword = existingStudent.IsTemporaryPassword;
-
-                    // Set default role to Student
                     student.RoleId = 1;
 
-                    // Auto-set CollegeYearLevel based on Level
                     if (level.LevelName.ToLower().Contains("college"))
                     {
-                        // For college students, ensure a valid year level is set
                         if (!student.CollegeYearLevel.HasValue ||
                             student.CollegeYearLevel < 1 ||
                             student.CollegeYearLevel > 4)
                         {
-                            student.CollegeYearLevel = 1; // Default to 1st year
+                            student.CollegeYearLevel = 1;
                         }
                     }
                     else
                     {
-                        // For non-college students, set to 0
                         student.CollegeYearLevel = 0;
                     }
 
-                    // Handle password update
                     if (!string.IsNullOrWhiteSpace(student.Password))
                     {
-                        // New password provided - hash it
                         student.Password = PasswordHelper.HashPassword(student.Password);
-                        student.IsTemporaryPassword = false; // Admin manually set/reset password
+                        student.IsTemporaryPassword = false;
                     }
                     else
                     {
-                        // No password provided - keep existing password
                         student.Password = existingStudent.Password;
                     }
 
@@ -424,7 +412,12 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                     _context.Update(student);
                     await _context.SaveChangesAsync();
 
-                    TempData["SuccessMessage"] = $"Student '{student.FullName}' updated successfully";
+                    // AUTO-ENROLL: Enroll into any new subjects if Level/Section changed
+                    int enrolledCount = await AutoEnrollStudentAsync(student);
+
+                    TempData["SuccessMessage"] = $"Student '{student.FullName}' updated successfully. " +
+                        (enrolledCount > 0 ? $"{enrolledCount} new subject(s) auto-enrolled." : "No new subjects to enroll.");
+
                     return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
@@ -453,7 +446,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 }
             }
 
-            // If we got this far, something failed, redisplay form
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
             TempData["ErrorMessage"] = "Validation failed: " + string.Join(", ", errors);
             await LoadDropdownsAsync(student);
@@ -528,18 +520,65 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             }
         }
 
-        // Helper method to check if student exists
+        // ── AUTO-ENROLL HELPER ─────────────────────────────────────────────────
+        // Automatically enrolls a student into all subjects that match
+        // their Level and Section. Returns number of new enrollments created.
+        private async Task<int> AutoEnrollStudentAsync(Student student)
+        {
+            if (!student.SectionId.HasValue || student.LevelId <= 0)
+                return 0;
+
+            // Get all subjects matching student's Level and Section with a teacher assigned
+            var subjects = await _context.Subject
+                .Where(s => s.LevelId == student.LevelId
+                         && s.SectionId == student.SectionId
+                         && s.TeacherId != null
+                         && s.TeacherId > 0)
+                .ToListAsync();
+
+            if (!subjects.Any())
+                return 0;
+
+            // Get already enrolled subject IDs to avoid duplicates
+            var alreadyEnrolledSubjectIds = await _context.Enrollment
+                .Where(e => e.StudentId == student.StudentId)
+                .Select(e => e.SubjectId)
+                .ToListAsync();
+
+            int count = 0;
+            foreach (var subject in subjects)
+            {
+                if (!alreadyEnrolledSubjectIds.Contains(subject.SubjectId))
+                {
+                    _context.Enrollment.Add(new Enrollment
+                    {
+                        StudentId = student.StudentId,
+                        SubjectId = subject.SubjectId,
+                        TeacherId = subject.TeacherId
+                    });
+                    count++;
+                }
+            }
+
+            if (count > 0)
+            {
+                await _context.SaveChangesAsync();
+            }
+
+            return count;
+        }
+
+        // ── HELPERS ────────────────────────────────────────────────────────────
+
         private bool StudentExists(int id)
         {
             return _context.Student.Any(e => e.StudentId == id);
         }
 
-        // Helper method to load dropdown lists
         private async Task LoadDropdownsAsync(Student student = null)
         {
             try
             {
-                // Load levels
                 var levels = await _context.Level
                     .OrderBy(l => l.LevelName)
                     .ToListAsync();
@@ -551,14 +590,12 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                     student?.LevelId
                 );
 
-                // Load sections with their Level for grouping
                 var sections = await _context.Section
                     .Include(s => s.Level)
                     .OrderBy(s => s.Level.LevelName)
                     .ThenBy(s => s.SectionName)
                     .ToListAsync();
 
-                // Convert to SelectListItem with Group (optgroup)
                 var sectionSelectList = sections.Select(s => new SelectListItem
                 {
                     Value = s.SectionId.ToString(),
@@ -569,7 +606,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
 
                 ViewData["SectionId"] = sectionSelectList;
 
-                // Load roles
                 var roles = await _context.Role
                     .OrderBy(r => r.Name)
                     .ToListAsync();
@@ -578,22 +614,18 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                     roles,
                     "RoleId",
                     "Name",
-                    student?.RoleId ?? 1 // Default to Student role
+                    student?.RoleId ?? 1
                 );
             }
             catch (Exception ex)
             {
-                // Log the error
                 ViewData["LevelId"] = new SelectList(new List<object>(), "LevelId", "LevelName");
                 ViewData["SectionId"] = new List<SelectListItem>();
                 ViewData["RoleId"] = new SelectList(new List<object>(), "RoleId", "Name");
-
                 throw new Exception($"Error loading dropdown data: {ex.Message}", ex);
             }
         }
 
-        // Note: I'm including the GetActivationEmailBody here as the logic originated in the MVC controller, 
-        // but it is mostly utilized by the StudentsApiController for the AJAX/Modal submit.
         private string GetActivationEmailBody(string fullName, string temporaryPassword, string activationLink)
         {
             return $@"
@@ -644,7 +676,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
 </body></html>";
         }
 
-        // Additional helper method for password reset (if needed in the future)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword(int id)
@@ -658,11 +689,9 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                     return Json(new { success = false, message = "Student not found" });
                 }
 
-                // Generate new temporary password
                 string newPassword = PasswordHelper.GenerateRandomPassword(10);
                 string confirmationToken = Guid.NewGuid().ToString();
 
-                // Update student
                 student.Password = PasswordHelper.HashPassword(newPassword);
                 student.IsTemporaryPassword = true;
                 student.EmailConfirmationToken = confirmationToken;
@@ -671,7 +700,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 _context.Update(student);
                 await _context.SaveChangesAsync();
 
-                // Send email with new password
                 try
                 {
                     string subject = "Password Reset - Golden Success College";
@@ -688,12 +716,10 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                         activationLink
                     );
 
-                    // Uncomment when email service is ready
                     await _emailService.SendEmailAsync(student.Email, subject, emailBody);
                 }
                 catch (Exception emailEx)
                 {
-                    // Log email error
                     return Json(new
                     {
                         success = true,
@@ -715,7 +741,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             }
         }
 
-        // Helper method for password reset email
         private string GetPasswordResetEmailBody(string fullName, string newPassword, string activationLink)
         {
             return $@"
@@ -723,155 +748,36 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
 <html>
 <head>
     <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Password Reset</title>
     <style>
-        body {{
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            margin: 0;
-            padding: 0;
-        }}
-        .container {{
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.05);
-        }}
-        .header {{
-            background-color: #dc3545;
-            color: #ffffff;
-            padding: 30px 20px;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-            text-align: center;
-        }}
-        .header h2 {{
-            margin: 0;
-            font-size: 24px;
-        }}
-        .header p {{
-            margin: 5px 0 0;
-            font-size: 14px;
-        }}
-        .content {{
-            padding: 30px;
-            line-height: 1.6;
-            color: #343a40;
-        }}
-        .footer {{
-            padding: 20px;
-            text-align: center;
-            font-size: 12px;
-            color: #6c757d;
-            border-top: 1px solid #dee2e6;
-        }}
-        .btn {{
-            display: inline-block;
-            padding: 12px 25px;
-            margin: 25px 0;
-            font-size: 16px;
-            color: #ffffff;
-            background-color: #dc3545;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            border: 1px solid #dc3545;
-        }}
-        .btn:hover {{
-            background-color: #c82333;
-            border-color: #bd2130;
-        }}
-        .temp-password {{
-            display: block;
-            background-color: #fff3cd;
-            padding: 15px;
-            border-radius: 4px;
-            font-size: 18px;
-            font-weight: bold;
-            text-align: center;
-            margin: 20px 0;
-            color: #856404;
-            border: 1px solid #ffc107;
-        }}
-        .warning {{
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 20px;
-        }}
-        .info-box {{
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 15px 0;
-        }}
+        body {{ font-family: Arial, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; }}
+        .container {{ width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; }}
+        .header {{ background-color: #dc3545; color: #ffffff; padding: 30px 20px; border-top-left-radius: 8px; border-top-right-radius: 8px; text-align: center; }}
+        .content {{ padding: 30px; line-height: 1.6; color: #343a40; }}
+        .footer {{ padding: 20px; text-align: center; font-size: 12px; color: #6c757d; border-top: 1px solid #dee2e6; }}
+        .btn {{ display: inline-block; padding: 12px 25px; margin: 25px 0; font-size: 16px; color: #ffffff; background-color: #dc3545; text-decoration: none; border-radius: 5px; font-weight: bold; }}
+        .temp-password {{ display: block; background-color: #fff3cd; padding: 15px; border-radius: 4px; font-size: 18px; font-weight: bold; text-align: center; margin: 20px 0; color: #856404; border: 1px solid #ffc107; }}
+        .warning {{ background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 4px; margin-top: 20px; }}
     </style>
 </head>
 <body>
     <table width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color: #f8f9fa; padding: 30px 0;'>
-        <tr>
-            <td align='center'>
-                <table class='container' cellpadding='0' cellspacing='0' border='0'>
-                    <tr>
-                        <td class='header'>
-                            <h2>Password Reset</h2>
-                            <p>Golden Success College</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class='content'>
-                            <p style='color: #343a40;'>Dear <strong>{fullName}</strong>,</p>
-                            
-                            <p>Your password has been reset by an administrator. This is a security measure to ensure your account remains protected.</p>
-
-                            <div class='info-box'>
-                                <strong>Your New Temporary Password:</strong>
-                            </div>
-
-                            <table width='100%' cellpadding='0' cellspacing='0' border='0'>
-                                <tr>
-                                    <td style='text-align: center;'>
-                                        <div class='temp-password'>
-                                            {newPassword}
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <p style='text-align: center;'>
-                                <a href='{activationLink}' class='btn'>
-                                    Log In Now
-                                </a>
-                            </p>
-
-                            <div class='warning'>
-                                <strong>⚠️ IMPORTANT SECURITY NOTICE:</strong><br/>
-                                For your security, you <strong>must</strong> change this temporary password immediately upon your next login. 
-                                This link will expire in 24 hours.
-                            </div>
-
-                            <p style='margin-top: 20px; font-size: 14px; color: #6c757d;'>
-                                If you did not request this password reset, please contact the system administrator immediately.
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class='footer'>
-                            <p>&copy; {DateTime.Now.Year} Golden Success College. All rights reserved.</p>
-                            <p style='margin-top: 5px;'>
-                                This is an automated message, please do not reply to this email.
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
+        <tr><td align='center'>
+            <table class='container' cellpadding='0' cellspacing='0' border='0'>
+                <tr><td class='header'><h2>Password Reset</h2><p>Golden Success College</p></td></tr>
+                <tr><td class='content'>
+                    <p>Dear <strong>{fullName}</strong>,</p>
+                    <p>Your password has been reset by an administrator.</p>
+                    <div class='temp-password'>{newPassword}</div>
+                    <p style='text-align:center;'><a href='{activationLink}' class='btn'>Log In Now</a></p>
+                    <div class='warning'>
+                        <strong>⚠️ IMPORTANT:</strong> Change this temporary password immediately upon your next login.
+                        This link will expire in 24 hours.
+                    </div>
+                </td></tr>
+                <tr><td class='footer'><p>&copy; {DateTime.Now.Year} Golden Success College. All rights reserved.</p></td></tr>
+            </table>
+        </td></tr>
     </table>
 </body>
 </html>";

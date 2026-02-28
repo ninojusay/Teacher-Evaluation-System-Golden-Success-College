@@ -321,10 +321,12 @@
 }
 
 <div class="mb-3 d-flex justify-content-between align-items-center">
+  @*  i auto generate the subject attended base sa level and teacher og section
+       
     <button class="btn btn-primary" id="btnCreateEnrollment">
         <i class="bi bi-plus-circle"></i> Create Subjects Attended
 
-    </button>
+    </button> *@
 </div>
 
 <div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:1050; text-align:center;">
@@ -557,6 +559,47 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+
+
+    <script>
+        $("#saveStudentBtn").click(function () {
+
+            var student = {
+                fullName: $("#FullName").val(),
+                email: $("#Email").val(),
+                levelId: parseInt($("#LevelId").val()),
+                sectionId: null, // optional
+                collegeYearLevel: parseInt($("#collegeYearInput").val())
+            };
+
+            $.ajax({
+                url: "/api/StudentsApi",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(student),
+                success: function (response) {
+                    if (response.success) {
+                        // Close modal
+                        var modalEl = document.getElementById('createStudentModal');
+                        var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        modal.hide();
+
+                        // Show API message
+                        alert(response.message);
+
+                        // Optional: reload table
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    console.error(xhr.responseText);
+                    alert("Error creating student.");
+                }
+            });
+        });
+    </script>
 
     <script>
         $(document).ready(function () {
