@@ -181,6 +181,45 @@
         box-shadow: 0 6px 24px rgba(0,0,0,.15);
     }
 
+    /* ── ADDED ONLY: Search & Toggle styles ── */
+    .search-toggle-bar {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px 18px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+        .search-toggle-bar .input-group {
+            flex: 1 1 220px;
+            max-width: 380px;
+        }
+
+    .toggle-btn-group .btn {
+        border-radius: 8px !important;
+        font-weight: 600;
+        padding: 7px 14px;
+    }
+
+    #tableView {
+        display: none;
+    }
+
+        #tableView table thead {
+            background: linear-gradient(135deg, var(--primary), #2c5282);
+            color: #fff;
+        }
+
+        #tableView table tbody tr:hover {
+            background: var(--accent-light);
+        }
+    /* ── END ADDED styles ── */
+
     @@media (max-width: 768px) {
         .page-header {
             padding: 16px 18px;
@@ -320,8 +359,95 @@
     </div>
 }
 
+@* ── ADDED: Search + Toggle bar ── *@
+<div class="search-toggle-bar">
+    <div class="input-group">
+        <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" id="enrollSearch" class="form-control border-start-0 ps-0"
+               placeholder="Search by name, level, or section..." />
+        <button class="btn btn-outline-secondary" id="btnClearEnrollSearch" title="Clear">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+    <div class="toggle-btn-group d-flex gap-2 ms-auto">
+        <button class="btn btn-primary" id="btnShowCards" title="Card View">
+            <i class="bi bi-grid-3x3-gap-fill"></i> Cards
+        </button>
+        <button class="btn btn-outline-primary" id="btnShowTable" title="Table View">
+            <i class="bi bi-table"></i> Table
+        </button>
+    </div>
+    <small class="text-muted" id="enrollSearchCount"></small>
+</div>
+
+@* ── ADDED: Table view (hidden by default) ── *@
+<div id="tableView">
+    @if (Model.Any())
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-3">#</th>
+                                <th>Student Name</th>
+                                <th>Level</th>
+                                <th>Section</th>
+                                <th class="text-center">Subjects Attended</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int rowNum = 1;
+                            }
+                            @foreach (var item in Model)
+                            {
+                                var tblCount = 0;
+                                if (ViewBag.EnrollmentCounts is Dictionary<int, int> tblCounts && tblCounts.ContainsKey(item.StudentId))
+                                    tblCount = tblCounts[item.StudentId];
+                                <tr class="enroll-table-row"
+                                    data-name="@item.Student?.FullName?.ToLower()"
+                                    data-level="@item.Student?.Section?.Level?.LevelName?.ToLower()"
+                                    data-section="@item.Student?.Section?.SectionName?.ToLower()">
+                                    <td class="ps-3 align-middle text-muted">@rowNum</td>
+                                    <td class="align-middle fw-semibold">@item.Student?.FullName</td>
+                                    <td class="align-middle">
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-building me-1"></i>@item.Student?.Section?.Level?.LevelName
+                                        </span>
+                                    </td>
+                                    <td class="align-middle">@item.Student?.Section?.SectionName</td>
+                                    <td class="text-center align-middle">
+                                        <span class="badge bg-primary">@tblCount Subject@(tblCount != 1 ? "s" : "")</span>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <button class="btn btn-sm btn-info btn-view-details text-white"
+                                                data-student-id="@item.StudentId"
+                                                data-student-name="@item.Student?.FullName">
+                                            <i class="bi bi-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                                rowNum++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="noTableResults" class="alert alert-warning text-center" style="display:none;">
+            <i class="bi bi-search"></i> No students match your search.
+        </div>
+    }
+</div>
+@* ── END ADDED table view ── *@
+
 <div class="mb-3 d-flex justify-content-between align-items-center">
-  @*  i auto generate the subject attended base sa level and teacher og section
+    @*  i auto generate the subject attended base sa level and teacher og section
        
     <button class="btn btn-primary" id="btnCreateEnrollment">
         <i class="bi bi-plus-circle"></i> Create Subjects Attended
@@ -338,79 +464,75 @@
     </div>
 </div>
 
-<div class="row g-4">
-    @if (!Model.Any())
-    {
-        <div class="col-12">
-            <div class="alert alert-info text-center">
-                <i class="bi bi-info-circle fs-4"></i>
-                <p class="mb-0 mt-2">No subject attended  found. Click "Create  Subjects Attended" to get started.</p>
-            </div>
-        </div>
-    }
-    else
-    {
-        @foreach (var item in Model)
+@* ── ADDED: wrap original card section in #cardView for toggle ── *@
+<div id="cardView">
+    <div class="row g-4">
+        @if (!Model.Any())
         {
-            <div class="col-lg-4 col-md-6 col-sm-12">
-                <div class="card enroll-card text-center shadow-sm h-100" style="border-radius:1.25rem;">
-                    <div class="card-body d-flex flex-column">
-                        @{
-                            // Teacher picture intentionally removed from index card to follow request
-                            // The card title and info blocks are necessary to identify the student/section on the index
-                            // var firstTeacher = item.Teacher;
-                        }
-
-                        <h5 class="card-title mb-1">@item.Student?.FullName</h5>
-                        <div class="text-muted small mb-1">
-                            <i class="bi bi-building"></i> @item.Student?.Section?.Level?.LevelName
-                        </div>
-                        <div class="text-muted small mb-2">
-                            <i class="bi bi-people"></i> @item.Student?.Section?.SectionName
-                        </div>
-                        <hr />
-
-                        @{
-                            // Retrieve enrollment count from ViewBag (using pattern matching for safety)
-                            var studentEnrollmentCount = 0;
-                            if (ViewBag.EnrollmentCounts is Dictionary<int, int> counts)
-                            {
-                                // Assuming StudentId is non-nullable 'int' in the Model
-                                if (counts.ContainsKey(item.StudentId))
-                                {
-                                    studentEnrollmentCount = counts[item.StudentId];
-                                }
-                            }
-                        }
-                        <div class="mb-3">
-                            <strong>
-                                <i class="bi bi-book-half"></i> Total Subjects Attended
-                                :
-                            </strong><br />
-                            <span class="badge bg-primary fs-5">@studentEnrollmentCount Subject@(studentEnrollmentCount != 1 ? "s" : "")</span>
-                        </div>
-
-                        <div class="mt-auto d-grid gap-2">
-                            <button class="btn btn-info btn-view-details" data-student-id="@item.StudentId" data-student-name="@item.Student?.FullName">
-                                <i class="bi bi-eye"></i> View All Subjects
-                            </button>
-
-                            @if (userRole == "Admin" || userRole == "Super Admin")
-                            {
-                                <button class="btn btn-warning btn-edit" data-id="@item.EnrollmentId" style="display:none;">
-                                    <i class="bi bi-pencil-square"></i> Edit
-                                </button>
-                                <button class="btn btn-danger btn-delete" data-id="@item.EnrollmentId" style="display:none;">
-                                    <i class="bi bi-trash"></i> Delete
-                                </button>
-                            }
-                        </div>
-                    </div>
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle fs-4"></i>
+                    <p class="mb-0 mt-2">No subject attended  found. Click "Create  Subjects Attended" to get started.</p>
                 </div>
             </div>
         }
-    }
+        else
+        {
+            @foreach (var item in Model)
+            {
+                var studentEnrollmentCount = 0;
+                if (ViewBag.EnrollmentCounts is Dictionary<int, int> counts && counts.ContainsKey(item.StudentId))
+                    studentEnrollmentCount = counts[item.StudentId];
+                <div class="col-lg-4 col-md-6 col-sm-12 enroll-card-item"
+                     data-name="@item.Student?.FullName?.ToLower()"
+                     data-level="@item.Student?.Section?.Level?.LevelName?.ToLower()"
+                     data-section="@item.Student?.Section?.SectionName?.ToLower()">
+                    <div class="card enroll-card text-center shadow-sm h-100" style="border-radius:1.25rem;">
+                        <div class="card-body d-flex flex-column">
+
+                            <h5 class="card-title mb-1">@item.Student?.FullName</h5>
+                            <div class="text-muted small mb-1">
+                                <i class="bi bi-building"></i> @item.Student?.Section?.Level?.LevelName
+                            </div>
+                            <div class="text-muted small mb-2">
+                                <i class="bi bi-people"></i> @item.Student?.Section?.SectionName
+                            </div>
+                            <hr />
+
+                            <div class="mb-3">
+                                <strong>
+                                    <i class="bi bi-book-half"></i> Total Subjects Attended
+                                    :
+                                </strong><br />
+                                <span class="badge bg-primary fs-5">@studentEnrollmentCount Subject@(studentEnrollmentCount != 1 ? "s" : "")</span>
+                            </div>
+
+                            <div class="mt-auto d-grid gap-2">
+                                <button class="btn btn-info btn-view-details" data-student-id="@item.StudentId" data-student-name="@item.Student?.FullName">
+                                    <i class="bi bi-eye"></i> View All Subjects
+                                </button>
+
+                                @if (userRole == "Admin" || userRole == "Super Admin")
+                                {
+                                    <button class="btn btn-warning btn-edit" data-id="@item.EnrollmentId" style="display:none;">
+                                        <i class="bi bi-pencil-square"></i> Edit
+                                    </button>
+                                    <button class="btn btn-danger btn-delete" data-id="@item.EnrollmentId" style="display:none;">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+    <div id="noCardResults" class="alert alert-warning text-center mt-3" style="display:none;">
+        <i class="bi bi-search"></i> No students match your search.
+    </div>
 </div>
+@* ── END card view wrapper ── *@
 
 <div class="modal fade" id="viewEnrollmentsModal" tabindex="-1" aria-labelledby="viewEnrollmentsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -560,6 +682,69 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
 
+    @* ── ADDED ONLY: Search & Toggle — isolated IIFE, does NOT touch existing logic ── *@
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var currentView = 'card';
+
+            function applySearch(q) {
+                q = (q || '').toLowerCase().trim();
+                var visible = 0;
+                if (currentView === 'card') {
+                    document.querySelectorAll('.enroll-card-item').forEach(function (el) {
+                        var match = !q || (el.dataset.name||'').includes(q) || (el.dataset.level||'').includes(q) || (el.dataset.section||'').includes(q);
+                        el.style.display = match ? '' : 'none';
+                        if (match) visible++;
+                    });
+                    var noCard = document.getElementById('noCardResults');
+                    if (noCard) noCard.style.display = (!visible && q) ? '' : 'none';
+                } else {
+                    document.querySelectorAll('.enroll-table-row').forEach(function (el) {
+                        var match = !q || (el.dataset.name||'').includes(q) || (el.dataset.level||'').includes(q) || (el.dataset.section||'').includes(q);
+                        el.style.display = match ? '' : 'none';
+                        if (match) visible++;
+                    });
+                    var noTable = document.getElementById('noTableResults');
+                    if (noTable) noTable.style.display = (!visible && q) ? '' : 'none';
+                }
+                var countEl = document.getElementById('enrollSearchCount');
+                if (countEl) countEl.textContent = q ? visible + ' result(s)' : '';
+            }
+
+            var searchInput = document.getElementById('enrollSearch');
+            var clearBtn = document.getElementById('btnClearEnrollSearch');
+            var btnCards = document.getElementById('btnShowCards');
+            var btnTable = document.getElementById('btnShowTable');
+            var cardView = document.getElementById('cardView');
+            var tableView = document.getElementById('tableView');
+
+            if (searchInput) searchInput.addEventListener('input', function () { applySearch(this.value); });
+
+            if (clearBtn) clearBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                applySearch('');
+            });
+
+            if (btnCards) btnCards.addEventListener('click', function () {
+                currentView = 'card';
+                cardView.style.display = '';
+                tableView.style.display = 'none';
+                btnCards.className = 'btn btn-primary';
+                btnTable.className = 'btn btn-outline-primary';
+                applySearch(searchInput.value);
+            });
+
+            if (btnTable) btnTable.addEventListener('click', function () {
+                currentView = 'table';
+                cardView.style.display = 'none';
+                tableView.style.display = 'block';
+                btnTable.className = 'btn btn-primary';
+                btnCards.className = 'btn btn-outline-primary';
+                applySearch(searchInput.value);
+            });
+        });
+    </script>
+    @* ── END ADDED script ── *@
 
     <script>
         $("#saveStudentBtn").click(function () {
@@ -907,22 +1092,22 @@
             // Load sections on page load if level is selected
             @if (selectedLevelId != null)
             {
-                        <text>
-                        $.ajax({
-                            url: `/Enrollments/GetSectionsByLevel?levelId=@selectedLevelId`,
-                            method: 'GET',
-                            success: function(res) {
-                                if (res.success) {
-                                    var html = '<option value="">All Sections</option>';
-                                    res.data.forEach(s => {
-                                        var selected = @(selectedSectionId ?? 0) == s.sectionId ? 'selected' : '';
-                                        html += `<option value="${s.sectionId}" ${selected}>${s.sectionName}</option>`;
-                                    });
-                                    $('#filterSection').html(html).prop('disabled', false);
+                            <text>
+                            $.ajax({
+                                url: `/Enrollments/GetSectionsByLevel?levelId=@selectedLevelId`,
+                                method: 'GET',
+                                success: function(res) {
+                                    if (res.success) {
+                                        var html = '<option value="">All Sections</option>';
+                                        res.data.forEach(s => {
+                                            var selected = @(selectedSectionId ?? 0) == s.sectionId ? 'selected' : '';
+                                            html += `<option value="${s.sectionId}" ${selected}>${s.sectionName}</option>`;
+                                        });
+                                        $('#filterSection').html(html).prop('disabled', false);
+                                    }
                                 }
-                            }
-                        });
-                        </text>
+                            });
+                            </text>
             }
 
             // Create Enrollment Button

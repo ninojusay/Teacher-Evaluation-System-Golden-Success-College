@@ -37,7 +37,8 @@
                 <i class='bx bx-menu' id="btn"></i>
             </div>
             <ul class="nav-list">
-                <!-- Dashboard - Common for all roles -->
+
+                <!-- Dashboard - All roles -->
                 <li>
                     <a asp-controller="Dashboard" asp-action="Index">
                         <i class='bx bx-home'></i>
@@ -45,9 +46,10 @@
                     </a>
                 </li>
 
+                @* ── SUPER ADMIN MENU ── *@
                 @if (isSuperAdmin)
                 {
-                    <!-- ================== User Management DROPDOWN ================== -->
+                    <!-- User Management -->
                     <li class="dropdown">
                         <a href="javascript:void(0);" class="dropdown-btn">
                             <i class='bx bx-user-circle'></i>
@@ -70,7 +72,7 @@
                         </ul>
                     </li>
 
-                    <!-- ================== Criteria & Questions DROPDOWN ================== -->
+                    <!-- Criteria & Questions -->
                     <li class="dropdown">
                         <a href="javascript:void(0);" class="dropdown-btn">
                             <i class='bx bx-list-check'></i>
@@ -93,7 +95,7 @@
                         </ul>
                     </li>
 
-                    <!-- ================== Student Registration DROPDOWN ================== -->
+                    <!-- Student Registration -->
                     <li class="dropdown">
                         <a href="javascript:void(0);" class="dropdown-btn">
                             <i class='bx bx-user-plus'></i>
@@ -134,7 +136,7 @@
                         </ul>
                     </li>
 
-                    <!-- ================== Teacher & Evaluation DROPDOWN ================== -->
+                    <!-- Teacher & Evaluation -->
                     <li class="dropdown">
                         <a href="javascript:void(0);" class="dropdown-btn">
                             <i class='bx bx-chalkboard'></i>
@@ -163,7 +165,7 @@
                         </ul>
                     </li>
 
-                    <!-- Activity Logs -->
+                    <!-- Activity Logs - Super Admin only -->
                     <li>
                         <a asp-controller="Logs" asp-action="Index">
                             <i class='bx bx-history'></i>
@@ -172,9 +174,10 @@
                     </li>
                 }
 
+                @* ── ADMIN MENU (no Activity Logs) ── *@
                 @if (isAdmin)
                 {
-                    <!-- ================== Criteria & Questions DROPDOWN ================== -->
+                    <!-- Criteria & Questions -->
                     <li class="dropdown">
                         <a href="javascript:void(0);" class="dropdown-btn">
                             <i class='bx bx-list-check'></i>
@@ -197,7 +200,7 @@
                         </ul>
                     </li>
 
-                    <!-- ================== Student Registration DROPDOWN ================== -->
+                    <!-- Student Registration -->
                     <li class="dropdown">
                         <a href="javascript:void(0);" class="dropdown-btn">
                             <i class='bx bx-user-plus'></i>
@@ -238,7 +241,7 @@
                         </ul>
                     </li>
 
-                    <!-- ================== Teacher & Evaluation DROPDOWN ================== -->
+                    <!-- Teacher & Evaluation -->
                     <li class="dropdown">
                         <a href="javascript:void(0);" class="dropdown-btn">
                             <i class='bx bx-chalkboard'></i>
@@ -266,16 +269,10 @@
                             </li>
                         </ul>
                     </li>
-
-                    <!-- Activity Logs -->
-                    <li>
-                        <a asp-controller="Logs" asp-action="Index">
-                            <i class='bx bx-history'></i>
-                            <span class="links_name">Activity Logs</span>
-                        </a>
-                    </li>
+                    @* ❌ No Activity Logs for Admin *@
                 }
 
+                @* ── STUDENT MENU ── *@
                 @if (isStudent)
                 {
                     <li>
@@ -285,8 +282,6 @@
                         </a>
                     </li>
 
-                    
-
                     <li>
                         <a asp-controller="Account" asp-action="Profile">
                             <i class='bx bx-user'></i>
@@ -294,6 +289,7 @@
                         </a>
                     </li>
                 }
+
             </ul>
 
             <!-- Profile section outside nav-list -->
@@ -371,57 +367,43 @@
 
             function toggleSidebar() {
                 sidebar.classList.toggle("open");
-
-                // On mobile, show/hide overlay
                 if (window.innerWidth <= 700) {
                     overlay.classList.toggle("active");
                 }
             }
 
-            // Toggle from sidebar button
             toggleBtn?.addEventListener("click", toggleSidebar);
-
-            // Toggle from mobile menu button
             mobileMenuBtn?.addEventListener("click", toggleSidebar);
 
-            // Close sidebar when clicking overlay
             overlay?.addEventListener("click", function() {
                 sidebar.classList.remove("open");
                 overlay.classList.remove("active");
             });
 
-            // Close sidebar on window resize if needed
             window.addEventListener("resize", function() {
                 if (window.innerWidth > 700) {
                     overlay.classList.remove("active");
                 }
             });
 
-            // Dropdown toggle functionality
             const dropdownButtons = document.querySelectorAll(".dropdown-btn");
             dropdownButtons.forEach(btn => {
                 btn.addEventListener("click", function (e) {
                     e.preventDefault();
                     const parent = btn.parentElement;
-
-                    // Close other dropdowns
                     document.querySelectorAll(".dropdown.open").forEach(dropdown => {
                         if (dropdown !== parent) {
                             dropdown.classList.remove("open");
                         }
                     });
-
-                    // Toggle current dropdown
                     parent.classList.toggle("open");
                 });
             });
 
-            // Auto-open sidebar on desktop
             if (window.innerWidth > 700) {
                 sidebar.classList.add("open");
             }
 
-            // Add active class to current page link
             const currentPath = window.location.pathname;
             const navLinks = document.querySelectorAll(".nav-list a");
             navLinks.forEach(link => {
@@ -432,10 +414,8 @@
         });
     </script>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
