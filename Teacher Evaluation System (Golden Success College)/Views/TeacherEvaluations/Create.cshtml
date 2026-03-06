@@ -98,9 +98,10 @@
                             <label asp-for="TeacherId" class="form-label fw-bold">
                                 <i class="bi bi-person-workspace"></i> Name of Teacher: <span class="text-danger">*</span>
                             </label>
-                            <select asp-for="TeacherId" class="form-select form-select-lg" asp-items="ViewBag.Teachers" id="teacherSelect" required>
+                            <select asp-for="TeacherId" class="form-select form-select-lg" asp-items="ViewBag.Teachers" id="teacherSelect" disabled>
                                 <option value="">-- Select Teacher --</option>
                             </select>
+                            <input type="hidden" asp-for="TeacherId" />
                             <small class="text-muted">Only teachers you're enrolled with are shown</small>
                         </div>
 

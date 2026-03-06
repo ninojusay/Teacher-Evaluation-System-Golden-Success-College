@@ -272,6 +272,11 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             ViewBag.HasAvailableEnrollments = true;
             ViewBag.HasNoEnrollments = false;
 
+
+            // Add these:
+            ViewBag.SingleTeacher = teachers.Count == 1;
+            ViewBag.TeacherName = teachers.Count == 1 ? teachers[0].Text : null;
+            ViewBag.SingleTeacherId = teachers.Count == 1 ? teachers[0].Value : null;
             return View(new EvaluationFormViewModel
             {
                 StudentId = studentId,
