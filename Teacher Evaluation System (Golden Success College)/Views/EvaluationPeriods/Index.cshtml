@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Teacher_Evaluation_System__Golden_Success_College_.Models.EvaluationPeriod>
+@model IEnumerable<Teacher_Evaluation_System__Golden_Success_College_.Models.EvaluationPeriod>
 
 @{
     ViewData["Title"] = "Evaluation Periods";
@@ -330,12 +330,11 @@
                             <textarea class="form-control" id="Description" rows="2"></textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
-                            <select class="form-select" id="Status" required>
-                                <option value="Upcoming">Upcoming</option>
-                                <option value="Active">Active</option>
-                                <option value="Completed">Completed</option>
-                            </select>
+                            <div class="alert alert-info py-2 mb-0" style="font-size:.85rem;">
+                                <i class="bi bi-info-circle me-1"></i>
+                                <strong>Status</strong> is automatically calculated based on your dates:
+                                <em>Upcoming</em> (before Start Date), <em>Active</em> (within range), <em>Completed</em> (after End Date).
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -649,14 +648,12 @@
             if (!$('#EndDate').val())             { showToast('End Date is required', 'danger'); return; }
 
             var payload = {
-                evaluationPeriodId: isEdit ? parseInt(periodId) : 0,
                 periodName:   $('#PeriodName').val().trim(),
                 academicYear: $('#AcademicYear').val().trim(),
                 semester:     $('#Semester').val().trim(),
                 startDate:    $('#StartDate').val(),
                 endDate:      $('#EndDate').val(),
-                description:  $('#Description').val(),
-                status:       $('#Status').val()
+                description:  $('#Description').val()
             };
 
             showLoading(true);
@@ -673,7 +670,12 @@
                     periodModal.hide();
                     setTimeout(function() { location.reload(); }, 900);
                 },
-                error: function() { showLoading(false); showToast('Failed to save period.', 'danger'); }
+                error: function(xhr) {
+                    showLoading(false);
+                    var msg = 'Failed to save period.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                    showToast(msg, 'danger');
+                }
             });
         });
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Teacher_Evaluation_System__Golden_Success_College_.Data;
@@ -496,6 +496,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
         public bool IsActive { get; set; } = true;
         public bool IsCurrent { get; set; } = false;
         public string? Description { get; set; }
+        public string? Status { get; set; }
     }
 
     public class UpdatePeriodDto
@@ -508,5 +509,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers.Api
         public bool IsActive { get; set; }
         public bool IsCurrent { get; set; }
         public string? Description { get; set; }
+        public string? Status { get; set; }
     }
 }
