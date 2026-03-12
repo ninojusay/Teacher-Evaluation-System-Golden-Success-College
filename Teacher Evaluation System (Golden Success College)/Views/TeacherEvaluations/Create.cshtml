@@ -32,7 +32,7 @@
                         <strong>You are not currently enrolled in any subjects.</strong>
                     </p>
                     <p class="mb-3">
-                        Before you can evaluate teachers, you need to select subject attended first. Click the button below to add your  subject.
+                        Before you can evaluate teachers, you need to select subject attended first. Click the button below to add your subject.
                     </p>
                     <div class="bg-light p-3 rounded mb-3">
                         <h6 class="mb-2"><i class="bi bi-info-circle text-primary"></i> Quick Steps:</h6>
@@ -46,7 +46,7 @@
                     <hr>
                     <div class="d-flex gap-2">
                         <a asp-controller="Enrollments" asp-action="Index" class="btn btn-primary btn-lg">
-                            <i class="bi bi-plus-circle"></i> Add subject  Now
+                            <i class="bi bi-plus-circle"></i> Add subject Now
                         </a>
                         <a asp-action="Index" class="btn btn-secondary btn-lg">
                             <i class="bi bi-arrow-left"></i> Back
@@ -68,7 +68,6 @@
                         <strong>Thank you for your valuable feedback!</strong> Your input helps improve the quality of education at Golden Success College.
                     </p>
                     <hr>
-                    
                 </div>
             }
             @* Case 3: Normal evaluation form *@
@@ -94,14 +93,19 @@
 
                     <!-- Selection Section -->
                     <div class="row mb-4">
+                        <!-- ✅ Teacher field: display-only, no asp-for, hidden input carries the value -->
                         <div class="col-md-6">
-                            <label asp-for="TeacherId" class="form-label fw-bold">
+                            <label class="form-label fw-bold">
                                 <i class="bi bi-person-workspace"></i> Name of Teacher: <span class="text-danger">*</span>
                             </label>
-                            <select asp-for="TeacherId" class="form-select form-select-lg" asp-items="ViewBag.Teachers" id="teacherSelect" disabled>
+                            <select class="form-select form-select-lg" id="teacherSelect" disabled>
                                 <option value="">-- Select Teacher --</option>
+                                @foreach (var t in teachersList)
+                                {
+                                    <option value="@t.Value">@t.Text</option>
+                                }
                             </select>
-                            <input type="hidden" asp-for="TeacherId" />
+                            <input type="hidden" name="TeacherId" id="teacherIdHidden" value="@Model.TeacherId" />
                             <small class="text-muted">Only teachers you're enrolled with are shown</small>
                         </div>
 
@@ -263,14 +267,11 @@
         const subjectSelect = document.getElementById('subjectSelect');
         const submitBtn = document.getElementById('submitBtn');
 
-        // Only initialize if elements exist (form is shown)
         if (teacherSelect && subjectSelect && submitBtn) {
-            // Check if teacher ID is passed from dashboard
             const urlParams = new URLSearchParams(window.location.search);
             const preselectedTeacherId = urlParams.get('teacherId');
             const preselectedSubjectId = urlParams.get('subjectId');
 
-            // Loading states
             function setSubjectLoading(loading = true) {
                 subjectSelect.disabled = loading;
                 if (loading) {
@@ -278,7 +279,6 @@
                 }
             }
 
-            // Show sections after subject is selected
             function showEvaluationSections() {
                 document.getElementById('facilitatorSection').style.display = 'flex';
                 document.getElementById('anonymousSection').style.display = 'block';
@@ -293,7 +293,6 @@
                 document.getElementById('questionsContainer').style.display = 'none';
             }
 
-            // Show message
             function showMessage(message, type = 'warning') {
                 const existingAlerts = document.querySelectorAll('.dynamic-alert');
                 existingAlerts.forEach(alert => alert.remove());
@@ -317,14 +316,12 @@
                     form.parentElement.insertBefore(alertDiv, form);
                 }
 
-                // Auto-dismiss after 7 seconds
                 setTimeout(() => {
                     alertDiv.classList.remove('show');
                     setTimeout(() => alertDiv.remove(), 150);
                 }, 7000);
             }
 
-            // Load subjects for selected teacher
             async function loadSubjects(teacherId, autoSelectSubjectId = null) {
                 if (!teacherId) {
                     subjectSelect.disabled = true;
@@ -358,7 +355,6 @@
                         });
                         subjectSelect.disabled = false;
 
-                        // Auto-select subject if provided
                         if (autoSelectSubjectId) {
                             subjectSelect.value = autoSelectSubjectId;
                             if (subjectSelect.value === autoSelectSubjectId) {
@@ -378,7 +374,6 @@
                 }
             }
 
-            // Calculate total and average scores
             function calculateScores() {
                 let total = 0;
                 let count = 0;
@@ -392,29 +387,26 @@
                 document.getElementById('averageScore').textContent = count > 0 ? (total / count).toFixed(2) : '0.00';
             }
 
-            // Auto-select teacher if passed from dashboard
+            // ✅ Auto-select teacher from URL and update hidden input
             if (preselectedTeacherId) {
                 teacherSelect.value = preselectedTeacherId;
+                document.getElementById('teacherIdHidden').value = preselectedTeacherId;
                 loadSubjects(preselectedTeacherId, preselectedSubjectId);
             }
 
-            // Event: Teacher changed
+            // ✅ Teacher change: update hidden input
             teacherSelect.addEventListener('change', async () => {
                 const teacherId = teacherSelect.value;
+                document.getElementById('teacherIdHidden').value = teacherId;
                 subjectSelect.value = '';
                 hideSections();
-
-                // Clear any previous dynamic alerts
                 document.querySelectorAll('.dynamic-alert').forEach(alert => alert.remove());
-
                 await loadSubjects(teacherId);
             });
 
-            // Event: Subject changed
             subjectSelect.addEventListener('change', () => {
                 if (subjectSelect.value) {
                     showEvaluationSections();
-                    // Scroll to questions
                     setTimeout(() => {
                         document.getElementById('ratingScaleInfo').scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
@@ -423,14 +415,11 @@
                 }
             });
 
-            // Add score calculation listeners
             document.querySelectorAll('.score-radio').forEach(radio => {
                 radio.addEventListener('change', calculateScores);
             });
 
-            // Form validation before submit
             document.getElementById('evaluationForm').addEventListener('submit', function (e) {
-                // Check if all radio buttons are answered
                 const allQuestions = document.querySelectorAll('input[type="radio"].score-radio');
                 const questionNames = new Set();
 
@@ -453,7 +442,6 @@
                     return false;
                 }
 
-                // Disable submit button to prevent double submission
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
             });

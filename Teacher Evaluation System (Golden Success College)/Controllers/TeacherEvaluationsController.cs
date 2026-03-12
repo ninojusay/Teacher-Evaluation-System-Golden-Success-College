@@ -46,7 +46,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 .ToListAsync();
 
             var evaluated = await _context.Evaluation
-                .Include(e => e.Scores) // ✅ needed for AverageScore
+                .Include(e => e.Scores)
                 .Where(e => e.TeacherId == teacherId && e.EvaluationPeriodId == periodId)
                 .ToListAsync();
 
@@ -88,13 +88,12 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             var currentPeriod = await _periodService.GetCurrentPeriodAsync();
             ViewBag.CurrentPeriod = currentPeriod;
 
-            // ✅ Load evaluations with Scores so AverageScore computes correctly
             var query = _context.Evaluation
                 .Include(e => e.Teacher)
                 .Include(e => e.Subject)
                 .Include(e => e.Student)
                 .Include(e => e.EvaluationPeriod)
-                .Include(e => e.Scores) // ✅ required for AverageScore
+                .Include(e => e.Scores)
                 .AsQueryable();
 
             if (!isAdmin)
@@ -102,7 +101,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 query = query.Where(e => e.StudentId == studentId);
             }
 
-            // Load into memory first so the computed AverageScore property works
             var rawEvaluations = await query
                 .OrderByDescending(e => e.DateEvaluated)
                 .ToListAsync();
@@ -120,7 +118,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 StudentName = e.IsAnonymous && !isAdmin ? "Anonymous" : e.Student.FullName,
                 IsAnonymous = e.IsAnonymous,
                 DateEvaluated = e.DateEvaluated,
-                AverageScore = e.AverageScore // ✅ now accurate because Scores are loaded
+                AverageScore = e.AverageScore
             }).ToList();
 
             return View(evaluations);
@@ -142,7 +140,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 .Include(e => e.Subject)
                 .Include(e => e.Teacher)
                 .Include(e => e.EvaluationPeriod)
-                .Include(e => e.Scores) // ✅ required for AverageScore
+                .Include(e => e.Scores)
                 .Where(e => e.TeacherId == teacherId)
                 .OrderByDescending(e => e.DateEvaluated)
                 .AsQueryable();
@@ -152,7 +150,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 query = query.Where(e => e.StudentId == studentId);
             }
 
-            // Load into memory first so computed AverageScore works
             var rawEvaluations = await query.ToListAsync();
 
             var evaluations = rawEvaluations.Select(e => new EvaluationListItemViewModel
@@ -167,7 +164,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 StudentName = e.IsAnonymous && !isAdmin ? "Anonymous" : e.Student.FullName,
                 IsAnonymous = e.IsAnonymous,
                 DateEvaluated = e.DateEvaluated,
-                AverageScore = e.AverageScore, // ✅ now accurate
+                AverageScore = e.AverageScore,
                 Comments = e.Comments
             }).ToList();
 
@@ -272,15 +269,14 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             ViewBag.HasAvailableEnrollments = true;
             ViewBag.HasNoEnrollments = false;
 
+            // ✅ Read teacherId from query string (passed when clicking teacher picture)
+            int.TryParse(Request.Query["teacherId"], out int preselectedTeacherId);
 
-            // Add these:
-            ViewBag.SingleTeacher = teachers.Count == 1;
-            ViewBag.TeacherName = teachers.Count == 1 ? teachers[0].Text : null;
-            ViewBag.SingleTeacherId = teachers.Count == 1 ? teachers[0].Value : null;
             return View(new EvaluationFormViewModel
             {
                 StudentId = studentId,
                 StudentName = student?.FullName,
+                TeacherId = preselectedTeacherId, // ✅ pre-fills the hidden input
                 CriteriaGroups = criteriaGroups,
                 IsAnonymous = true
             });
@@ -348,12 +344,11 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             var currentPeriod = await _periodService.GetCurrentPeriodAsync();
             ViewBag.CurrentPeriod = currentPeriod;
 
-            // ✅ Load Scores so AverageScore computes correctly
             var rawEvaluations = await _context.Evaluation
                 .Include(e => e.Teacher)
                 .Include(e => e.Subject)
                 .Include(e => e.EvaluationPeriod)
-                .Include(e => e.Scores) // ✅ required for AverageScore
+                .Include(e => e.Scores)
                 .Where(e => e.StudentId == studentId)
                 .OrderByDescending(e => e.DateEvaluated)
                 .ToListAsync();
@@ -369,7 +364,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                     : e.Teacher.PicturePath,
                 IsAnonymous = e.IsAnonymous,
                 DateEvaluated = e.DateEvaluated,
-                AverageScore = e.AverageScore // ✅ now accurate
+                AverageScore = e.AverageScore
             }).ToList();
 
             return View(evaluations);
@@ -393,7 +388,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 .Include(e => e.Subject)
                 .Include(e => e.Teacher)
                 .Include(e => e.EvaluationPeriod)
-                .Include(e => e.Scores) // ✅ required for AverageScore
+                .Include(e => e.Scores)
                 .Where(e => e.TeacherId == teacherId)
                 .AsQueryable();
 
@@ -402,7 +397,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 query = query.Where(e => e.StudentId == studentId);
             }
 
-            // Load into memory first so computed AverageScore works
             var rawEvaluations = await query
                 .OrderByDescending(e => e.DateEvaluated)
                 .ToListAsync();
@@ -418,7 +412,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 StudentName = e.IsAnonymous && !isAdmin ? "Anonymous" : e.Student.FullName,
                 IsAnonymous = e.IsAnonymous,
                 DateEvaluated = e.DateEvaluated,
-                AverageScore = e.AverageScore // ✅ now accurate
+                AverageScore = e.AverageScore
             }).ToList();
 
             var teacher = await _context.Teacher.FindAsync(teacherId.Value);
@@ -439,6 +433,13 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 return RedirectToAction(nameof(Create));
             }
 
+            // ✅ Guard against invalid TeacherId/SubjectId
+            if (model.TeacherId <= 0 || model.SubjectId <= 0)
+            {
+                TempData["ErrorMessage"] = "Please select a valid teacher and subject.";
+                return RedirectToAction(nameof(Create));
+            }
+
             var currentPeriod = await _periodService.GetCurrentPeriodAsync();
             if (currentPeriod == null || !currentPeriod.IsValidForEvaluation())
             {
@@ -449,9 +450,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             var studentId = GetCurrentStudentId();
             var ipAddress = GetClientIpAddress();
 
-            await _activityLogService.LogEvaluationStartedAsync(
-                studentId, model.TeacherId, model.SubjectId, ipAddress);
-
+            // ✅ Check enrollment FIRST before logging
             var isEnrolled = await _context.Enrollment
                 .AnyAsync(e => e.StudentId == studentId
                     && e.TeacherId == model.TeacherId
@@ -462,6 +461,10 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 TempData["ErrorMessage"] = "You are not enrolled in this teacher's class.";
                 return RedirectToAction(nameof(Create));
             }
+
+            // ✅ Only log AFTER confirming teacher is valid
+            await _activityLogService.LogEvaluationStartedAsync(
+                studentId, model.TeacherId, model.SubjectId, ipAddress);
 
             var alreadyEvaluated = await _context.Evaluation
                 .AnyAsync(e => e.StudentId == studentId
@@ -499,7 +502,6 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
 
             TempData["SuccessMessage"] = $"Evaluation submitted successfully for {currentPeriod.PeriodName}! Thank you for your feedback.";
 
-            // ✅ Students go to MyEvaluations, Admins go to Index
             var isAdmin = User.IsInRole("Admin") || User.IsInRole("Super Admin");
             return isAdmin
                 ? RedirectToAction(nameof(Index))
@@ -550,7 +552,7 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
                 IsAnonymous = evaluation.IsAnonymous,
                 DateEvaluated = evaluation.DateEvaluated,
                 Comments = evaluation.Comments,
-                OverallAverage = evaluation.AverageScore, // ✅ accurate because Scores are loaded
+                OverallAverage = evaluation.AverageScore,
                 CriteriaResults = evaluation.Scores
                     .GroupBy(s => s.Question?.Criteria?.Name)
                     .Select(g => new CriteriaResultViewModel
