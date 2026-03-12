@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -16,15 +16,18 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
         private readonly Teacher_Evaluation_System__Golden_Success_College_Context _context;
         private readonly IActivityLogService _activityLogService;
         private readonly IEvaluationPeriodService _periodService;
+        private readonly ITeacherAiSummaryService _aiService;
 
         public TeacherEvaluationsController(
             Teacher_Evaluation_System__Golden_Success_College_Context context,
             IActivityLogService activityLogService,
-            IEvaluationPeriodService periodService)
+            IEvaluationPeriodService periodService,
+            ITeacherAiSummaryService aiService)
         {
             _context = context;
             _activityLogService = activityLogService;
             _periodService = periodService;
+            _aiService = aiService;
         }
 
         // GET: TeacherEvaluations/TeacherDetails/5
@@ -633,6 +636,41 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             {
                 return StatusCode(500, new { success = false, message = $"Error deleting evaluation: {ex.Message}" });
             }
+        }
+
+        // GET: TeacherEvaluations/GetAiSummary/5
+        [HttpGet]
+        [Authorize(Roles = "Admin,Super Admin")]
+        public async Task<IActionResult> GetAiSummary(int teacherId)
+        {
+            if (teacherId <= 0) return BadRequest();
+
+            var currentPeriod = await _periodService.GetCurrentPeriodAsync();
+            if (currentPeriod == null) return Json(new { success = false, message = "No active evaluation period." });
+
+            var evaluations = await _context.Evaluation
+                .Include(e => e.Scores)
+                    .ThenInclude(s => s.Question)
+                        .ThenInclude(q => q.Criteria)
+                .Where(e => e.TeacherId == teacherId && e.EvaluationPeriodId == currentPeriod.EvaluationPeriodId)
+                .ToListAsync();
+
+            if (!evaluations.Any())
+                return Json(new { success = false, message = "No evaluations found for this period." });
+
+            var teacher = await _context.Teacher.FindAsync(teacherId);
+            string teacherName = teacher?.FullName ?? "Teacher";
+
+            string summary = _aiService.GenerateSummary(teacherName, evaluations);
+            string advice = _aiService.GenerateAdvice(evaluations);
+
+            return Json(new 
+            { 
+                success = true, 
+                summary = summary, 
+                advice = advice,
+                teacherName = teacherName
+            });
         }
 
         private int GetCurrentStudentId()

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Teacher_Evaluation_System__Golden_Success_College_.Data;
 using Teacher_Evaluation_System__Golden_Success_College_.Services;
@@ -22,6 +22,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<IEvaluationPeriodService, EvaluationPeriodService>();
+builder.Services.AddScoped<ITeacherAiSummaryService, TeacherAiSummaryService>();
 // Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
