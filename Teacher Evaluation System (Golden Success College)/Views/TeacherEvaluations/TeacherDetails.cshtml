@@ -411,8 +411,12 @@
                 </div>
             </div>
             <div class="modal-footer" style="background:#fff;">
+                <button type="button" class="btn btn-outline-danger px-4" id="btnDownloadAiPdf">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+                </button>
                 <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
             </div>
+
         </div>
     </div>
 </div>
@@ -548,6 +552,16 @@
                         });
                 });
             }
+
+            // 📄 PDF Download Handler
+            var btnDownload = document.getElementById('btnDownloadAiPdf');
+            if (btnDownload) {
+                btnDownload.addEventListener('click', function() {
+                    var teacherId = @Model.TeacherId;
+                    window.location.href = '/TeacherEvaluations/DownloadAiReport?teacherId=' + teacherId;
+                });
+            }
+
 
             function formatAiText(text) {
                 if (!text) return "";

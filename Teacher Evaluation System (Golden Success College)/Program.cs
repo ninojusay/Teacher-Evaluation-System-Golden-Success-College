@@ -2,8 +2,14 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Teacher_Evaluation_System__Golden_Success_College_.Data;
 using Teacher_Evaluation_System__Golden_Success_College_.Services;
+using QuestPDF.Infrastructure;
+
+
+// Configure QuestPDF
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Add DbContext
 builder.Services.AddDbContext<Teacher_Evaluation_System__Golden_Success_College_Context>(options =>

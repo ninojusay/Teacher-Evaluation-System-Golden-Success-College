@@ -673,7 +673,36 @@ namespace Teacher_Evaluation_System__Golden_Success_College_.Controllers
             });
         }
 
+        // GET: TeacherEvaluations/DownloadAiReport/5
+        [HttpGet]
+        [Authorize(Roles = "Admin,Super Admin")]
+        public async Task<IActionResult> DownloadAiReport(int teacherId)
+        {
+            if (teacherId <= 0) return BadRequest();
+
+            var currentPeriod = await _periodService.GetCurrentPeriodAsync();
+            if (currentPeriod == null) return NotFound("No active evaluation period.");
+
+            var evaluations = await _context.Evaluation
+                .Include(e => e.Scores)
+                    .ThenInclude(s => s.Question)
+                        .ThenInclude(q => q.Criteria)
+                .Where(e => e.TeacherId == teacherId && e.EvaluationPeriodId == currentPeriod.EvaluationPeriodId)
+                .ToListAsync();
+
+            if (!evaluations.Any()) return NotFound("No evaluations found for this period.");
+
+            var teacher = await _context.Teacher.FindAsync(teacherId);
+            string teacherName = teacher?.FullName ?? "Teacher";
+
+            var pdfBytes = _aiService.GeneratePdfReport(teacherName, evaluations);
+            string fileName = $"AI_Report_{teacherName.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.pdf";
+
+            return File(pdfBytes, "application/pdf", fileName);
+        }
+
         private int GetCurrentStudentId()
+
         {
             var studentIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(studentIdClaim))
